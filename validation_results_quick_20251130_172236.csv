@@ -1,0 +1,6 @@
+Ticker,Status,Quality_Score,Warnings,Errors,Checks_Passed
+AAPL,PASS,100,0,0,5
+JPM,PASS,100,0,0,5
+JNJ,PASS,100,0,0,5
+XOM,PASS,100,0,0,5
+AMZN,PASS,100,0,0,5
