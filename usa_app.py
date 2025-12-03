@@ -1528,7 +1528,7 @@ if "ai_disclaimer_shown" not in st.session_state:
 # Toggle button (top-right corner)
 col1, col2, col3 = st.columns([8, 1, 1])
 with col3:
-    if st.button("🤖 AI", key="ai_toggle", help="AI Chat (Under Development)", use_container_width=False):
+    if st.button("🤖 AI", key="ai_toggle", help="AI Financial Advisor - Ask questions about loaded company", use_container_width=False):
         st.session_state.show_ai_chat = not st.session_state.show_ai_chat
         st.rerun()
 
@@ -1567,34 +1567,125 @@ if st.session_state.show_ai_chat:
     </style>
     """, unsafe_allow_html=True)
     
-    # Create floating container
+    # Create floating container with actual AI chat
     with st.container():
         st.markdown('<div class="ai-chat-container">', unsafe_allow_html=True)
-        st.markdown('<div class="ai-chat-header">AI Financial Advisor</div>', unsafe_allow_html=True)
+        st.markdown('<div class="ai-chat-header"><i class="bi bi-robot" style="margin-right: 8px;"></i>AI Financial Advisor</div>', unsafe_allow_html=True)
         st.markdown('<div class="ai-chat-body">', unsafe_allow_html=True)
         
-        # Under Construction Message
-        st.markdown("""
-        <div style='text-align: center; padding: 3rem 1rem;'>
-            <div style='font-size: 4rem; color: #3b82f6; margin-bottom: 1.5rem;'>
-                <i class="bi bi-gear-fill" style='animation: spin 3s linear infinite;'></i>
+        # Initialize AI if not done
+        if "ai_advisor" not in st.session_state:
+            try:
+                from financial_ai import FinancialAI
+                st.session_state.ai_advisor = FinancialAI(tier="free")
+            except Exception as e:
+                st.session_state.ai_advisor = None
+                st.session_state.ai_error = str(e)
+        
+        # Check if we have company data loaded
+        has_company_data = st.session_state.financials is not None
+        
+        # Disclaimer (show once per session)
+        if not st.session_state.ai_disclaimer_shown:
+            st.markdown("""
+            <div style='background: rgba(59, 130, 246, 0.1); border: 1px solid rgba(59, 130, 246, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 15px;'>
+                <p style='color: #94a3b8; font-size: 0.85rem; margin: 0;'>
+                    <strong style='color: #3b82f6;'>Disclaimer:</strong> This AI provides educational financial analysis, not investment advice. 
+                    Always consult a licensed financial professional before making investment decisions.
+                </p>
             </div>
-            <h3 style='color: #3b82f6; margin-bottom: 1rem;'>Under Development</h3>
-            <p style='color: #94a3b8; font-size: 1.1rem; line-height: 1.6; max-width: 300px; margin: 0 auto;'>
-                Our AI Financial Advisor is being fine-tuned for professional-grade insights.
-                <br><br>
-                <em style='font-size: 0.9rem; color: #64748b;'>
-                    Coming soon: Real-time market analysis, portfolio recommendations, and expert-level financial Q&A.
-                </em>
-            </p>
-        </div>
-        <style>
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        </style>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            if st.button("I Understand", key="ai_disclaimer_btn", use_container_width=True):
+                st.session_state.ai_disclaimer_shown = True
+                st.rerun()
+        else:
+            # Check AI availability
+            if st.session_state.ai_advisor is None:
+                st.markdown("""
+                <div style='text-align: center; padding: 1rem; color: #f59e0b;'>
+                    <i class="bi bi-exclamation-triangle" style='font-size: 2rem;'></i>
+                    <p style='margin-top: 10px;'>AI service unavailable. Please check your API configuration.</p>
+                </div>
+                """, unsafe_allow_html=True)
+            elif not has_company_data:
+                st.markdown("""
+                <div style='text-align: center; padding: 1.5rem; color: #94a3b8;'>
+                    <i class="bi bi-graph-up-arrow" style='font-size: 2.5rem; color: #3b82f6;'></i>
+                    <p style='margin-top: 15px; font-size: 0.95rem;'>Load company data first to chat with the AI advisor.</p>
+                    <p style='font-size: 0.85rem; color: #64748b;'>Enter a ticker in the sidebar and click "Extract Data"</p>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                # Show company context
+                ticker = st.session_state.ticker
+                company_name = st.session_state.financials.get("company_name", ticker)
+                st.markdown(f"""
+                <div style='background: rgba(59, 130, 246, 0.1); border-radius: 6px; padding: 8px 12px; margin-bottom: 12px;'>
+                    <span style='color: #3b82f6; font-weight: 600;'>Analyzing:</span> 
+                    <span style='color: #e2e8f0;'>{company_name} ({ticker})</span>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Chat history display
+                if st.session_state.ai_chat_history:
+                    for msg in st.session_state.ai_chat_history[-5:]:  # Show last 5 messages
+                        role_color = "#3b82f6" if msg["role"] == "user" else "#22c55e"
+                        role_icon = "person" if msg["role"] == "user" else "robot"
+                        st.markdown(f"""
+                        <div style='margin-bottom: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 8px; border-left: 3px solid {role_color};'>
+                            <div style='color: {role_color}; font-size: 0.8rem; margin-bottom: 5px;'>
+                                <i class="bi bi-{role_icon}"></i> {"You" if msg["role"] == "user" else "AI Advisor"}
+                            </div>
+                            <div style='color: #e2e8f0; font-size: 0.9rem;'>{msg["content"][:500]}{"..." if len(msg["content"]) > 500 else ""}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                
+                # Input and buttons
+                st.markdown('</div>', unsafe_allow_html=True)  # Close ai-chat-body for streamlit widgets
+                
+                user_question = st.text_input("Ask about this company...", key="ai_question_input", placeholder="e.g., What's the valuation outlook?")
+                
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    ask_btn = st.button("Ask AI", key="ai_ask_btn", type="primary", use_container_width=True)
+                with col2:
+                    if st.button("Clear", key="ai_clear_btn", use_container_width=True):
+                        st.session_state.ai_chat_history = []
+                        st.rerun()
+                
+                if ask_btn and user_question.strip():
+                    with st.spinner("Analyzing..."):
+                        try:
+                            # Build company context for AI
+                            company_context = {
+                                "ticker": ticker,
+                                "company_name": company_name,
+                                "sector": st.session_state.financials.get("sector", "N/A"),
+                                "current_price": st.session_state.financials.get("current_price", "N/A"),
+                                "market_cap": st.session_state.financials.get("market_cap", "N/A"),
+                                "pe_ratio": st.session_state.financials.get("pe_ratio", "N/A"),
+                                "growth_rate": st.session_state.financials.get("revenue_growth", "N/A"),
+                                "roe": st.session_state.financials.get("roe", "N/A"),
+                                "debt_equity": st.session_state.financials.get("debt_equity", "N/A"),
+                                "current_ratio": st.session_state.financials.get("current_ratio", "N/A"),
+                            }
+                            
+                            # Get AI response
+                            result = st.session_state.ai_advisor.ask(user_question, company_context, context_type="general")
+                            
+                            # Add to chat history
+                            st.session_state.ai_chat_history.append({"role": "user", "content": user_question})
+                            st.session_state.ai_chat_history.append({
+                                "role": "assistant", 
+                                "content": result["response"],
+                                "model": result.get("model_used", "unknown"),
+                                "confidence": result.get("confidence", 0)
+                            })
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"AI Error: {str(e)}")
+                
+                st.markdown('<div class="ai-chat-body" style="padding-top: 0;">', unsafe_allow_html=True)  # Re-open for closing tags
         
         st.markdown('</div>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
