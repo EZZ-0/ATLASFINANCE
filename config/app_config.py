@@ -27,12 +27,12 @@ CHART_ICON = "📊"
 REPORT_ICON = "📄"
 
 # Theme colors (matches theme_presets.py)
-PRIMARY_COLOR = "#1e88e5"  # Blue
-SECONDARY_COLOR = "#ffd700"  # Gold
-ACCENT_COLOR = "#64b5f6"  # Light Blue
-BACKGROUND_DARK = "#0a1929"
-TEXT_PRIMARY = "#e3f2fd"
-TEXT_SECONDARY = "#90caf9"
+PRIMARY_COLOR = "#3b82f6"  # Blue
+SECONDARY_COLOR = "#10b981"  # Green accent
+ACCENT_COLOR = "#f59e0b"  # Gold accent
+BACKGROUND_DARK = "#0f1419"  # Clean dark charcoal
+TEXT_PRIMARY = "#f0f4f8"  # Light gray for readability
+TEXT_SECONDARY = "#94a3b8"  # Muted gray
 
 # ==========================================
 # FEATURE FLAGS

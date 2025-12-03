@@ -230,17 +230,17 @@ def render_quant_tab(ticker: str, financials: Dict) -> None:
             # Display interpretations in professional themed boxes
             st.markdown(f"""
             <div style='padding: 0.8rem 1rem; margin: 0.5rem 0;
-                        background: rgba(30, 136, 229, 0.08); backdrop-filter: blur(10px);
+                        background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
                         border-left: 3px solid #1e88e5; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6;'>{mkt_interp}</p>
             </div>
             <div style='padding: 0.8rem 1rem; margin: 0.5rem 0;
-                        background: rgba(30, 136, 229, 0.08); backdrop-filter: blur(10px);
+                        background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
                         border-left: 3px solid #1e88e5; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6;'>{size_interp}</p>
             </div>
             <div style='padding: 0.8rem 1rem; margin: 0.5rem 0;
-                        background: rgba(30, 136, 229, 0.08); backdrop-filter: blur(10px);
+                        background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
                         border-left: 3px solid #1e88e5; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6;'>{value_interp}</p>
             </div>
@@ -258,7 +258,7 @@ def render_quant_tab(ticker: str, financials: Dict) -> None:
             
             st.markdown(f"""
             <div style='padding: 0.8rem 1rem; margin: 0.5rem 0;
-                        background: rgba(30, 136, 229, 0.08); backdrop-filter: blur(10px);
+                        background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
                         border-left: 3px solid {alpha_color}; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6;'>{alpha_interp}</p>
             </div>

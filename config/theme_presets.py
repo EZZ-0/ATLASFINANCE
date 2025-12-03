@@ -5,17 +5,17 @@ Easily swap between color schemes without touching main code
 
 THEMES = {
     'blue_corporate': {
-        'name': 'Blue Corporate (Current)',
-        'primary': '#1e88e5',
-        'primary_light': '#64b5f6',
-        'primary_dark': '#0d47a1',
-        'secondary': '#ffd700',
-        'secondary_light': '#ffecb3',
-        'background': '#0a0e27',
-        'surface': 'rgba(30, 136, 229, 0.15)',
-        'text': '#ffffff',
-        'text_secondary': '#e3f2fd',
-        'gradient': 'linear-gradient(135deg, #1e88e5 0%, #ffd700 100%)',
+        'name': 'Professional Dark (Current)',
+        'primary': '#3b82f6',
+        'primary_light': '#60a5fa',
+        'primary_dark': '#2563eb',
+        'secondary': '#10b981',
+        'secondary_light': '#34d399',
+        'background': '#0f1419',
+        'surface': 'rgba(59, 130, 246, 0.12)',
+        'text': '#f0f4f8',
+        'text_secondary': '#94a3b8',
+        'gradient': 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
     },
     
     'emerald_gold': {

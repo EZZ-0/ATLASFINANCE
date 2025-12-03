@@ -131,12 +131,12 @@ def render_live_dcf_modeling(financials: Dict, model: DCFModel):
     """
     
     st.markdown("""
-    <div style='padding: 1rem; background: rgba(30, 136, 229, 0.1); 
+    <div style='padding: 1rem; background: rgba(59, 130, 246, 0.1); 
                 border-left: 4px solid #1e88e5; border-radius: 6px; margin-bottom: 1.5rem;'>
         <h3 style='color: #42a5f5; margin: 0 0 0.5rem 0;'>
             <i class="bi bi-sliders" style="margin-right: 0.5rem;"></i>Live DCF Scenario Builder
         </h3>
-        <p style='color: #90caf9; margin: 0; font-size: 0.9rem;'>
+        <p style='color: #94a3b8; margin: 0; font-size: 0.9rem;'>
             Adjust assumptions with sliders below to see instant preview. Click "Run Full DCF" for complete valuation.
         </p>
     </div>

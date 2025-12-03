@@ -692,19 +692,19 @@ def render_investment_summary_tab(financials: Dict):
     # Professional Header - IC Style
     st.markdown(f"""
     <div style='text-align: center; padding: 1.5rem 0; 
-                border-bottom: 1px solid rgba(100, 181, 246, 0.15);'>
+                border-bottom: 1px solid rgba(59, 130, 246, 0.15);'>
         <div style='display: inline-block; padding: 0.8rem 2rem; margin-bottom: 1rem;
                     background: {rec_bg}; border: 2px solid {rec_color};
-                    border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);'>
+                    border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);'>
             <h2 style='color: {rec_color}; margin: 0; font-size: 1.6rem; font-weight: 700; letter-spacing: 1.5px;'>
                 {rec_icon} {rec} | PT: ${price_target:.0f} | {upside_pct:+.0f}% | {conviction} CONVICTION
             </h2>
         </div>
-        <div style='border-bottom: 1px solid rgba(100, 181, 246, 0.1); padding-bottom: 0.8rem; margin-bottom: 0.8rem;'>
-            <h1 style='color: #64b5f6; font-size: 2.5rem; margin: 0.3rem 0; font-weight: 600;'>
+        <div style='border-bottom: 1px solid rgba(59, 130, 246, 0.1); padding-bottom: 0.8rem; margin-bottom: 0.8rem;'>
+            <h1 style='color: #3b82f6; font-size: 2.5rem; margin: 0.3rem 0; font-weight: 600;'>
                 {generator.ticker}
             </h1>
-            <p style='color: #90caf9; font-size: 1rem; margin: 0; font-weight: 400;'>
+            <p style='color: #94a3b8; font-size: 1rem; margin: 0; font-weight: 400;'>
                 {generator.company_name}
             </p>
         </div>
@@ -722,7 +722,7 @@ def render_investment_summary_tab(financials: Dict):
     business_summary = info.get('longBusinessSummary', 'No business description available')
     
     st.markdown("""
-    <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.3rem; margin: 1.5rem 0 1rem 0;
+    <h3 style='color: #3b82f6; font-weight: 700; font-size: 1.3rem; margin: 1.5rem 0 1rem 0;
                letter-spacing: 1px;'>
         <i class="bi bi-building" style="margin-right: 0.5rem;"></i>BUSINESS MODEL
     </h3>
@@ -733,40 +733,40 @@ def render_investment_summary_tab(financials: Dict):
     
     with biz_col1:
         st.markdown(f"""
-        <div style='padding: 0.8rem; background: rgba(30, 136, 229, 0.08); border-radius: 6px; text-align: center;'>
-            <p style='color: #64b5f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>SECTOR</p>
-            <p style='color: white; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{sector}</p>
+        <div style='padding: 0.8rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; text-align: center;'>
+            <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>SECTOR</p>
+            <p style='color: #f0f4f8; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{sector}</p>
         </div>
         """, unsafe_allow_html=True)
     
     with biz_col2:
         st.markdown(f"""
-        <div style='padding: 0.8rem; background: rgba(30, 136, 229, 0.08); border-radius: 6px; text-align: center;'>
-            <p style='color: #64b5f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>INDUSTRY</p>
-            <p style='color: white; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{industry}</p>
+        <div style='padding: 0.8rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; text-align: center;'>
+            <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>INDUSTRY</p>
+            <p style='color: #f0f4f8; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{industry}</p>
         </div>
         """, unsafe_allow_html=True)
     
     with biz_col3:
         st.markdown(f"""
-        <div style='padding: 0.8rem; background: rgba(30, 136, 229, 0.08); border-radius: 6px; text-align: center;'>
-            <p style='color: #64b5f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>EMPLOYEES</p>
-            <p style='color: white; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{f'{employees:,}' if isinstance(employees, int) else employees}</p>
+        <div style='padding: 0.8rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; text-align: center;'>
+            <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>EMPLOYEES</p>
+            <p style='color: #f0f4f8; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>{f'{employees:,}' if isinstance(employees, int) else employees}</p>
         </div>
         """, unsafe_allow_html=True)
     
     with biz_col4:
         if website and website != 'N/A':
             st.markdown(f"""
-            <div style='padding: 0.8rem; background: rgba(30, 136, 229, 0.08); border-radius: 6px; text-align: center;'>
-                <p style='color: #64b5f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>WEBSITE</p>
-                <a href='{website}' target='_blank' style='color: #ffd700; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600; text-decoration: none;'>Visit →</a>
+            <div style='padding: 0.8rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; text-align: center;'>
+                <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>WEBSITE</p>
+                <a href='{website}' target='_blank' style='color: #10b981; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600; text-decoration: none;'>Visit →</a>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown(f"""
-            <div style='padding: 0.8rem; background: rgba(30, 136, 229, 0.08); border-radius: 6px; text-align: center;'>
-                <p style='color: #64b5f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>WEBSITE</p>
+            <div style='padding: 0.8rem; background: rgba(59, 130, 246, 0.08); border-radius: 6px; text-align: center;'>
+                <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600;'>WEBSITE</p>
                 <p style='color: white; font-size: 0.9rem; margin: 0.3rem 0 0 0; font-weight: 600;'>N/A</p>
             </div>
             """, unsafe_allow_html=True)
@@ -783,7 +783,7 @@ def render_investment_summary_tab(financials: Dict):
             
             st.markdown(f"""
             <div style='padding: 1rem; margin: 1rem 0;
-                        background: rgba(30, 136, 229, 0.05);
+                        background: rgba(59, 130, 246, 0.05);
                         border-left: 3px solid #1e88e5; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6; font-size: 0.9rem;'>
                     {short_summary}
@@ -793,7 +793,7 @@ def render_investment_summary_tab(financials: Dict):
             
             with st.expander("📖 Read Full Business Description", expanded=False):
                 st.markdown(f"""
-                <div style='padding: 1rem; background: rgba(30, 136, 229, 0.03);
+                <div style='padding: 1rem; background: rgba(59, 130, 246, 0.03);
                             border-radius: 6px; line-height: 1.7;'>
                     <p style='color: #e3f2fd; margin: 0; font-size: 0.9rem;'>
                         {business_summary}
@@ -804,7 +804,7 @@ def render_investment_summary_tab(financials: Dict):
             # Short enough to show fully
             st.markdown(f"""
             <div style='padding: 1rem; margin: 1rem 0;
-                        background: rgba(30, 136, 229, 0.05);
+                        background: rgba(59, 130, 246, 0.05);
                         border-left: 3px solid #1e88e5; border-radius: 4px;'>
                 <p style='color: #e3f2fd; margin: 0; line-height: 1.6; font-size: 0.9rem;'>
                     {business_summary}
@@ -826,7 +826,7 @@ def render_investment_summary_tab(financials: Dict):
     for point in thesis_points:
         st.markdown(f"""
         <div style='padding: 0.8rem 1rem; margin-bottom: 0.5rem;
-                    background: rgba(30, 136, 229, 0.08);
+                    background: rgba(59, 130, 246, 0.08);
                     border-left: 3px solid #1e88e5; border-radius: 4px;'>
             <p style='color: #e3f2fd; margin: 0; line-height: 1.6; font-size: 0.95rem;'>
                 {point}
@@ -922,7 +922,7 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-graph-up" style="margin-right: 0.5rem;"></i>KEY METRICS
     </h3>
     """, unsafe_allow_html=True)
@@ -1008,8 +1008,8 @@ def render_investment_summary_tab(financials: Dict):
     
     # Display IC-READY metrics in professional layout
     st.markdown("""
-    <div style='background: rgba(30, 136, 229, 0.05); padding: 1.5rem; border-radius: 10px;
-                border: 1px solid rgba(30, 136, 229, 0.2); margin-bottom: 1.5rem;'>
+    <div style='background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 10px;
+                border: 1px solid rgba(59, 130, 246, 0.15); margin-bottom: 1.5rem;'>
     """, unsafe_allow_html=True)
     
     # Row 1: Valuation & Size
@@ -1089,7 +1089,7 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-bar-chart-fill" style="margin-right: 0.5rem;"></i>COMPARABLE VALUATION
     </h3>
     """, unsafe_allow_html=True)
@@ -1101,23 +1101,23 @@ def render_investment_summary_tab(financials: Dict):
     
     # Create comparison table
     st.markdown("""
-    <div style='background: rgba(30, 136, 229, 0.05); padding: 1.5rem; border-radius: 10px;
-                border: 1px solid rgba(30, 136, 229, 0.2);'>
+    <div style='background: rgba(59, 130, 246, 0.05); padding: 1.5rem; border-radius: 10px;
+                border: 1px solid rgba(59, 130, 246, 0.15);'>
     """, unsafe_allow_html=True)
     
     comp_cols = st.columns([2, 1, 1, 1, 1])
     
     # Header row
     with comp_cols[0]:
-        st.markdown("<p style='color: #64b5f6; font-weight: 700; font-size: 0.9rem;'>Company</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #3b82f6; font-weight: 700; font-size: 0.9rem;'>Company</p>", unsafe_allow_html=True)
     with comp_cols[1]:
-        st.markdown("<p style='color: #64b5f6; font-weight: 700; font-size: 0.9rem;'>P/E</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #3b82f6; font-weight: 700; font-size: 0.9rem;'>P/E</p>", unsafe_allow_html=True)
     with comp_cols[2]:
-        st.markdown("<p style='color: #64b5f6; font-weight: 700; font-size: 0.9rem;'>P/B</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #3b82f6; font-weight: 700; font-size: 0.9rem;'>P/B</p>", unsafe_allow_html=True)
     with comp_cols[3]:
-        st.markdown("<p style='color: #64b5f6; font-weight: 700; font-size: 0.9rem;'>ROE</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #3b82f6; font-weight: 700; font-size: 0.9rem;'>ROE</p>", unsafe_allow_html=True)
     with comp_cols[4]:
-        st.markdown("<p style='color: #64b5f6; font-weight: 700; font-size: 0.9rem;'>D/E</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #3b82f6; font-weight: 700; font-size: 0.9rem;'>D/E</p>", unsafe_allow_html=True)
     
     # Company row
     comp_cols2 = st.columns([2, 1, 1, 1, 1])
@@ -1139,15 +1139,15 @@ def render_investment_summary_tab(financials: Dict):
     # Sector row
     comp_cols3 = st.columns([2, 1, 1, 1, 1])
     with comp_cols3[0]:
-        st.markdown("<p style='color: #90caf9;'>Sector Median</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #94a3b8;'>Sector Median</p>", unsafe_allow_html=True)
     with comp_cols3[1]:
-        st.markdown(f"<p style='color: #90caf9;'>{sector['PE']:.1f}x</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: #94a3b8;'>{sector['PE']:.1f}x</p>", unsafe_allow_html=True)
     with comp_cols3[2]:
-        st.markdown(f"<p style='color: #90caf9;'>{sector['PB']:.1f}x</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: #94a3b8;'>{sector['PB']:.1f}x</p>", unsafe_allow_html=True)
     with comp_cols3[3]:
-        st.markdown(f"<p style='color: #90caf9;'>{sector['ROE']*100:.1f}%</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: #94a3b8;'>{sector['ROE']*100:.1f}%</p>", unsafe_allow_html=True)
     with comp_cols3[4]:
-        st.markdown(f"<p style='color: #90caf9;'>{sector['DE']:.2f}x</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='color: #94a3b8;'>{sector['DE']:.2f}x</p>", unsafe_allow_html=True)
     
     st.markdown("</div>", unsafe_allow_html=True)
     
@@ -1156,7 +1156,7 @@ def render_investment_summary_tab(financials: Dict):
         pe_status = "premium" if premium['PE'] > 0 else "discount"
         pe_color = "#66bb6a" if premium['PE'] > 0 else "#ef5350"
         st.markdown(f"""
-        <div style='padding: 1rem; margin-top: 1rem; background: rgba(30, 136, 229, 0.08);
+        <div style='padding: 1rem; margin-top: 1rem; background: rgba(59, 130, 246, 0.08);
                     border-left: 3px solid #1e88e5; border-radius: 4px;'>
             <p style='color: #e3f2fd; margin: 0; font-size: 0.9rem; line-height: 1.6;'>
                 <strong style='color: #42a5f5;'>Valuation Analysis:</strong> 
@@ -1206,7 +1206,7 @@ def render_investment_summary_tab(financials: Dict):
                     <p style='color: #66bb6a; margin: 0; font-weight: 700; font-size: 1.1rem;'>
                         +${catalyst['impact']:.0f}
                     </p>
-                    <p style='color: #90caf9; margin: 0; font-size: 0.75rem;'>
+                    <p style='color: #94a3b8; margin: 0; font-size: 0.75rem;'>
                         impact
                     </p>
                 </div>
@@ -1221,14 +1221,14 @@ def render_investment_summary_tab(financials: Dict):
                     border: 2px solid #ffd700; border-radius: 8px;'>
             <div style='display: flex; justify-content: space-between; align-items: center;'>
                 <div>
-                    <p style='color: #90caf9; margin: 0; font-size: 0.85rem;'>Current Price</p>
+                    <p style='color: #94a3b8; margin: 0; font-size: 0.85rem;'>Current Price</p>
                     <p style='color: white; margin: 0; font-weight: 700; font-size: 1.5rem;'>${current:.0f}</p>
                 </div>
                 <div style='text-align: center;'>
                     <p style='color: #ffd700; margin: 0; font-size: 1.2rem;'>→ +${total_impact:.0f} →</p>
                 </div>
                 <div style='text-align: right;'>
-                    <p style='color: #90caf9; margin: 0; font-size: 0.85rem;'>Target Price</p>
+                    <p style='color: #94a3b8; margin: 0; font-size: 0.85rem;'>Target Price</p>
                     <p style='color: #66bb6a; margin: 0; font-weight: 700; font-size: 1.5rem;'>${target:.0f}</p>
                 </div>
             </div>
@@ -1243,7 +1243,7 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-exclamation-triangle-fill" style="margin-right: 0.5rem;"></i>RISK ASSESSMENT
     </h3>
     """, unsafe_allow_html=True)
@@ -1292,7 +1292,7 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-cash-stack" style="margin-right: 0.5rem;"></i>VALUATION RANGE
     </h3>
     """, unsafe_allow_html=True)
@@ -1322,10 +1322,10 @@ def render_investment_summary_tab(financials: Dict):
                     backdrop-filter: blur(10px);
                     border-radius: 10px; border: 1px solid rgba(100, 181, 246, 0.25);
                     border-left: 4px solid #1e88e5;
-                    box-shadow: 0 6px 20px rgba(30, 136, 229, 0.15);'>
+                    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.12);'>
             <div style='color: #42a5f5; font-weight: 700; font-size: 0.8rem; letter-spacing: 1.5px; text-transform: uppercase;'>BASE CASE</div>
             <div style='font-size: 2.5rem; font-weight: 700; margin: 1rem 0; color: white;'>${valuation['base_case']:.2f}</div>
-            <div style='color: #64b5f6; font-size: 1rem; font-weight: 600;'>Current Price</div>
+            <div style='color: #3b82f6; font-size: 1rem; font-weight: 600;'>Current Price</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -1349,7 +1349,7 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-shield-fill-exclamation" style="margin-right: 0.5rem;"></i>RISK SEVERITY MATRIX
     </h3>
     """, unsafe_allow_html=True)
@@ -1503,19 +1503,19 @@ def render_investment_summary_tab(financials: Dict):
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
     <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.5rem; margin-bottom: 1rem;
-               border-bottom: 2px solid rgba(30, 136, 229, 0.3); padding-bottom: 0.5rem;'>
+               border-bottom: 2px solid rgba(59, 130, 246, 0.25); padding-bottom: 0.5rem;'>
         <i class="bi bi-building" style="margin-right: 0.5rem;"></i>COMPANY PROFILE
     </h3>
     """, unsafe_allow_html=True)
     
     st.markdown(f"""
-    <div style='padding: 1.5rem; background: linear-gradient(135deg, rgba(30, 136, 229, 0.1) 0%, rgba(21, 101, 192, 0.15) 100%);
-                border-radius: 10px; border: 1px solid rgba(30, 136, 229, 0.3);'>
+    <div style='padding: 1.5rem; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.15) 100%);
+                border-radius: 10px; border: 1px solid rgba(59, 130, 246, 0.25);'>
         <div style='display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; color: #e3f2fd;'>
-            <div><strong style='color: #64b5f6;'>Company:</strong> {generator.company_name}</div>
-            <div><strong style='color: #64b5f6;'>Ticker:</strong> {generator.ticker}</div>
-            <div><strong style='color: #64b5f6;'>Analysis Date:</strong> {pd.Timestamp.now().strftime('%Y-%m-%d')}</div>
-            <div><strong style='color: #64b5f6;'>Report Type:</strong> Investment Summary</div>
+            <div><strong style='color: #3b82f6;'>Company:</strong> {generator.company_name}</div>
+            <div><strong style='color: #3b82f6;'>Ticker:</strong> {generator.ticker}</div>
+            <div><strong style='color: #3b82f6;'>Analysis Date:</strong> {pd.Timestamp.now().strftime('%Y-%m-%d')}</div>
+            <div><strong style='color: #3b82f6;'>Report Type:</strong> Investment Summary</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -1560,8 +1560,8 @@ def render_investment_summary_tab(financials: Dict):
     
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("""
-    <div style='text-align: center; padding: 1rem; color: #64b5f6; font-size: 0.9rem;
-                border-top: 1px solid rgba(30, 136, 229, 0.2); margin-top: 2rem;'>
+    <div style='text-align: center; padding: 1rem; color: #3b82f6; font-size: 0.9rem;
+                border-top: 1px solid rgba(59, 130, 246, 0.15); margin-top: 2rem;'>
         <em>This analysis is for informational purposes only and should not be considered investment advice.</em>
     </div>
     """, unsafe_allow_html=True)

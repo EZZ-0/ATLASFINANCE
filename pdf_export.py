@@ -59,7 +59,7 @@ def generate_investment_summary_pdf(financials, generator, recommendation_data):
         'CustomSubtitle',
         parent=styles['Heading2'],
         fontSize=14,
-        textColor=colors.HexColor('#64b5f6'),
+        textColor=colors.HexColor('#3b82f6'),
         spaceAfter=6,
         alignment=TA_CENTER
     )
