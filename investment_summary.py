@@ -18,6 +18,18 @@ import numpy as np
 import plotly.graph_objects as go
 from typing import Dict, List, Tuple, Any
 
+# Import UI enhancement components with fallback
+try:
+    from ui_components import render_gauge, render_radar_chart, ECHARTS_AVAILABLE
+    UI_COMPONENTS_AVAILABLE = True
+except ImportError:
+    UI_COMPONENTS_AVAILABLE = False
+    ECHARTS_AVAILABLE = False
+    def render_gauge(*args, **kwargs):
+        pass
+    def render_radar_chart(*args, **kwargs):
+        pass
+
 class InvestmentSummaryGenerator:
     """
     Generate comprehensive investment summary from financial data
@@ -710,6 +722,118 @@ def render_investment_summary_tab(financials: Dict):
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Investment Score Gauges - Always show (with fallback if ECharts unavailable)
+    st.markdown("""
+    <h3 style='color: #1e88e5; font-weight: 700; font-size: 1.3rem; margin: 1.5rem 0 1rem 0;
+               letter-spacing: 1px;'>
+        <i class="bi bi-speedometer2" style="margin-right: 0.5rem;"></i>SCORE DASHBOARD
+    </h3>
+    """, unsafe_allow_html=True)
+    
+    # Calculate conviction score (0-100)
+    conviction_map = {'LOW': 33, 'MEDIUM': 66, 'HIGH': 100}
+    conviction_score = conviction_map.get(conviction, 50)
+    
+    # Calculate health score from multiple metrics
+    def calculate_health_score():
+        """Calculate overall financial health score 0-100"""
+        ratios = financials.get('ratios', pd.DataFrame())
+        score = 50  # Base score
+        
+        def get_ratio(key):
+            if not ratios.empty and key in ratios.index:
+                val = ratios.loc[key].iloc[0]
+                return val if pd.notnull(val) else None
+            return None
+        
+        # ROE component (+/-20)
+        roe = get_ratio('ROE')
+        if roe:
+            if roe > 0.15: score += 20
+            elif roe > 0.10: score += 10
+            elif roe < 0: score -= 15
+        
+        # Debt/Equity component (+/-15)
+        debt_equity = get_ratio('Debt_to_Equity')
+        if debt_equity:
+            if debt_equity < 0.5: score += 15
+            elif debt_equity < 1.0: score += 5
+            elif debt_equity > 2.0: score -= 15
+        
+        # Current Ratio component (+/-15)
+        current_ratio = get_ratio('Current_Ratio')
+        if current_ratio:
+            if current_ratio > 2.0: score += 15
+            elif current_ratio > 1.5: score += 10
+            elif current_ratio < 1.0: score -= 15
+        
+        return max(0, min(100, score))
+    
+    health_score = calculate_health_score()
+    
+    # Calculate risk score
+    risk_reward = recommendation_data.get('risk_reward', 1.0)
+    risk_score = min(100, max(0, risk_reward * 40))  # Scale to 0-100
+    
+    # Use ECharts gauges if available, otherwise use native metrics
+    if UI_COMPONENTS_AVAILABLE and ECHARTS_AVAILABLE:
+        gauge_cols = st.columns(3)
+        
+        with gauge_cols[0]:
+            render_gauge(
+                value=conviction_score,
+                title="Conviction Level",
+                min_value=0,
+                max_value=100,
+                thresholds=[(40, '#ef4444'), (70, '#f59e0b'), (100, '#10b981')],
+                height=200,
+                key="conviction_gauge"
+            )
+        
+        with gauge_cols[1]:
+            render_gauge(
+                value=health_score,
+                title="Financial Health",
+                min_value=0,
+                max_value=100,
+                thresholds=[(40, '#ef4444'), (70, '#f59e0b'), (100, '#10b981')],
+                height=200,
+                key="health_gauge"
+            )
+        
+        with gauge_cols[2]:
+            render_gauge(
+                value=risk_score,
+                title="Risk/Reward",
+                min_value=0,
+                max_value=100,
+                thresholds=[(30, '#ef4444'), (60, '#f59e0b'), (100, '#10b981')],
+                height=200,
+                key="risk_gauge"
+            )
+    else:
+        # Fallback: Native Streamlit metrics with progress bars
+        gauge_cols = st.columns(3)
+        
+        def get_score_color(score):
+            if score < 40: return "🔴"
+            elif score < 70: return "🟡"
+            else: return "🟢"
+        
+        with gauge_cols[0]:
+            st.metric("Conviction Level", f"{get_score_color(conviction_score)} {conviction_score}/100")
+            st.progress(conviction_score / 100)
+        
+        with gauge_cols[1]:
+            st.metric("Financial Health", f"{get_score_color(health_score)} {health_score}/100")
+            st.progress(health_score / 100)
+        
+        with gauge_cols[2]:
+            st.metric("Risk/Reward", f"{get_score_color(risk_score)} {risk_score:.0f}/100")
+            st.progress(risk_score / 100)
     
     st.markdown("<br>", unsafe_allow_html=True)
     

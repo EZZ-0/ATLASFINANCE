@@ -51,8 +51,8 @@ def build_search_index(financials: Dict) -> List[Dict]:
                         "location": "Data Tab → Income Statement",
                         "icon": "📊"
                     })
-            except:
-                pass
+            except (KeyError, TypeError, AttributeError):
+                pass  # Metric not found in income statement
     
     # 2. Balance Sheet metrics
     balance = financials.get("balance_sheet", pd.DataFrame())
@@ -68,8 +68,8 @@ def build_search_index(financials: Dict) -> List[Dict]:
                         "location": "Data Tab → Balance Sheet",
                         "icon": "🏦"
                     })
-            except:
-                pass
+            except (KeyError, TypeError, AttributeError):
+                pass  # Metric not found in balance sheet
     
     # 3. Cash Flow metrics
     cashflow = financials.get("cash_flow", pd.DataFrame())
@@ -85,8 +85,8 @@ def build_search_index(financials: Dict) -> List[Dict]:
                         "location": "Data Tab → Cash Flow",
                         "icon": "💵"
                     })
-            except:
-                pass
+            except (KeyError, TypeError, AttributeError):
+                pass  # Metric not found in cash flow
     
     # 4. Ratios (from ratios DataFrame)
     ratios = financials.get("ratios", pd.DataFrame())
@@ -108,8 +108,8 @@ def build_search_index(financials: Dict) -> List[Dict]:
                         "location": "Dashboard or Analysis Tab",
                         "icon": "📈"
                     })
-            except:
-                pass
+            except (KeyError, TypeError, AttributeError):
+                pass  # Ratio not found
     
     # 5. Growth Rates (from growth_rates dict)
     growth = financials.get("growth_rates", {})
@@ -128,8 +128,8 @@ def build_search_index(financials: Dict) -> List[Dict]:
                         "location": "Analysis Tab → Growth",
                         "icon": "📊"
                     })
-            except:
-                pass
+            except (KeyError, TypeError, AttributeError):
+                pass  # Growth rate not found
     
     # 6. Market Data
     market = financials.get("market_data", {})
@@ -254,7 +254,7 @@ def format_value(value, metric_name: str = "") -> str:
                 return f"{value:,.2f}"
         
         return str(value)
-    except:
+    except (ValueError, TypeError):
         return str(value)
 
 

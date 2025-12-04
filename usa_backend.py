@@ -18,8 +18,139 @@ import time
 import requests
 import pandas as pd
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Callable, Any
+from functools import wraps
 import usa_dictionary as usa_dict
+
+# Import centralized logging
+from utils.logging_config import EngineLogger, log_error, log_warning, log_info
+
+# Initialize logger for this module
+_logger = EngineLogger.get_logger("USABackend")
+
+
+# ==========================================
+# RETRY DECORATOR WITH EXPONENTIAL BACKOFF
+# ==========================================
+
+def retry_with_backoff(
+    max_retries: int = 3,
+    base_delay: float = 1.0,
+    max_delay: float = 30.0,
+    exponential_base: float = 2.0,
+    retryable_exceptions: Tuple = (requests.exceptions.RequestException, requests.exceptions.Timeout)
+):
+    """
+    Decorator for retrying API calls with exponential backoff.
+    
+    Handles rate limiting (HTTP 429) and temporary failures gracefully.
+    
+    Args:
+        max_retries: Maximum number of retry attempts
+        base_delay: Initial delay in seconds
+        max_delay: Maximum delay between retries
+        exponential_base: Multiplier for exponential backoff
+        retryable_exceptions: Tuple of exception types to retry on
+    
+    Usage:
+        @retry_with_backoff(max_retries=3)
+        def fetch_data(url):
+            return requests.get(url)
+    """
+    def decorator(func: Callable):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            
+            for attempt in range(max_retries + 1):
+                try:
+                    result = func(*args, **kwargs)
+                    
+                    # Check for rate limiting in response (if it's a requests Response)
+                    if hasattr(result, 'status_code') and result.status_code == 429:
+                        raise requests.exceptions.RequestException("Rate limited (HTTP 429)")
+                    
+                    return result
+                    
+                except retryable_exceptions as e:
+                    last_exception = e
+                    
+                    if attempt < max_retries:
+                        # Calculate delay with exponential backoff + jitter
+                        delay = min(base_delay * (exponential_base ** attempt), max_delay)
+                        # Add jitter (±25%) to prevent thundering herd
+                        import random
+                        jitter = delay * 0.25 * (2 * random.random() - 1)
+                        delay = delay + jitter
+                        
+                        _logger.warning(
+                            f"Retry {attempt + 1}/{max_retries} for {func.__name__} "
+                            f"after {delay:.1f}s delay. Error: {e}"
+                        )
+                        time.sleep(delay)
+                    else:
+                        _logger.error(
+                            f"All {max_retries} retries failed for {func.__name__}. "
+                            f"Last error: {e}"
+                        )
+                        
+                except Exception as e:
+                    # Non-retryable exception, raise immediately
+                    _logger.error(f"Non-retryable error in {func.__name__}: {e}")
+                    raise
+            
+            # All retries exhausted
+            if last_exception:
+                raise last_exception
+            
+        return wrapper
+    return decorator
+
+
+def retry_yfinance_call(func: Callable, *args, max_retries: int = 3, **kwargs):
+    """
+    Wrapper for yfinance calls with retry logic.
+    
+    yfinance doesn't use requests directly, so we handle its errors separately.
+    
+    Args:
+        func: The yfinance function to call
+        *args: Arguments for the function
+        max_retries: Maximum retry attempts
+        **kwargs: Keyword arguments for the function
+    
+    Returns:
+        Result from the yfinance call
+    """
+    last_exception = None
+    
+    for attempt in range(max_retries + 1):
+        try:
+            result = func(*args, **kwargs)
+            return result
+            
+        except Exception as e:
+            error_str = str(e).lower()
+            
+            # Check if it's a rate limiting error
+            if 'rate limit' in error_str or 'too many requests' in error_str or '429' in error_str:
+                last_exception = e
+                
+                if attempt < max_retries:
+                    delay = min(2.0 * (2 ** attempt), 30.0)  # Exponential backoff
+                    _logger.warning(
+                        f"yfinance rate limited, retry {attempt + 1}/{max_retries} "
+                        f"after {delay:.1f}s. Error: {e}"
+                    )
+                    time.sleep(delay)
+                else:
+                    _logger.error(f"yfinance rate limit persists after {max_retries} retries")
+            else:
+                # Non-rate-limit error, raise immediately
+                raise
+    
+    if last_exception:
+        raise last_exception
 
 # Import quant engine for advanced analysis
 try:
@@ -58,7 +189,169 @@ class USAFinancialExtractor:
             'Accept': 'application/json'
         }
         self.sec_base_url = "https://data.sec.gov/api/xbrl"
-        self.cache = {}  # Simple in-memory cache
+        
+        # TTL-based cache for market data
+        # Format: {key: {"data": value, "timestamp": datetime, "ttl_seconds": int}}
+        self._cache = {}
+        self._cache_ttl = {
+            "market_data": 3600,      # 1 hour for real-time market data
+            "financials": 86400,       # 24 hours for financial statements
+            "company_info": 604800,    # 7 days for company info
+            "default": 3600            # 1 hour default
+        }
+    
+    # ==========================================
+    # API REQUEST HELPERS WITH RETRY
+    # ==========================================
+    
+    def _make_sec_request(self, url: str, timeout: int = 15) -> requests.Response:
+        """
+        Make a request to SEC API with retry logic.
+        
+        Args:
+            url: The SEC API URL
+            timeout: Request timeout in seconds
+        
+        Returns:
+            Response object
+        
+        Raises:
+            requests.exceptions.RequestException: After all retries exhausted
+        """
+        max_retries = 3
+        last_exception = None
+        
+        for attempt in range(max_retries + 1):
+            try:
+                resp = requests.get(url, headers=self.headers, timeout=timeout)
+                
+                # Check for rate limiting
+                if resp.status_code == 429:
+                    raise requests.exceptions.RequestException(
+                        f"SEC API rate limited (HTTP 429). Retry-After: {resp.headers.get('Retry-After', 'unknown')}"
+                    )
+                
+                return resp
+                
+            except (requests.exceptions.RequestException, requests.exceptions.Timeout) as e:
+                last_exception = e
+                
+                if attempt < max_retries:
+                    # Exponential backoff: 1s, 2s, 4s
+                    delay = min(1.0 * (2 ** attempt), 10.0)
+                    _logger.warning(f"SEC API retry {attempt + 1}/{max_retries} after {delay:.1f}s. Error: {e}")
+                    time.sleep(delay)
+                else:
+                    _logger.error(f"SEC API failed after {max_retries} retries: {e}")
+        
+        if last_exception:
+            raise last_exception
+    
+    def _make_yfinance_call(self, func: Callable, *args, **kwargs):
+        """
+        Make a yfinance API call with retry logic for rate limiting.
+        
+        Args:
+            func: The yfinance function/method to call
+            *args: Positional arguments
+            **kwargs: Keyword arguments
+        
+        Returns:
+            Result from yfinance call
+        """
+        return retry_yfinance_call(func, *args, max_retries=3, **kwargs)
+    
+    # ==========================================
+    # TTL-BASED CACHING
+    # ==========================================
+    
+    def _cache_get(self, key: str) -> Optional[Any]:
+        """
+        Get a value from cache if it exists and hasn't expired.
+        
+        Args:
+            key: Cache key
+        
+        Returns:
+            Cached data or None if expired/not found
+        """
+        if key not in self._cache:
+            return None
+        
+        entry = self._cache[key]
+        timestamp = entry.get("timestamp")
+        ttl = entry.get("ttl_seconds", self._cache_ttl["default"])
+        
+        # Check if expired
+        if timestamp:
+            age = (datetime.now() - timestamp).total_seconds()
+            if age > ttl:
+                _logger.debug(f"Cache expired for key: {key} (age: {age:.0f}s, ttl: {ttl}s)")
+                del self._cache[key]
+                return None
+        
+        _logger.debug(f"Cache hit for key: {key}")
+        return entry.get("data")
+    
+    def _cache_set(self, key: str, data: Any, cache_type: str = "default"):
+        """
+        Store a value in cache with TTL.
+        
+        Args:
+            key: Cache key
+            data: Data to cache
+            cache_type: Type of cache ("market_data", "financials", "company_info", "default")
+        """
+        ttl = self._cache_ttl.get(cache_type, self._cache_ttl["default"])
+        
+        self._cache[key] = {
+            "data": data,
+            "timestamp": datetime.now(),
+            "ttl_seconds": ttl,
+            "cache_type": cache_type
+        }
+        _logger.debug(f"Cache set for key: {key} (ttl: {ttl}s)")
+    
+    def _cache_clear(self, key: Optional[str] = None):
+        """
+        Clear cache entries.
+        
+        Args:
+            key: Specific key to clear, or None to clear all
+        """
+        if key:
+            if key in self._cache:
+                del self._cache[key]
+                _logger.info(f"Cache cleared for key: {key}")
+        else:
+            self._cache.clear()
+            _logger.info("Cache cleared (all entries)")
+    
+    def _cache_stats(self) -> Dict:
+        """
+        Get cache statistics.
+        
+        Returns:
+            Dict with cache stats
+        """
+        now = datetime.now()
+        stats = {
+            "total_entries": len(self._cache),
+            "entries_by_type": {},
+            "expired_count": 0
+        }
+        
+        for key, entry in self._cache.items():
+            cache_type = entry.get("cache_type", "default")
+            stats["entries_by_type"][cache_type] = stats["entries_by_type"].get(cache_type, 0) + 1
+            
+            # Check if expired
+            timestamp = entry.get("timestamp")
+            ttl = entry.get("ttl_seconds", 3600)
+            if timestamp and (now - timestamp).total_seconds() > ttl:
+                stats["expired_count"] += 1
+        
+        return stats
     
     # ==========================================
     # 0. FISCAL YEAR INTELLIGENCE
@@ -108,7 +401,8 @@ class USAFinancialExtractor:
                         dates.append(col)
                     else:
                         dates.append(pd.to_datetime(col))
-                except:
+                except (ValueError, TypeError, pd.errors.ParserError):
+                    # Skip columns that can't be parsed as dates
                     continue
             
             if not dates:
@@ -169,7 +463,7 @@ class USAFinancialExtractor:
         try:
             # SEC maintains a ticker-to-CIK mapping
             url = "https://www.sec.gov/files/company_tickers.json"
-            resp = requests.get(url, headers=self.headers, timeout=10)
+            resp = self._make_sec_request(url, timeout=10)
             resp.raise_for_status()
             
             data = resp.json()
@@ -226,18 +520,20 @@ class USAFinancialExtractor:
         Returns:
             Dictionary with financial statements (income, balance, cashflow)
         """
+        _logger.info(f"Extracting from SEC EDGAR: {ticker.upper()}")
         print(f"\n[INFO] Extracting from SEC EDGAR: {ticker.upper()}")
         t0 = time.time()
         
         # 1. Get CIK
         cik = self.get_cik_from_ticker(ticker)
         if not cik:
+            _logger.warning(f"CIK not found for ticker: {ticker}")
             return {"status": "error", "message": "CIK not found"}
         
-        # 2. Fetch Company Facts (XBRL data)
+        # 2. Fetch Company Facts (XBRL data) with retry logic
         try:
             url = f"{self.sec_base_url}/companyfacts/CIK{cik}.json"
-            resp = requests.get(url, headers=self.headers, timeout=15)
+            resp = self._make_sec_request(url, timeout=15)
             resp.raise_for_status()
             data = resp.json()
             
@@ -247,6 +543,7 @@ class USAFinancialExtractor:
             
             # 4. Build Financial Statements
             filing_label = " + ".join(filing_types)
+            _logger.debug(f"Extracting {filing_label} filings for {ticker}")
             print(f"   Extracting {filing_label} filings...")
             
             financials = {
@@ -261,14 +558,20 @@ class USAFinancialExtractor:
                 "per_share_data": self._extract_per_share_data(us_gaap, filing_types)
             }
             
+            _logger.info(f"SEC Extraction Complete for {ticker}: {financials['extraction_time']}")
+            EngineLogger.log_data_extraction(ticker, success=True)
             print(f"[OK] SEC Extraction Complete: {financials['extraction_time']}")
             return financials
             
         except requests.exceptions.HTTPError as e:
+            _logger.error(f"SEC HTTP error for {ticker}: {e}")
             if e.response.status_code == 404:
                 return {"status": "error", "message": "Company not found in SEC database"}
+            EngineLogger.log_data_extraction(ticker, success=False, error=str(e))
             return {"status": "error", "message": f"SEC API Error: {e}"}
         except Exception as e:
+            _logger.error(f"SEC extraction failed for {ticker}: {e}", exc_info=True)
+            EngineLogger.log_data_extraction(ticker, success=False, error=str(e))
             return {"status": "error", "message": f"Extraction failed: {e}"}
     
     def _extract_income_statement(self, us_gaap: Dict, filing_types: List[str] = ["10-K"]) -> pd.DataFrame:
@@ -437,25 +740,78 @@ class USAFinancialExtractor:
             fiscal_year_offset: Which fiscal year to extract (0=latest, 1=previous year, etc.)
         """
         if not YFINANCE_AVAILABLE:
+            _logger.warning("yfinance not available for extraction")
             return {"status": "error", "message": "yfinance not installed"}
         
+        _logger.info(f"Extracting from Yahoo Finance: {ticker.upper()}")
         print(f"\n[INFO] Extracting from Yahoo Finance: {ticker.upper()}")
         t0 = time.time()
         
         try:
             stock = yf.Ticker(ticker)
             
-            # Get financial statements
-            income_stmt = stock.financials  # Annual income statement
-            balance = stock.balance_sheet   # Annual balance sheet
-            cashflow = stock.cashflow       # Annual cash flow
+            # Get financial statements with retry logic for rate limiting
+            def get_financials_with_retry():
+                """Fetch financials with retry on rate limit"""
+                max_retries = 3
+                for attempt in range(max_retries + 1):
+                    try:
+                        income = stock.financials
+                        bal = stock.balance_sheet
+                        cf = stock.cashflow
+                        return income, bal, cf
+                    except Exception as e:
+                        error_str = str(e).lower()
+                        if 'rate limit' in error_str or 'too many requests' in error_str or '429' in error_str:
+                            if attempt < max_retries:
+                                delay = 2.0 * (2 ** attempt)
+                                _logger.warning(f"yfinance rate limited, retry {attempt + 1}/{max_retries} after {delay:.1f}s")
+                                print(f"   [RETRY] Rate limited, waiting {delay:.1f}s...")
+                                time.sleep(delay)
+                            else:
+                                raise
+                        else:
+                            raise
+                return pd.DataFrame(), pd.DataFrame(), pd.DataFrame()
             
-            # Get historical prices (back to 1990 or IPO)
+            income_stmt, balance, cashflow = get_financials_with_retry()
+            
+            # Get historical prices (back to 1990 or IPO) with retry
             print(f"   Fetching historical prices...")
-            historical_prices = stock.history(period="max", start="1990-01-01")
+            historical_prices = pd.DataFrame()
+            for attempt in range(3):
+                try:
+                    historical_prices = stock.history(period="max", start="1990-01-01")
+                    break
+                except Exception as e:
+                    if 'rate limit' in str(e).lower() or '429' in str(e):
+                        if attempt < 2:
+                            delay = 2.0 * (2 ** attempt)
+                            _logger.warning(f"yfinance history rate limited, retry after {delay:.1f}s")
+                            time.sleep(delay)
+                        else:
+                            _logger.error(f"Failed to fetch history after retries: {e}")
+                    else:
+                        raise
             
-            # Get current market data with explicit error handling
-            info = stock.info
+            # Get current market data with explicit error handling and retry
+            info = {}
+            for attempt in range(3):
+                try:
+                    info = stock.info
+                    break
+                except Exception as e:
+                    if 'rate limit' in str(e).lower() or '429' in str(e):
+                        if attempt < 2:
+                            delay = 2.0 * (2 ** attempt)
+                            _logger.warning(f"yfinance info rate limited, retry after {delay:.1f}s")
+                            time.sleep(delay)
+                        else:
+                            _logger.error(f"Failed to fetch info after retries: {e}")
+                            info = {}
+                    else:
+                        raise
+            
             current_price = info.get("currentPrice", info.get("regularMarketPrice", 0))
             shares = info.get("sharesOutstanding", 0)
             
@@ -512,10 +868,14 @@ class USAFinancialExtractor:
             if growth_dict:
                 financials["growth_rates"] = growth_dict
             
+            _logger.info(f"Yahoo Finance Extraction Complete for {ticker}: {financials['extraction_time']}")
+            EngineLogger.log_data_extraction(ticker, success=True)
             print(f"[OK] Yahoo Finance Extraction Complete: {financials['extraction_time']}")
             return financials
             
         except Exception as e:
+            _logger.error(f"yfinance extraction failed for {ticker}: {e}", exc_info=True)
+            EngineLogger.log_data_extraction(ticker, success=False, error=str(e))
             return {"status": "error", "message": f"yfinance extraction failed: {e}"}
     
     # ==========================================
@@ -523,7 +883,8 @@ class USAFinancialExtractor:
     # ==========================================
     
     def extract_financials(self, ticker: str, source: str = "auto", filing_types: List[str] = ["10-K"], 
-                          include_quant: bool = False, fiscal_year_offset: int = 0) -> Dict:
+                          include_quant: bool = False, fiscal_year_offset: int = 0,
+                          use_cache: bool = True) -> Dict:
         """
         Smart extractor that chooses best source automatically.
         
@@ -532,11 +893,23 @@ class USAFinancialExtractor:
             source: "sec", "yfinance", or "auto" (tries SEC first)
             filing_types: List of SEC filing types ["10-K"], ["10-Q"], ["10-K", "10-Q"], ["S-1"]
             include_quant: If True, run Fama-French quant analysis
+            use_cache: If True, use cached data if available and not expired
             
         Returns:
             Comprehensive financial data dictionary
         """
         ticker = ticker.upper().strip()
+        
+        # Generate cache key based on parameters
+        cache_key = f"{ticker}_{source}_{','.join(filing_types)}_{include_quant}_{fiscal_year_offset}"
+        
+        # Check cache first (if enabled)
+        if use_cache:
+            cached_data = self._cache_get(cache_key)
+            if cached_data:
+                _logger.info(f"Returning cached data for {ticker}")
+                print(f"[CACHE] Using cached data for {ticker}")
+                return cached_data
         
         # Capture overall start time for accurate extraction time
         self._overall_start_time = time.time()
@@ -581,6 +954,11 @@ class USAFinancialExtractor:
         # Update extraction time to include quant analysis
         if "extraction_time" in financials and hasattr(self, '_overall_start_time'):
             financials["extraction_time"] = f"{time.time() - self._overall_start_time:.2f}s"
+        
+        # Cache the results (only if successful)
+        if "status" not in financials or financials.get("status") != "error":
+            self._cache_set(cache_key, financials, cache_type="financials")
+            _logger.info(f"Cached financial data for {ticker}")
         
         return financials
     
@@ -947,7 +1325,8 @@ class USAFinancialExtractor:
                         if latest_pretax > 0 and latest_tax > 0:
                             effective_tax_rate = latest_tax / latest_pretax
                             effective_tax_rate = min(max(effective_tax_rate, 0.10), 0.40)  # Cap between 10-40%
-                    except:
+                    except (KeyError, IndexError, TypeError, ZeroDivisionError):
+                        # Use default US corporate tax rate if calculation fails
                         effective_tax_rate = 0.21
                 
                 # Calculate NOPAT series

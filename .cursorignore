@@ -1,0 +1,42 @@
+# Cursor Ignore File - Exclude from indexing for performance
+
+# Build outputs (PyInstaller)
+build/
+dist/
+*.spec
+
+# Large folders
+4t43wt/
+AFI/
+archive_old_files/
+school_project/
+
+# Backup folders
+backups/
+BACKUP_*/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Test outputs
+test_*.xlsx
+*.pdf
+
+# Large data files
+full_codebase.txt
+
+
+
+

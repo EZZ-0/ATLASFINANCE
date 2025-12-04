@@ -12,7 +12,7 @@ This centralizes all hardcoded names/strings to make rebranding trivial.
 
 APP_NAME = "ATLAS FINANCIAL INTELLIGENCE"
 APP_NAME_SHORT = "Atlas Engine"
-APP_TAGLINE = "Professional-Grade Financial Analysis & Valuation Engine"
+APP_TAGLINE = " Financial Analysis & Valuation Engine"
 APP_VERSION = "2.0.0"
 COMPANY_NAME = "Atlas Financial Intelligence"
 

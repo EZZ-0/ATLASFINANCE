@@ -53,6 +53,12 @@ logs/
 backup_*.py
 *_backup.py
 
+# Build artifacts
 build/
 dist/
+build_backup/
+dist_backup/
+*.exe
+*.pkg
+*.pyz
 *.spec

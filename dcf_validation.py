@@ -4,8 +4,11 @@ DCF Input Validation Module
 Validates DCF assumptions to prevent invalid scenarios
 """
 
-from typing import List, Tuple
-from dcf_modeling import DCFAssumptions
+from typing import List, Tuple, TYPE_CHECKING
+
+# Use TYPE_CHECKING to avoid circular import
+if TYPE_CHECKING:
+    from dcf_modeling import DCFAssumptions
 
 
 class DCFValidationError(Exception):
@@ -13,7 +16,7 @@ class DCFValidationError(Exception):
     pass
 
 
-def validate_dcf_assumptions(assumptions: DCFAssumptions) -> Tuple[List[str], List[str]]:
+def validate_dcf_assumptions(assumptions: 'DCFAssumptions') -> Tuple[List[str], List[str]]:
     """
     Validate DCF input assumptions
     

@@ -20,6 +20,17 @@ import streamlit as st
 import pandas as pd
 from typing import Dict
 
+# Import smart_dataframe with fallback for graceful degradation
+try:
+    from ui_components import smart_dataframe
+    UI_COMPONENTS_AVAILABLE = True
+except ImportError:
+    UI_COMPONENTS_AVAILABLE = False
+    def smart_dataframe(df, title=None, height=400, key=None, **kwargs):
+        if title:
+            st.markdown(f"**{title}**")
+        st.dataframe(df, use_container_width=True, height=height, key=key)
+
 
 def icon(name: str, size: str = '1em') -> str:
     """
@@ -297,7 +308,7 @@ def render_quant_tab(ticker: str, financials: Dict) -> None:
             }
             
             export_df = pd.DataFrame(export_data)
-            st.dataframe(export_df, use_container_width=True)
+            smart_dataframe(export_df, title=None, height=300, key="quant_export_table")
             
             csv = export_df.to_csv(index=False)
             st.download_button(

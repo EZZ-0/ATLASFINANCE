@@ -20,6 +20,17 @@ import streamlit as st
 import pandas as pd
 from typing import Dict
 
+# Import smart_dataframe with fallback for graceful degradation
+try:
+    from ui_components import smart_dataframe
+    UI_COMPONENTS_AVAILABLE = True
+except ImportError:
+    UI_COMPONENTS_AVAILABLE = False
+    def smart_dataframe(df, title=None, height=400, key=None, **kwargs):
+        if title:
+            st.markdown(f"**{title}**")
+        st.dataframe(df, use_container_width=True, height=height, key=key)
+
 
 def icon(name: str, size: str = '1em') -> str:
     """
@@ -376,7 +387,7 @@ def render_governance_tab(ticker: str, financials: Dict) -> None:
                             if '% Outstanding' in display_df.columns:
                                 display_df['% Outstanding'] = display_df['% Outstanding'].apply(lambda x: f"{x:.2f}%" if isinstance(x, (int, float)) else x)
                             
-                            st.dataframe(display_df, use_container_width=True, height=400)
+                            smart_dataframe(display_df, title=None, height=400, key="ownership_structure_table")
                 else:
                     st.warning(gov_data.get('message', 'Unable to fetch ownership data'))
         
@@ -423,7 +434,7 @@ def render_governance_tab(ticker: str, financials: Dict) -> None:
                     # Transactions table
                     if not insider_data['transactions'].empty:
                         st.markdown("### Recent Transactions")
-                        st.dataframe(insider_data['transactions'], use_container_width=True, height=400)
+                        smart_dataframe(insider_data['transactions'], title=None, height=400, key="insider_transactions_table")
                 else:
                     st.warning(insider_data['message'])
                     
@@ -459,7 +470,7 @@ def render_governance_tab(ticker: str, financials: Dict) -> None:
                     # Holders table
                     if not inst_data['holders'].empty:
                         st.markdown("### Top Institutional Holders")
-                        st.dataframe(inst_data['holders'], use_container_width=True, height=400)
+                        smart_dataframe(inst_data['holders'], title=None, height=400, key="institutional_holders_table")
                 else:
                     st.warning(inst_data['message'])
                     

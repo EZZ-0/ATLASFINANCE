@@ -26,6 +26,17 @@ import pandas as pd
 import numpy as np
 from typing import Dict
 
+# Import smart_dataframe with fallback for graceful degradation
+try:
+    from ui_components import smart_dataframe
+    UI_COMPONENTS_AVAILABLE = True
+except ImportError:
+    UI_COMPONENTS_AVAILABLE = False
+    def smart_dataframe(df, title=None, height=400, key=None, **kwargs):
+        if title:
+            st.markdown(f"**{title}**")
+        st.dataframe(df, use_container_width=True, height=height, key=key)
+
 
 def icon(name: str, size: str = '1em') -> str:
     """
@@ -143,7 +154,7 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                     peer_df = peer_df[['ticker', 'name', 'industry', 'market_cap', 'similarity_score']]
                     peer_df.columns = ['Ticker', 'Company', 'Industry', 'Market Cap', 'Match Score']
                     
-                    st.dataframe(peer_df, use_container_width=True, height=300)
+                    smart_dataframe(peer_df, title=None, height=300, key="peer_discovery_table")
                     
                     st.caption(f"Discovery Method: {peer_result['discovery_method']}")
                     
@@ -212,6 +223,7 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                         
                         styled_df = display_df.style.apply(highlight_primary, axis=1)
                         
+                        # Note: AgGrid doesn't support styled DataFrames, use native for styling
                         st.dataframe(styled_df, use_container_width=True, height=500)
                         
                         st.caption(f"Note: {current_ticker} is highlighted in yellow")
@@ -273,7 +285,7 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                             percentile_df = percentile_df.sort_values('Percentile_Num', ascending=False)
                             percentile_df = percentile_df.drop('Percentile_Num', axis=1)
                             
-                            st.dataframe(percentile_df, use_container_width=True, height=500)
+                            smart_dataframe(percentile_df, title=None, height=500, key="percentile_rankings_table")
                             
                             # Summary stats
                             top_20_count = len([p for p in percentile_data if float(p['Percentile']) >= 80])
@@ -344,7 +356,7 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                         stats_df = stats_df.round(2)
                         
                         # Display statistics
-                        st.dataframe(stats_df, use_container_width=True, height=500)
+                        smart_dataframe(stats_df, title=None, height=500, key="peer_statistics_table")
                         
                         # Statistical insights
                         st.markdown("---")

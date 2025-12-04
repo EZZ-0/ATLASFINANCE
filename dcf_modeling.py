@@ -19,6 +19,15 @@ from typing import Dict, List, Tuple, Optional
 from dataclasses import dataclass
 import usa_dictionary as usa_dict
 
+# Import centralized logging
+from utils.logging_config import EngineLogger
+
+# Import DCF validation
+from dcf_validation import validate_dcf_assumptions, DCFValidationError
+
+# Initialize logger for this module
+_logger = EngineLogger.get_logger("DCFModel")
+
 @dataclass
 class DCFAssumptions:
     """Container for DCF model assumptions"""
@@ -64,6 +73,10 @@ class DCFModel:
         
         # Extract base metrics from latest year
         self._extract_base_metrics()
+        
+        # Calculate WACC from quant analysis if available
+        self.calculated_wacc = self._calculate_wacc()
+        self.wacc_source = "calculated" if self.calculated_wacc else "default"
         
         # Pre-built scenarios
         conservative = self._build_conservative_assumptions()
@@ -123,8 +136,10 @@ class DCFModel:
                 for kw in keywords:
                     if kw in latest.index:
                         return float(latest.get(kw, 0))
-        except:
-            pass
+        except (KeyError, IndexError, ValueError, TypeError) as e:
+            # Log metric extraction failure for debugging
+            import logging
+            logging.getLogger("DCFModel").debug(f"Metric extraction failed for keywords {keywords}: {e}")
         
         return 0
     
@@ -208,6 +223,7 @@ class DCFModel:
             self.historical_growth = self._calculate_historical_growth()
             
         except Exception as e:
+            _logger.warning(f"Metric extraction warning for {self.ticker}: {e}", exc_info=True)
             print(f"⚠️ Metric extraction warning: {e}")
             self._set_default_metrics()
     
@@ -273,7 +289,133 @@ class DCFModel:
         self.historical_growth = 0.10
     
     # ==========================================
-    # 2. ASSUMPTION BUILDERS
+    # 2. WACC CALCULATION
+    # ==========================================
+    
+    def _calculate_wacc(self) -> Optional[float]:
+        """
+        Calculate Weighted Average Cost of Capital (WACC) using:
+        - Cost of Equity from Fama-French 3-Factor Model (if available)
+        - Cost of Debt from interest expense / total debt
+        - Capital structure weights from market cap and debt
+        
+        WACC = (E/(D+E)) × Ke + (D/(D+E)) × Kd × (1-T)
+        
+        Returns:
+            Calculated WACC as decimal, or None if insufficient data
+        """
+        try:
+            # Get Cost of Equity from quant analysis (Fama-French)
+            quant = self.financials.get('quant_analysis', {})
+            ff_results = quant.get('fama_french', {})
+            
+            cost_of_equity = ff_results.get('cost_of_equity_annual')
+            
+            if cost_of_equity is None or cost_of_equity <= 0:
+                _logger.debug(f"No valid cost of equity for {self.ticker}, using default WACC")
+                return None
+            
+            # Get market data for weights
+            market_data = self.financials.get('market_data', {})
+            market_cap = market_data.get('market_cap', 0)
+            
+            # Get balance sheet data
+            balance = self.financials.get('balance_sheet', pd.DataFrame())
+            
+            # Get total debt
+            total_debt = self._find_metric_value(
+                balance,
+                ["Total Debt", "TotalDebt", "Long Term Debt And Capital Lease Obligation", "Long Term Debt"]
+            )
+            
+            # Get interest expense for cost of debt calculation
+            income = self.financials.get('income_statement', pd.DataFrame())
+            interest_expense = self._find_metric_value(
+                income,
+                ["Interest Expense", "InterestExpense", "Interest Expense Non Operating"]
+            )
+            
+            # Calculate Cost of Debt
+            if total_debt > 0 and interest_expense > 0:
+                cost_of_debt = abs(interest_expense) / total_debt
+                # Cap cost of debt at reasonable range (1% - 15%)
+                cost_of_debt = max(0.01, min(0.15, cost_of_debt))
+            else:
+                # Use risk-free rate + spread as fallback
+                cost_of_debt = 0.05  # 5% default
+            
+            # Tax rate (use standard US corporate rate)
+            tax_rate = 0.21
+            
+            # Calculate weights
+            if market_cap > 0 and total_debt >= 0:
+                total_capital = market_cap + total_debt
+                equity_weight = market_cap / total_capital
+                debt_weight = total_debt / total_capital
+            else:
+                # Default to 80% equity, 20% debt if no market data
+                equity_weight = 0.80
+                debt_weight = 0.20
+            
+            # Calculate WACC
+            # WACC = (E/(D+E)) × Ke + (D/(D+E)) × Kd × (1-T)
+            wacc = (equity_weight * cost_of_equity) + (debt_weight * cost_of_debt * (1 - tax_rate))
+            
+            # Cap WACC at reasonable range (5% - 25%)
+            wacc = max(0.05, min(0.25, wacc))
+            
+            _logger.info(
+                f"WACC calculated for {self.ticker}: {wacc:.2%} "
+                f"(Ke={cost_of_equity:.2%}, Kd={cost_of_debt:.2%}, E%={equity_weight:.1%}, D%={debt_weight:.1%})"
+            )
+            
+            # Store component details for transparency
+            self.wacc_components = {
+                'cost_of_equity': cost_of_equity,
+                'cost_of_debt': cost_of_debt,
+                'equity_weight': equity_weight,
+                'debt_weight': debt_weight,
+                'tax_rate': tax_rate,
+                'market_cap': market_cap,
+                'total_debt': total_debt
+            }
+            
+            return wacc
+            
+        except Exception as e:
+            _logger.warning(f"WACC calculation failed for {self.ticker}: {e}")
+            return None
+    
+    def get_wacc_breakdown(self) -> Dict:
+        """
+        Get detailed breakdown of WACC calculation for display.
+        
+        Returns:
+            Dict with WACC components and calculation details
+        """
+        if not hasattr(self, 'wacc_components'):
+            return {
+                'wacc': self.calculated_wacc or 0.10,
+                'source': self.wacc_source,
+                'note': 'Using default WACC - insufficient data for calculation'
+            }
+        
+        components = self.wacc_components
+        return {
+            'wacc': self.calculated_wacc,
+            'source': self.wacc_source,
+            'cost_of_equity': components['cost_of_equity'],
+            'cost_of_debt': components['cost_of_debt'],
+            'equity_weight': components['equity_weight'],
+            'debt_weight': components['debt_weight'],
+            'tax_rate': components['tax_rate'],
+            'formula': 'WACC = (E/(D+E)) × Ke + (D/(D+E)) × Kd × (1-T)',
+            'calculation': f"({components['equity_weight']:.1%} × {components['cost_of_equity']:.2%}) + "
+                          f"({components['debt_weight']:.1%} × {components['cost_of_debt']:.2%} × (1 - {components['tax_rate']:.0%}))"
+        }
+    
+    # ==========================================
+    # 3. ASSUMPTION BUILDERS
     # ==========================================
     
     def _build_conservative_assumptions(self) -> DCFAssumptions:
@@ -281,15 +423,20 @@ class DCFModel:
         # Lower growth, higher discount rate
         growth = max(0.03, self.historical_growth * 0.6)  # 60% of historical
         
+        # Use calculated WACC + 2% risk premium for conservative case
+        base_wacc = self.calculated_wacc if self.calculated_wacc else 0.10
+        discount_rate = min(0.20, base_wacc + 0.02)  # Add 2% risk premium, cap at 20%
+        
         return DCFAssumptions(
             revenue_growth_rates=[growth] * 5,  # Flat conservative growth
             terminal_growth_rate=0.02,  # GDP growth
-            discount_rate=0.12,  # Higher risk
+            discount_rate=discount_rate,
             tax_rate=0.21,
             capex_pct_revenue=self.capex_pct * 1.2,  # Higher capex needs
             nwc_pct_revenue=0.05,
             depreciation_pct_revenue=0.04,
-            projection_years=5
+            projection_years=5,
+            wacc_source=f"{self.wacc_source} (+2% risk premium)"
         )
     
     def _build_base_assumptions(self) -> DCFAssumptions:
@@ -297,15 +444,19 @@ class DCFModel:
         # Use historical growth or reasonable default
         growth = self.historical_growth if self.historical_growth > 0 else 0.10
         
+        # Use calculated WACC if available, otherwise default
+        discount_rate = self.calculated_wacc if self.calculated_wacc else 0.10
+        
         return DCFAssumptions(
             revenue_growth_rates=[growth] * 5,
             terminal_growth_rate=0.025,  # Slightly above GDP
-            discount_rate=0.10,  # Standard WACC
+            discount_rate=discount_rate,
             tax_rate=0.21,
             capex_pct_revenue=self.capex_pct,
             nwc_pct_revenue=0.03,
             depreciation_pct_revenue=0.04,
-            projection_years=5
+            projection_years=5,
+            wacc_source=self.wacc_source
         )
     
     def _build_aggressive_assumptions(self) -> DCFAssumptions:
@@ -313,15 +464,20 @@ class DCFModel:
         # Higher growth, lower discount rate
         growth = min(0.25, self.historical_growth * 1.5)  # 150% of historical, capped
         
+        # Use calculated WACC - 2% for aggressive case (lower risk assumption)
+        base_wacc = self.calculated_wacc if self.calculated_wacc else 0.10
+        discount_rate = max(0.05, base_wacc - 0.02)  # Subtract 2%, floor at 5%
+        
         return DCFAssumptions(
             revenue_growth_rates=[growth] * 5,
             terminal_growth_rate=0.03,  # Optimistic perpetual growth
-            discount_rate=0.08,  # Lower risk/higher confidence
+            discount_rate=discount_rate,
             tax_rate=0.21,
             capex_pct_revenue=self.capex_pct * 0.8,  # Efficiency gains
             nwc_pct_revenue=0.02,
             depreciation_pct_revenue=0.04,
-            projection_years=5
+            projection_years=5,
+            wacc_source=f"{self.wacc_source} (-2% optimistic)"
         )
     
     # ==========================================
@@ -345,6 +501,18 @@ class DCFModel:
         else:
             assumptions = self.scenarios.get(scenario, self.scenarios["base"])
         
+        # Validate assumptions before calculation (mandatory)
+        try:
+            errors, warnings = validate_dcf_assumptions(assumptions)
+            if warnings:
+                for warning in warnings:
+                    _logger.warning(f"DCF Assumption Warning for {self.ticker}: {warning}")
+                    print(f"⚠️ DCF Warning: {warning}")
+        except DCFValidationError as e:
+            _logger.error(f"DCF Validation Failed for {self.ticker}: {e}")
+            raise  # Re-raise to prevent invalid calculations
+        
+        _logger.info(f"Running DCF Model for {self.ticker}: {scenario.upper()} | WACC={assumptions.discount_rate:.1%}, Terminal={assumptions.terminal_growth_rate:.1%}")
         print(f"\n[INFO] Running DCF Model: {scenario.upper()} | {assumptions}")
         
         # Build projection DataFrame
@@ -380,7 +548,10 @@ class DCFModel:
             "terminal_value": terminal_value,
             "net_debt": net_debt,
             "projections": projections,
-            "shares_outstanding": self.shares_outstanding
+            "shares_outstanding": self.shares_outstanding,
+            "validation_warnings": warnings if 'warnings' in dir() else [],
+            "wacc_source": assumptions.wacc_source,
+            "wacc_breakdown": self.get_wacc_breakdown() if hasattr(self, 'wacc_components') else None
         }
     
     def _project_cash_flows(self, assumptions: DCFAssumptions) -> pd.DataFrame:

@@ -62,7 +62,7 @@ def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
                 hist = stock.history(period='1d')
                 if not hist.empty:
                     current_price = hist['Close'].iloc[-1]
-        except:
+        except (KeyError, IndexError, TypeError, AttributeError):
             current_price = None
         
         # Get price targets
@@ -72,7 +72,7 @@ def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
             target_mean = stock.info.get('targetMeanPrice')
             target_median = stock.info.get('targetMedianPrice')
             num_analysts = stock.info.get('numberOfAnalystOpinions')
-        except:
+        except (KeyError, TypeError, AttributeError):
             target_high = None
             target_low = None
             target_mean = None

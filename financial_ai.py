@@ -27,6 +27,12 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 from dotenv import load_dotenv
 
+# Import centralized logging
+from utils.logging_config import EngineLogger
+
+# Initialize logger for this module
+_logger = EngineLogger.get_logger("FinancialAI")
+
 # Load environment variables
 load_dotenv()
 
@@ -287,9 +293,11 @@ Be comprehensive but concise. Use professional financial terminology but explain
     def _ask_gemini(self, prompt: str) -> Optional[str]:
         """Query Gemini API"""
         if not self.primary_model:
+            _logger.debug("Gemini model not initialized")
             return None
         
         if not self._check_rate_limit():
+            _logger.warning("Gemini daily limit reached, using fallback...")
             print("⚠️  Gemini daily limit reached, using fallback...")
             return None
         
@@ -301,20 +309,25 @@ Be comprehensive but concise. Use professional financial terminology but explain
             if self.analytics_enabled:
                 self._log_analytics('gemini', 'success', len(prompt))
             
+            _logger.info(f"Gemini request successful | Prompt: {len(prompt)} chars | Response: {len(response.text)} chars")
+            EngineLogger.log_ai_request('gemini', len(prompt), len(response.text), success=True)
             return response.text
             
         except Exception as e:
+            _logger.error(f"Gemini error: {e}", exc_info=True)
             print(f"⚠️  Gemini error: {e}")
             
             # Log analytics
             if self.analytics_enabled:
                 self._log_analytics('gemini', 'error', len(prompt))
+            EngineLogger.log_ai_request('gemini', len(prompt), 0, success=False)
             
             return None
     
     def _ask_ollama(self, prompt: str) -> Optional[str]:
         """Query Ollama (local)"""
         if not self.fallback_model:
+            _logger.debug("Ollama model not available")
             return None
         
         try:
@@ -332,22 +345,28 @@ Be comprehensive but concise. Use professional financial terminology but explain
             
             if response.status_code == 200:
                 result = response.json()
+                response_text = result.get('response', '')
                 
                 # Log analytics
                 if self.analytics_enabled:
                     self._log_analytics('ollama', 'success', len(prompt))
                 
-                return result.get('response', '')
+                _logger.info(f"Ollama request successful | Prompt: {len(prompt)} chars | Response: {len(response_text)} chars")
+                EngineLogger.log_ai_request('ollama', len(prompt), len(response_text), success=True)
+                return response_text
             else:
+                _logger.warning(f"Ollama returned status code: {response.status_code}")
                 print(f"⚠️  Ollama error: {response.status_code}")
                 return None
                 
         except Exception as e:
+            _logger.error(f"Ollama error: {e}", exc_info=True)
             print(f"⚠️  Ollama error: {e}")
             
             # Log analytics
             if self.analytics_enabled:
                 self._log_analytics('ollama', 'error', len(prompt))
+            EngineLogger.log_ai_request('ollama', len(prompt), 0, success=False)
             
             return None
     

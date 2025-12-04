@@ -28,7 +28,7 @@ def format_financial_number(x, force_scale=None):
     
     try:
         x = float(x)
-    except:
+    except (ValueError, TypeError):
         return str(x)
     
     if x == 0:
@@ -93,8 +93,8 @@ def format_dataframe_for_display(df, transpose_for_yfinance=False):
         try:
             if df_copy[col].dtype in ['float64', 'int64', 'float32', 'int32']:
                 df_copy[col] = df_copy[col].apply(format_financial_number)
-        except:
-            pass  # Skip non-numeric columns
+        except (KeyError, TypeError, AttributeError):
+            pass  # Skip non-numeric or problematic columns
     
     return df_copy
 

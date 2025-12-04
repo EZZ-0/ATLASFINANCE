@@ -47,6 +47,13 @@ from enhanced_tables import enhanced_dataframe, create_sortable_table
 from investment_summary import render_investment_summary_tab
 from dashboard_tab import render_dashboard_tab
 
+# Advanced UI Components (Phase 7 - UI/UX Enhancement)
+from ui_components import (
+    smart_dataframe, render_gauge, render_radar_chart, 
+    render_styled_header, render_data_explorer, init_ui_components,
+    show_library_status, DARK_THEME
+)
+
 # ==========================================
 # BOOTSTRAP ICON HELPER
 # ==========================================
@@ -744,6 +751,7 @@ with st.sidebar:
                         st.session_state.financials = result
                         st.session_state.ticker = ticker_input
                         st.session_state.dcf_results = None  # Reset DCF when new data loaded
+                        st.session_state.data_extracted = True  # Enable tabs view
                         
                         # Auto-collapse sidebar - DIRECT APPROACH
                         st.markdown("""
@@ -791,6 +799,7 @@ with st.sidebar:
             st.session_state.financials = None
             st.session_state.dcf_results = None
             st.session_state.ticker = ""
+            st.session_state.data_extracted = False  # Return to landing page
             st.rerun()
         
     else:
@@ -1155,7 +1164,7 @@ def render_model_tab_EXAMPLE():
 
 # App Title/Header
 st.markdown('<h1 class="main-header"><i class="bi bi-lightning-fill" style="margin-right: 0.8rem;"></i>ATLAS FINANCIAL INTELLIGENCE</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;">Professional-Grade Financial Analysis & Valuation Engine</p>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;"> Financial Analysis & Valuation Engine</p>', unsafe_allow_html=True)
 
 # ==========================================
 # CENTERED SEARCH BAR (Landing Page Only)
@@ -1773,7 +1782,7 @@ else:
                 # Use helper function for proper formatting
                 cf_display, cf_csv = prepare_table_for_display(cashflow, "Cash Flow")
                 
-                st.dataframe(cf_display, use_container_width=True, height=400)
+                smart_dataframe(cf_display, title=None, height=400, key="cashflow_table")
                 
                 # Download button with properly formatted CSV
                 csv = cf_csv.to_csv(index=True)
@@ -1941,7 +1950,7 @@ else:
                 if 'Volume' in display_prices.columns:
                     display_prices['Volume'] = display_prices['Volume'].apply(lambda x: f"{x:,.0f}")
                 
-                st.dataframe(display_prices.iloc[::-1], use_container_width=True, height=400)
+                smart_dataframe(display_prices.iloc[::-1], title=None, height=400, key="price_history_table")
                 
                 # Download button
                 csv = historical_prices.to_csv()
@@ -2103,8 +2112,8 @@ else:
                 if growth_data:
                     growth_df = pd.DataFrame(growth_data)
                     
-                    # Display table with clean formatting (no extra grid)
-                    st.dataframe(growth_df, use_container_width=True, height=400, hide_index=True)
+                    # Display table with clean formatting (uses AgGrid if available)
+                    smart_dataframe(growth_df, title=None, height=400, key="growth_metrics_table")
                     
                     # Download button
                     csv = growth_df.to_csv(index=False)
@@ -2310,7 +2319,7 @@ else:
                         if col in projections.columns:
                             projections[col] = projections[col].apply(format_financial_number)
                     
-                    st.dataframe(projections, use_container_width=True)
+                    smart_dataframe(projections, title=None, height=300, key=f"dcf_projections_{scenario_name}")
             
             # Sensitivity Analysis
             if show_sensitivity:
@@ -2769,7 +2778,7 @@ else:
                     
                     with st.expander("View Z-Score Components"):
                         comp_df = pd.DataFrame([altman['components']])
-                        st.dataframe(comp_df.T, use_container_width=True)
+                        smart_dataframe(comp_df.T, title=None, height=200, key="zscore_components")
                 else:
                     st.warning(f"Altman Z-Score: {altman.get('message', 'Unavailable')}")
                 
@@ -2815,7 +2824,7 @@ else:
                     
                     with st.expander("View M-Score Components"):
                         comp_df = pd.DataFrame([beneish['components']])
-                        st.dataframe(comp_df.T, use_container_width=True)
+                        smart_dataframe(comp_df.T, title=None, height=200, key="mscore_components")
                 else:
                     st.warning(f"Beneish M-Score: {beneish.get('message', 'Unavailable')}")
                 
@@ -2981,11 +2990,11 @@ else:
                     
                     with col1:
                         st.markdown(f"### {icon('fire')} Most Active Calls", unsafe_allow_html=True)
-                        st.dataframe(options_data['most_active']['calls'], use_container_width=True)
+                        smart_dataframe(options_data['most_active']['calls'], title=None, height=300, key="options_calls_1")
                     
                     with col2:
                         st.markdown(f"### {icon('fire')} Most Active Puts", unsafe_allow_html=True)
-                        st.dataframe(options_data['most_active']['puts'], use_container_width=True)
+                        smart_dataframe(options_data['most_active']['puts'], title=None, height=300, key="options_puts_1")
                 else:
                     st.warning(options_data['message'])
                     
@@ -3282,7 +3291,7 @@ else:
                         
                         with st.expander("View Z-Score Components"):
                             comp_df = pd.DataFrame([altman['components']])
-                            st.dataframe(comp_df.T, use_container_width=True)
+                            smart_dataframe(comp_df.T, title=None, height=200, key="zscore_components_2")
                     else:
                         st.warning(f"Altman Z-Score: {altman.get('message', 'Unavailable')}")
                     
@@ -3328,7 +3337,7 @@ else:
                         
                         with st.expander("View M-Score Components"):
                             comp_df = pd.DataFrame([beneish['components']])
-                            st.dataframe(comp_df.T, use_container_width=True)
+                            smart_dataframe(comp_df.T, title=None, height=200, key="mscore_components_2")
                     else:
                         st.warning(f"Beneish M-Score: {beneish.get('message', 'Unavailable')}")
                     
@@ -3651,11 +3660,11 @@ else:
                         
                         with col1:
                             st.markdown(f"### {icon('fire')} Most Active Calls", unsafe_allow_html=True)
-                            st.dataframe(options_data['most_active']['calls'], use_container_width=True)
+                            smart_dataframe(options_data['most_active']['calls'], title=None, height=300, key="options_calls_2")
                         
                         with col2:
                             st.markdown(f"### {icon('fire')} Most Active Puts", unsafe_allow_html=True)
-                            st.dataframe(options_data['most_active']['puts'], use_container_width=True)
+                            smart_dataframe(options_data['most_active']['puts'], title=None, height=300, key="options_puts_2")
                     else:
                         st.warning(options_data['message'])
                         
