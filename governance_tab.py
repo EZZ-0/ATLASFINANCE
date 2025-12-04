@@ -157,6 +157,31 @@ def render_governance_tab(ticker: str, financials: Dict) -> None:
                     board = gov_data.get('board', {})
                     score = gov_data.get('governance_score', {})
                     
+                    # Display officers/directors if available
+                    officers = board.get('officers', [])
+                    if officers:
+                        st.markdown("**Key Executives & Directors:**")
+                        
+                        # Create a DataFrame for display
+                        import pandas as pd
+                        officers_df = pd.DataFrame([
+                            {
+                                'Name': o.get('name', 'N/A'),
+                                'Title': o.get('title', 'N/A'),
+                                'Age': o.get('age') if o.get('age') else '-',
+                            }
+                            for o in officers[:10]  # Show top 10
+                        ])
+                        
+                        st.dataframe(officers_df, use_container_width=True, hide_index=True)
+                        
+                        if len(officers) > 10:
+                            st.caption(f"Showing top 10 of {len(officers)} executives/directors")
+                        
+                        st.markdown("---")
+                    else:
+                        st.caption("Executive/Director names not available from data source. See Proxy Statement for full board details.")
+                    
                     # Board composition
                     if board.get('total_directors'):
                         col1, col2, col3, col4 = st.columns(4)
@@ -181,7 +206,7 @@ def render_governance_tab(ticker: str, financials: Dict) -> None:
                         st.caption(board.get('board_risk', ''))
                         
                         if board.get('estimated'):
-                            st.warning("⚠️ Note: Independence figures are estimated based on industry averages. See Proxy Statement (DEF 14A) for exact data.")
+                            st.warning("Note: Independence figures are estimated based on industry averages. See Proxy Statement (DEF 14A) for exact data.")
                     
                     st.markdown("---")
                     

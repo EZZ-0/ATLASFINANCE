@@ -584,6 +584,39 @@ st.markdown("""
     hr {
         border-color: var(--border-subtle) !important;
     }
+    
+    /* ==========================================
+       CHROME IFRAME FIX (ECharts Gauges)
+       Fixes Score Dashboard not appearing in Chrome
+       ========================================== */
+    
+    /* Force iframe visibility for ECharts components */
+    iframe {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+    
+    /* Ensure Streamlit custom components (ECharts) render properly */
+    [data-testid="stCustomComponentV1"] {
+        min-height: 200px !important;
+        display: block !important;
+        overflow: visible !important;
+    }
+    
+    /* ECharts iframe specific styling */
+    [data-testid="stCustomComponentV1"] iframe {
+        background: #1e2530 !important;
+        border: none !important;
+        min-height: 200px !important;
+        width: 100% !important;
+    }
+    
+    /* Gauge container fix */
+    .element-container:has(iframe) {
+        min-height: 200px;
+        display: block !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1348,6 +1381,16 @@ if st.session_state.financials and st.session_state.ticker:
         <p style='color: #10b981; font-size: 1.8rem; margin: 0.3rem 0 0 0; font-weight: 700;'>${current_price if isinstance(current_price, str) else f'{current_price:.2f}'}</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Small New Search button (right-aligned)
+    col_spacer, col_btn = st.columns([5, 1])
+    with col_btn:
+        if st.button("New Search", key="home_btn"):
+            st.session_state.financials = None
+            st.session_state.dcf_results = None
+            st.session_state.ticker = ""
+            st.session_state.data_extracted = False
+            st.rerun()
 else:
     # Show placeholder when no ticker loaded
     st.markdown("""
@@ -1875,23 +1918,45 @@ else:
                     freq = quant.get("data_frequency", "Daily")
                     ipo_info = f"**IPO Date:** {ipo_date} | **Frequency:** {freq}"
                 
-                st.info(f"ℹ Historical data from January 1, 1990 to present. {ipo_info}")
+                st.info(f"Historical data from January 1, 1990 to present. {ipo_info}")
                 
-                # Display key metrics
+                # Display key metrics with price change indicators
                 current_price = market_data.get("current_price", "N/A")
                 high_52w = historical_prices['Close'].rolling(252).max().iloc[-1] if len(historical_prices) > 252 else historical_prices['Close'].max()
                 low_52w = historical_prices['Close'].rolling(252).min().iloc[-1] if len(historical_prices) > 252 else historical_prices['Close'].min()
                 
+                # Calculate 1-Year return (more meaningful than all-time)
+                if len(historical_prices) >= 252:
+                    price_1y_ago = historical_prices['Close'].iloc[-252]
+                    one_year_return = ((historical_prices['Close'].iloc[-1] / price_1y_ago) - 1) * 100
+                    price_change_1y = historical_prices['Close'].iloc[-1] - price_1y_ago
+                else:
+                    # Use available data if less than 1 year
+                    price_1y_ago = historical_prices['Close'].iloc[0]
+                    one_year_return = ((historical_prices['Close'].iloc[-1] / price_1y_ago) - 1) * 100
+                    price_change_1y = historical_prices['Close'].iloc[-1] - price_1y_ago
+                
                 col1, col2, col3, col4 = st.columns(4)
                 with col1:
-                    st.metric("Current Price", f"${current_price:.2f}" if isinstance(current_price, (int, float)) else current_price)
+                    # Current price with change indicator
+                    if isinstance(current_price, (int, float)) and price_change_1y != 0:
+                        change_color = "#10b981" if price_change_1y > 0 else "#ef4444"
+                        change_arrow = "+" if price_change_1y > 0 else ""
+                        st.metric(
+                            "Current Price", 
+                            f"${current_price:.2f}",
+                            delta=f"{change_arrow}${abs(price_change_1y):.2f} ({change_arrow}{one_year_return:.1f}%)"
+                        )
+                    else:
+                        st.metric("Current Price", f"${current_price:.2f}" if isinstance(current_price, (int, float)) else current_price)
                 with col2:
                     st.metric("52-Week High", f"${high_52w:.2f}")
                 with col3:
                     st.metric("52-Week Low", f"${low_52w:.2f}")
                 with col4:
-                    total_return = ((historical_prices['Close'].iloc[-1] / historical_prices['Close'].iloc[0]) - 1) * 100
-                    st.metric("Total Return", f"{total_return:.1f}%")
+                    # Show 1Y Return instead of all-time return
+                    delta_color = "normal" if one_year_return > 0 else "inverse"
+                    st.metric("1Y Return", f"{one_year_return:.1f}%", delta=f"vs 1 year ago", delta_color="off")
                 
                 st.markdown("---")
                 

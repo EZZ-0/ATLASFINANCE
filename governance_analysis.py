@@ -64,7 +64,26 @@ def analyze_governance(ticker: str) -> Dict:
             'independence_ratio': None,
             'board_size_assessment': None,
             'estimated': True,  # Flag that some data is estimated
+            'officers': [],  # List of company officers/directors
         }
+        
+        # Get company officers from Yahoo Finance
+        try:
+            officers = info.get('companyOfficers', [])
+            if officers:
+                board_data['officers'] = [
+                    {
+                        'name': officer.get('name', 'N/A'),
+                        'title': officer.get('title', 'N/A'),
+                        'age': officer.get('age'),
+                        'totalPay': officer.get('totalPay'),
+                        'exercisedValue': officer.get('exercisedValue'),
+                        'unexercisedValue': officer.get('unexercisedValue'),
+                    }
+                    for officer in officers
+                ]
+        except Exception:
+            pass
         
         # Get from Yahoo Finance info
         board_size = info.get('boardSize')

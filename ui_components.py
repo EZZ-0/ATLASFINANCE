@@ -481,10 +481,11 @@ def _render_echarts_gauge(
             "backgroundColor": "#1e2530"
         }
         
+        # Render ECharts gauge
         st_echarts(option, height=f"{height}px", key=key)
         
     except Exception as e:
-        st.warning(f"ECharts error, using fallback: {e}")
+        # Fallback to native Streamlit gauge on any error
         _render_native_gauge(value, title, min_value, max_value)
 
 def _render_native_gauge(
