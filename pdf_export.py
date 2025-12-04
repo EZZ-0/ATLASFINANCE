@@ -116,6 +116,91 @@ def generate_investment_summary_pdf(financials, generator, recommendation_data):
     story.append(rec_table)
     story.append(Spacer(1, 0.2*inch))
     
+    # ===== SCORE DASHBOARD =====
+    story.append(Paragraph("Score Dashboard", section_style))
+    
+    # Calculate scores for PDF
+    conviction_map = {'LOW': 33, 'MEDIUM': 66, 'HIGH': 100}
+    conviction_score = conviction_map.get(conviction, 50)
+    
+    # Calculate health score
+    def calculate_health_score_for_pdf():
+        """Calculate overall financial health score 0-100"""
+        ratios = financials.get('ratios', pd.DataFrame())
+        score = 50  # Base score
+        
+        def get_ratio_val(key):
+            if not ratios.empty and key in ratios.index:
+                val = ratios.loc[key].iloc[0]
+                return val if pd.notnull(val) else None
+            return None
+        
+        roe_val = get_ratio_val('ROE')
+        if roe_val:
+            if roe_val > 0.15: score += 20
+            elif roe_val > 0.10: score += 10
+            elif roe_val < 0: score -= 15
+        
+        debt_eq = get_ratio_val('Debt_to_Equity')
+        if debt_eq:
+            if debt_eq < 0.5: score += 15
+            elif debt_eq < 1.0: score += 5
+            elif debt_eq > 2.0: score -= 15
+        
+        curr_ratio = get_ratio_val('Current_Ratio')
+        if curr_ratio:
+            if curr_ratio > 2.0: score += 15
+            elif curr_ratio > 1.5: score += 10
+            elif curr_ratio < 1.0: score -= 15
+        
+        return max(0, min(100, score))
+    
+    health_score = calculate_health_score_for_pdf()
+    
+    # Risk/Reward score
+    risk_reward = recommendation_data.get('risk_reward', 1.0)
+    risk_score = min(100, max(0, risk_reward * 40))
+    
+    # Score color helper
+    def get_score_color(score):
+        if score < 40:
+            return colors.HexColor('#ef4444')  # Red
+        elif score < 70:
+            return colors.HexColor('#f59e0b')  # Yellow/Orange
+        else:
+            return colors.HexColor('#10b981')  # Green
+    
+    # Create score dashboard table
+    score_data = [
+        ['Conviction Level', 'Financial Health', 'Risk/Reward'],
+        [f'{conviction_score}/100', f'{health_score}/100', f'{risk_score:.0f}/100'],
+    ]
+    
+    score_table = Table(score_data, colWidths=[2.17*inch, 2.17*inch, 2.17*inch])
+    score_table.setStyle(TableStyle([
+        # Headers
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a1f26')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 11),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 10),
+        ('TOPPADDING', (0, 0), (-1, 0), 10),
+        # Score values - colored backgrounds
+        ('BACKGROUND', (0, 1), (0, 1), get_score_color(conviction_score)),
+        ('BACKGROUND', (1, 1), (1, 1), get_score_color(health_score)),
+        ('BACKGROUND', (2, 1), (2, 1), get_score_color(risk_score)),
+        ('TEXTCOLOR', (0, 1), (-1, 1), colors.white),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 1), (-1, 1), 18),
+        ('BOTTOMPADDING', (0, 1), (-1, 1), 15),
+        ('TOPPADDING', (0, 1), (-1, 1), 15),
+        ('GRID', (0, 0), (-1, -1), 1, colors.HexColor('#e0e0e0')),
+    ]))
+    
+    story.append(score_table)
+    story.append(Spacer(1, 0.2*inch))
+    
     # ===== BUSINESS MODEL =====
     story.append(Paragraph("Business Model", section_style))
     

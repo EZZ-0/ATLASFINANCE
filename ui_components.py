@@ -478,7 +478,7 @@ def _render_echarts_gauge(
                     "name": title
                 }]
             }],
-            "backgroundColor": "transparent"
+            "backgroundColor": "#1e2530"
         }
         
         st_echarts(option, height=f"{height}px", key=key)

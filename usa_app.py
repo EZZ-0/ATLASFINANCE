@@ -14,8 +14,15 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
+import base64
 from datetime import datetime
 import time
+
+# ==========================================
+# BACKGROUND IMAGE TOGGLE (Easy to undo)
+# ==========================================
+# Set to False to disable the custom background image
+ENABLE_BACKGROUND_IMAGE = True
 
 # Import our modules
 from usa_backend import USAFinancialExtractor
@@ -188,44 +195,43 @@ st.markdown("""
         }
     }
     
-    /* Premium Metric Cards with Clean Glassmorphism */
+    /* Clean Metric Cards - Solid, Readable Design */
     .metric-card {
-        background: var(--bg-card);
-        backdrop-filter: blur(10px);
+        background: #1e2530 !important;
         padding: 1.5rem;
         border-radius: 12px;
-        border: 1px solid var(--border-subtle);
-        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
     .metric-card:hover {
         transform: translateY(-2px);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        border-color: var(--border-accent);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+        border-color: rgba(59, 130, 246, 0.3);
     }
     
-    /* Streamlit Metrics Enhancement */
+    /* Streamlit Metrics - Clean Solid Design */
     [data-testid="stMetric"] {
-        background: var(--bg-card);
+        background: #1e2530 !important;
         padding: 1.2rem;
         border-radius: 10px;
-        border: 1px solid var(--border-subtle);
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(59, 130, 246, 0.15);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
     }
     
     [data-testid="stMetric"]:hover {
-        border-color: var(--border-accent);
-        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
+        border-color: rgba(59, 130, 246, 0.3);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
     }
     
-    /* Professional Tab Styling */
+    /* Professional Tab Styling - Clean Solid Design */
     .stTabs [data-baseweb="tab-list"] {
         gap: 0.5rem;
-        background-color: var(--bg-secondary);
+        background-color: #1a1f26 !important;
         padding: 0.5rem;
         border-radius: 10px;
-        border: 1px solid var(--border-subtle);
+        border: 1px solid rgba(59, 130, 246, 0.12);
     }
     
     .stTabs [data-baseweb="tab"] {
@@ -249,16 +255,16 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
     }
     
-    /* Enhanced Data Tables */
+    /* Enhanced Data Tables - Clean Solid Design */
     .stDataFrame {
         border-radius: 10px;
         overflow: hidden;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-        background-color: var(--bg-card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        background-color: #1e2530 !important;
     }
     
     .stDataFrame th {
-        background: var(--bg-secondary) !important;
+        background: #1a1f26 !important;
         color: var(--text-primary) !important;
         font-weight: 600;
         padding: 12px 16px !important;
@@ -270,19 +276,19 @@ st.markdown("""
     
     .stDataFrame td {
         padding: 12px 16px !important;
-        border-bottom: 1px solid var(--border-subtle);
+        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
         color: var(--text-primary) !important;
-        background-color: var(--bg-card);
+        background-color: #1e2530 !important;
     }
     
     .stDataFrame tr:hover {
-        background-color: var(--bg-hover) !important;
+        background-color: #252d3a !important;
     }
     
-    /* Sidebar Enhancement */
+    /* Sidebar - Clean Solid Design */
     [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-primary) 100%);
-        border-right: 1px solid var(--border-subtle);
+        background: linear-gradient(180deg, #1a1f26 0%, #0f1419 100%) !important;
+        border-right: 1px solid rgba(59, 130, 246, 0.12);
     }
     
     [data-testid="stSidebar"] * {
@@ -306,27 +312,27 @@ st.markdown("""
         box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
     }
     
-    /* Charts Enhancement */
+    /* Charts Enhancement - Clean Solid Design */
     .js-plotly-plot {
         border-radius: 10px;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
         overflow: hidden;
-        background-color: var(--bg-card) !important;
+        background-color: #1e2530 !important;
     }
     
-    /* Expander Styling */
+    /* Expander Styling - Clean Solid Design */
     .streamlit-expanderHeader {
-        background-color: var(--bg-secondary);
+        background-color: #1a1f26 !important;
         border-radius: 8px;
         font-weight: 600;
         transition: all 0.2s ease;
         color: var(--text-primary) !important;
-        border: 1px solid var(--border-subtle);
+        border: 1px solid rgba(59, 130, 246, 0.12);
     }
     
     .streamlit-expanderHeader:hover {
-        background-color: var(--bg-hover);
-        border-color: var(--border-accent);
+        background-color: #252d3a !important;
+        border-color: rgba(59, 130, 246, 0.25);
     }
     
     /* Metric Value Styling */
@@ -349,15 +355,15 @@ st.markdown("""
         color: #ef4444 !important;
     }
     
-    /* Alert Boxes */
+    /* Alert Boxes - Clean Solid Design */
     .stAlert {
         border-radius: 10px;
         border-left-width: 4px;
         padding: 1rem 1.5rem;
-        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
-        background: var(--bg-card);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        background: #1e2530 !important;
         color: var(--text-primary);
-        border: 1px solid var(--border-subtle);
+        border: 1px solid rgba(59, 130, 246, 0.12);
     }
     
     /* Loading Spinner */
@@ -580,6 +586,66 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# ==========================================
+# BACKGROUND IMAGE (Toggle: ENABLE_BACKGROUND_IMAGE)
+# ==========================================
+# To UNDO: Set ENABLE_BACKGROUND_IMAGE = False at the top of this file
+
+if ENABLE_BACKGROUND_IMAGE:
+    # Load and encode the background image
+    bg_image_path = os.path.join(os.path.dirname(__file__), "Background_1.png")
+    if os.path.exists(bg_image_path):
+        with open(bg_image_path, "rb") as img_file:
+            bg_base64 = base64.b64encode(img_file.read()).decode()
+        
+        st.markdown(f"""
+        <style>
+            /* ==========================================
+               SUBTLE WORLD MAP OVERLAY
+               To disable: Set ENABLE_BACKGROUND_IMAGE = False
+               ========================================== */
+            
+            /* Keep original dark gradient as base */
+            .stApp {{
+                background: var(--bg-primary) !important;
+                position: relative;
+            }}
+            
+            [data-testid="stAppViewContainer"] {{
+                background: var(--bg-primary) !important;
+                position: relative;
+            }}
+            
+            /* World map overlay with subtle opacity */
+            [data-testid="stAppViewContainer"]::before {{
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-image: url("data:image/png;base64,{bg_base64}");
+                background-size: cover;
+                background-position: center center;
+                background-repeat: no-repeat;
+                opacity: 0.22;
+                pointer-events: none;
+                z-index: 0;
+            }}
+            
+            /* Ensure content stays above overlay */
+            .main .block-container {{
+                position: relative;
+                z-index: 1;
+            }}
+            
+            [data-testid="stSidebar"] {{
+                position: relative;
+                z-index: 1;
+            }}
+        </style>
+        """, unsafe_allow_html=True)
 
 # ==========================================
 # SESSION STATE INITIALIZATION
@@ -1275,7 +1341,7 @@ if st.session_state.financials and st.session_state.ticker:
     st.markdown(f"""
     <div style='padding: 0.8rem 1.5rem; margin: 0.5rem auto 1rem auto;
                 max-width: 400px;
-                background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
+                background: #1e2530;
                 border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;
                 text-align: center;'>
         <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600; letter-spacing: 0.5px;'>STOCK PRICE (AT EXTRACTION)</p>
@@ -1417,15 +1483,14 @@ st.markdown("""
     background: rgba(100, 181, 246, 0.5);
 }
 
-/* Glass scroll buttons - FIXED POSITIONING */
+/* Clean scroll buttons - FIXED POSITIONING */
 .tab-scroll-btn {
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
     width: 40px;
     height: 40px;
-    background: rgba(59, 130, 246, 0.15);
-    backdrop-filter: blur(10px);
+    background: #1e2530;
     border: 1px solid rgba(59, 130, 246, 0.3);
     border-radius: 50%;
     display: flex;
@@ -1438,7 +1503,7 @@ st.markdown("""
 }
 
 .tab-scroll-btn:hover {
-    background: rgba(59, 130, 246, 0.25);
+    background: #252d3a;
     border-color: rgba(59, 130, 246, 0.5);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.3);
     transform: translateY(-50%) scale(1.1);
@@ -2847,7 +2912,7 @@ else:
                     
                     st.markdown("""
                     <div style='padding: 0.8rem 1rem; margin: 1rem 0; 
-                                background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
+                                background: #1e2530;
                                 border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;'>
                         <p style='color: #3b82f6; font-weight: 700; margin: 0 0 0.8rem 0; font-size: 1rem;'>
                             Breakdown
@@ -3360,7 +3425,7 @@ else:
                         
                         st.markdown("""
                         <div style='padding: 0.8rem 1rem; margin: 1rem 0; 
-                                    background: rgba(59, 130, 246, 0.08); backdrop-filter: blur(10px);
+                                    background: #1e2530;
                                     border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;'>
                             <p style='color: #3b82f6; font-weight: 700; margin: 0 0 0.8rem 0; font-size: 1rem;'>
                                 Breakdown
