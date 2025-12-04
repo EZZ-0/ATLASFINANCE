@@ -1381,16 +1381,6 @@ if st.session_state.financials and st.session_state.ticker:
         <p style='color: #10b981; font-size: 1.8rem; margin: 0.3rem 0 0 0; font-weight: 700;'>${current_price if isinstance(current_price, str) else f'{current_price:.2f}'}</p>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Small New Search button (right-aligned)
-    col_spacer, col_btn = st.columns([5, 1])
-    with col_btn:
-        if st.button("New Search", key="home_btn"):
-            st.session_state.financials = None
-            st.session_state.dcf_results = None
-            st.session_state.ticker = ""
-            st.session_state.data_extracted = False
-            st.rerun()
 else:
     # Show placeholder when no ticker loaded
     st.markdown("""
@@ -1643,10 +1633,18 @@ if "ai_chat_history" not in st.session_state:
 if "ai_disclaimer_shown" not in st.session_state:
     st.session_state.ai_disclaimer_shown = False
 
-# Toggle button (top-right corner)
-col1, col2, col3 = st.columns([8, 1, 1])
+# Toggle buttons (top-right corner) - New Search and AI
+col1, col2, col3 = st.columns([7, 1, 1])
+with col2:
+    if st.session_state.get('data_extracted', False):
+        if st.button("New Search", key="home_btn"):
+            st.session_state.financials = None
+            st.session_state.dcf_results = None
+            st.session_state.ticker = ""
+            st.session_state.data_extracted = False
+            st.rerun()
 with col3:
-    if st.button("🤖 AI", key="ai_toggle", help="AI Chat (Under Development)", use_container_width=False):
+    if st.button("AI", key="ai_toggle", help="AI Chat (Under Development)"):
         st.session_state.show_ai_chat = not st.session_state.show_ai_chat
         st.rerun()
 
