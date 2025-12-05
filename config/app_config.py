@@ -64,12 +64,24 @@ DATA_SOURCES = {
 # API CONFIGURATION
 # ==========================================
 
+# Environment Variables (all optional, app works without them):
+# - GEMINI_API_KEY or GOOGLE_API_KEY: For AI chat (free: https://makersuite.google.com/app/apikey)
+# - ALPHAVANTAGE_API_KEY: For Alpha Vantage data (free: https://www.alphavantage.co/support/#api-key)
+# - FMP_API_KEY: For Financial Modeling Prep (requires paid subscription now)
+
 # AI Models
 AI_CONFIG = {
     'primary_model': 'gemini-2.0-flash',  # Updated to stable model
     'fallback_model': 'ollama/llama3.1',
     'temperature': 0.3,
     'max_tokens': 2000,
+}
+
+# Data Sources (in priority order)
+DATA_SOURCE_CONFIG = {
+    'primary': 'sec',           # SEC EDGAR (most accurate)
+    'secondary': 'yfinance',    # Yahoo Finance (real-time)
+    'tertiary': 'fmp',          # Financial Modeling Prep (gap filling)
 }
 
 # Rate Limits (requests per minute)

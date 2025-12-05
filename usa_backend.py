@@ -167,6 +167,20 @@ except ImportError:
     YFINANCE_AVAILABLE = False
     print("⚠️ yfinance not installed. Install with: pip install yfinance")
 
+# FMP (Financial Modeling Prep) - Third data source
+try:
+    from fmp_extractor import get_fmp_extractor, FMPExtractor
+    FMP_AVAILABLE = True
+except ImportError:
+    FMP_AVAILABLE = False
+
+# Alpha Vantage - Alternative third data source (500 calls/day free)
+try:
+    from alphavantage_extractor import get_alphavantage_extractor, AlphaVantageExtractor
+    ALPHAVANTAGE_AVAILABLE = True
+except ImportError:
+    ALPHAVANTAGE_AVAILABLE = False
+
 class USAFinancialExtractor:
     """
     Extracts financial data from USA public companies using multiple sources.
@@ -1025,11 +1039,11 @@ class USAFinancialExtractor:
     
     def _fill_data_gaps(self, ticker: str, financials: Dict, primary_source: str) -> Dict:
         """
-        Fill missing fields by trying alternate sources.
+        Fill missing fields by trying alternate sources (PHASE 1 + PHASE 2).
         
-        This is PHASE 1 of multi-source fusion:
+        Multi-source fusion:
         - Identifies gaps (missing/null values)
-        - Tries alternate sources for just those fields
+        - Tries yfinance first, then FMP for remaining gaps
         - Tracks which source provided each field
         
         Args:
@@ -1040,23 +1054,32 @@ class USAFinancialExtractor:
         Returns:
             financials dict with gaps filled
         """
-        if not YFINANCE_AVAILABLE:
-            return financials
-        
         # Track sources for transparency
         if '_sources' not in financials:
             financials['_sources'] = {}
         
-        gaps_filled = 0
-        
-        # Fields to check for gaps
+        # Fields to check for gaps (expanded list)
         critical_fields = [
-            'current_price', 'market_cap', 'pe_ratio', 'forward_pe', 'peg_ratio',
-            'price_to_book', 'price_to_sales', 'roe', 'roa', 'debt_to_equity',
-            'current_ratio', 'quick_ratio', 'revenue_growth', 'earnings_growth',
-            'dividend_yield', 'beta', 'sector', 'industry', 'employees',
+            # Market data
+            'current_price', 'market_cap', 'beta', 'average_volume',
             'fifty_two_week_high', 'fifty_two_week_low', 'shares_outstanding',
-            'target_price', 'recommendation'
+            # Valuation ratios
+            'pe_ratio', 'forward_pe', 'peg_ratio', 'price_to_book', 'price_to_sales',
+            'ev_to_ebitda', 'ev_to_sales', 'enterprise_value',
+            # Profitability
+            'roe', 'roa', 'roic', 'gross_margin', 'operating_margin', 'profit_margin',
+            # Liquidity/Solvency
+            'debt_to_equity', 'current_ratio', 'quick_ratio', 'interest_coverage',
+            # Growth
+            'revenue_growth', 'earnings_growth',
+            # Dividends
+            'dividend_yield', 'payout_ratio',
+            # Company info
+            'sector', 'industry', 'employees',
+            # Analyst data
+            'target_price', 'target_price_avg', 'recommendation', 'eps_estimate_avg',
+            # FMP special
+            'fmp_rating', 'fmp_rating_score', 'graham_number',
         ]
         
         # Identify gaps
@@ -1072,57 +1095,113 @@ class USAFinancialExtractor:
         
         print(f"   [GAP FILL] Found {len(gaps)} gaps: {', '.join(gaps[:5])}{'...' if len(gaps) > 5 else ''}")
         
-        # If primary was SEC, try yfinance for gaps
-        if primary_source == 'sec':
+        gaps_filled_yf = 0
+        gaps_filled_fmp = 0
+        remaining_gaps = gaps.copy()
+        
+        # ========== STEP 1: Try yfinance for gaps ==========
+        if YFINANCE_AVAILABLE and primary_source != 'yfinance':
             try:
                 stock = yf.Ticker(ticker)
                 info = stock.info
                 
+                yf_field_map = {
+                    'current_price': ['currentPrice', 'regularMarketPrice'],
+                    'market_cap': ['marketCap'],
+                    'pe_ratio': ['trailingPE'],
+                    'forward_pe': ['forwardPE'],
+                    'peg_ratio': ['pegRatio'],
+                    'price_to_book': ['priceToBook'],
+                    'price_to_sales': ['priceToSalesTrailing12Months'],
+                    'roe': ['returnOnEquity'],
+                    'roa': ['returnOnAssets'],
+                    'debt_to_equity': ['debtToEquity'],
+                    'current_ratio': ['currentRatio'],
+                    'quick_ratio': ['quickRatio'],
+                    'revenue_growth': ['revenueGrowth'],
+                    'earnings_growth': ['earningsGrowth'],
+                    'dividend_yield': ['dividendYield'],
+                    'beta': ['beta'],
+                    'sector': ['sector'],
+                    'industry': ['industry'],
+                    'employees': ['fullTimeEmployees'],
+                    'fifty_two_week_high': ['fiftyTwoWeekHigh'],
+                    'fifty_two_week_low': ['fiftyTwoWeekLow'],
+                    'shares_outstanding': ['sharesOutstanding'],
+                    'target_price': ['targetMeanPrice'],
+                    'recommendation': ['recommendationKey'],
+                    'enterprise_value': ['enterpriseValue'],
+                    'average_volume': ['averageVolume'],
+                    'gross_margin': ['grossMargins'],
+                    'operating_margin': ['operatingMargins'],
+                    'profit_margin': ['profitMargins'],
+                    'payout_ratio': ['payoutRatio'],
+                }
+                
                 for field in gaps:
-                    # Map our field names to yfinance field names
-                    yf_field_map = {
-                        'current_price': ['currentPrice', 'regularMarketPrice'],
-                        'market_cap': ['marketCap'],
-                        'pe_ratio': ['trailingPE'],
-                        'forward_pe': ['forwardPE'],
-                        'peg_ratio': ['pegRatio'],
-                        'price_to_book': ['priceToBook'],
-                        'price_to_sales': ['priceToSalesTrailing12Months'],
-                        'roe': ['returnOnEquity'],
-                        'roa': ['returnOnAssets'],
-                        'debt_to_equity': ['debtToEquity'],
-                        'current_ratio': ['currentRatio'],
-                        'quick_ratio': ['quickRatio'],
-                        'revenue_growth': ['revenueGrowth'],
-                        'earnings_growth': ['earningsGrowth'],
-                        'dividend_yield': ['dividendYield'],
-                        'beta': ['beta'],
-                        'sector': ['sector'],
-                        'industry': ['industry'],
-                        'employees': ['fullTimeEmployees'],
-                        'fifty_two_week_high': ['fiftyTwoWeekHigh'],
-                        'fifty_two_week_low': ['fiftyTwoWeekLow'],
-                        'shares_outstanding': ['sharesOutstanding'],
-                        'target_price': ['targetMeanPrice'],
-                        'recommendation': ['recommendationKey'],
-                    }
-                    
                     yf_keys = yf_field_map.get(field, [field])
                     for yf_key in yf_keys:
                         value = info.get(yf_key)
                         if value is not None and value != '' and value != 0:
                             financials[field] = value
                             financials['_sources'][field] = 'yfinance'
-                            gaps_filled += 1
+                            gaps_filled_yf += 1
+                            if field in remaining_gaps:
+                                remaining_gaps.remove(field)
                             break
                 
-                print(f"   [GAP FILL] Filled {gaps_filled} gaps from yfinance")
+                if gaps_filled_yf > 0:
+                    print(f"   [GAP FILL] Filled {gaps_filled_yf} gaps from yfinance")
                 
             except Exception as e:
                 print(f"   [GAP FILL] yfinance fallback failed: {e}")
         
-        # If primary was yfinance, we could try SEC for gaps (future enhancement)
-        # For now, yfinance usually has most market data
+        # ========== STEP 2: Try FMP for remaining gaps (if available) ==========
+        if FMP_AVAILABLE and remaining_gaps:
+            try:
+                fmp = get_fmp_extractor()
+                if fmp.available:
+                    fmp_data = fmp.extract_all(ticker)
+                    
+                    if fmp_data and len(fmp_data) > 0:
+                        for field in list(remaining_gaps):
+                            value = fmp_data.get(field)
+                            if value is not None and value != '' and value != 0:
+                                financials[field] = value
+                                financials['_sources'][field] = 'fmp'
+                                gaps_filled_fmp += 1
+                                remaining_gaps.remove(field)
+                        
+                        if gaps_filled_fmp > 0:
+                            print(f"   [GAP FILL] Filled {gaps_filled_fmp} gaps from FMP")
+            except Exception:
+                pass  # FMP failed silently
+        
+        # ========== STEP 3: Try Alpha Vantage for remaining gaps ==========
+        gaps_filled_av = 0
+        if ALPHAVANTAGE_AVAILABLE and remaining_gaps:
+            try:
+                av = get_alphavantage_extractor()
+                if av.available:
+                    av_data = av.extract_all(ticker)
+                    
+                    if av_data and len(av_data) > 0:
+                        for field in list(remaining_gaps):
+                            value = av_data.get(field)
+                            if value is not None and value != '' and value != 0:
+                                financials[field] = value
+                                financials['_sources'][field] = 'alphavantage'
+                                gaps_filled_av += 1
+                                remaining_gaps.remove(field)
+                        
+                        if gaps_filled_av > 0:
+                            print(f"   [GAP FILL] Filled {gaps_filled_av} gaps from Alpha Vantage")
+            except Exception:
+                pass  # Alpha Vantage failed silently
+        
+        total_filled = gaps_filled_yf + gaps_filled_fmp + gaps_filled_av
+        if total_filled > 0:
+            print(f"   [GAP FILL] Total: {total_filled}/{len(gaps)} gaps filled")
         
         return financials
     
