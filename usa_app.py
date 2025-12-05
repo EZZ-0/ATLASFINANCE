@@ -677,8 +677,8 @@ if ENABLE_BACKGROUND_IMAGE:
                 position: relative;
                 z-index: 1;
             }}
-        </style>
-        """, unsafe_allow_html=True)
+</style>
+""", unsafe_allow_html=True)
 
 # ==========================================
 # SESSION STATE INITIALIZATION
@@ -1634,86 +1634,161 @@ if "ai_disclaimer_shown" not in st.session_state:
     st.session_state.ai_disclaimer_shown = False
 
 # Toggle buttons (top-right corner) - New Search and AI
+# CSS for matching button styles
+    st.markdown("""
+    <style>
+/* Match header button styles */
+[data-testid="stHorizontalBlock"] > div:nth-last-child(-n+2) button[kind="secondary"] {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    padding: 0.35rem 0.6rem !important;
+    border-radius: 6px !important;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border: none !important;
+    color: white !important;
+    white-space: nowrap !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
 col1, col2, col3 = st.columns([7, 1, 1])
 with col2:
     if st.session_state.get('data_extracted', False):
-        if st.button("New Search", key="home_btn"):
+        if st.button("New Search", key="home_btn", use_container_width=True):
             st.session_state.financials = None
             st.session_state.dcf_results = None
             st.session_state.ticker = ""
             st.session_state.data_extracted = False
             st.rerun()
 with col3:
-    if st.button("AI", key="ai_toggle", help="AI Chat (Under Development)"):
+    if st.button("AI Chat", key="ai_toggle", help="AI Financial Advisor", use_container_width=True):
         st.session_state.show_ai_chat = not st.session_state.show_ai_chat
         st.rerun()
 
-# Floating chat panel
+# AI Chat Panel - Using Dialog/Modal
 if st.session_state.show_ai_chat:
-    # CSS for floating panel
-    st.markdown("""
-    <style>
-    .ai-chat-container {
-        position: fixed;
-        right: 20px;
-        top: 100px;
-        width: 400px;
-        max-height: 75vh;
-        background: linear-gradient(135deg, rgba(26, 17, 13, 0.98) 0%, rgba(15, 10, 8, 0.98) 100%);
-        border: 2px solid rgba(255, 215, 0, 0.3);
-        border-radius: 16px;
-        padding: 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
-        z-index: 9999;
-        overflow: hidden;
-    }
-    .ai-chat-header {
-        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-        color: white;
-        padding: 15px 20px;
-        font-weight: 700;
-        font-size: 1.1rem;
-        border-radius: 14px 14px 0 0;
-    }
-    .ai-chat-body {
-        padding: 20px;
-        max-height: calc(75vh - 60px);
-        overflow-y: auto;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    # Initialize AI advisor (reinit if failed before)
+    if "ai_advisor" not in st.session_state or st.session_state.ai_advisor is None:
+        try:
+            print("[AI] Initializing FinancialAI...")
+            from financial_ai import FinancialAI
+            st.session_state.ai_advisor = FinancialAI(tier="free")
+            if st.session_state.ai_advisor.primary_model:
+                print("[AI] FinancialAI initialized with Gemini")
+            else:
+                print("[AI] FinancialAI initialized but no model available")
+                st.session_state.ai_error = "Gemini model not initialized"
+        except Exception as e:
+            st.session_state.ai_advisor = None
+            st.session_state.ai_error = str(e)
+            print(f"[AI ERROR] Failed to initialize: {e}")
+            import traceback
+            traceback.print_exc()
     
-    # Create floating container
-    with st.container():
-        st.markdown('<div class="ai-chat-container">', unsafe_allow_html=True)
-        st.markdown('<div class="ai-chat-header">AI Financial Advisor</div>', unsafe_allow_html=True)
-        st.markdown('<div class="ai-chat-body">', unsafe_allow_html=True)
+    # Build company data
+    company_data = {}
+    if st.session_state.financials:
+        fin = st.session_state.financials
+        company_data = {
+            'ticker': st.session_state.get('ticker', 'N/A'),
+            'company_name': fin.get('company_name', st.session_state.get('ticker', 'N/A')),
+            'sector': fin.get('sector', 'N/A'),
+            'current_price': fin.get('current_price', 'N/A'),
+            'market_cap': fin.get('market_cap', 'N/A'),
+            'pe_ratio': fin.get('pe_ratio', 'N/A'),
+            'growth_rate': fin.get('revenue_growth', 'N/A'),
+            'roe': fin.get('roe', 'N/A'),
+            'debt_equity': fin.get('debt_to_equity', 'N/A'),
+            'current_ratio': fin.get('current_ratio', 'N/A'),
+        }
+    
+    # AI Chat Container - Visible at top of page
+    st.markdown("---")
+    st.markdown("### 🤖 AI Financial Advisor")
+    
+    # Show disclaimer
+    if not st.session_state.ai_disclaimer_shown:
+        st.info("⚠️ AI responses are for informational purposes only. Not investment advice.")
+        st.session_state.ai_disclaimer_shown = True
+    
+    # Check AI availability
+    if st.session_state.ai_advisor is None:
+        st.error(f"❌ AI unavailable: {st.session_state.get('ai_error', 'Unknown error')}")
+        st.code("Troubleshooting:\n1. Set GEMINI_API_KEY in environment\n2. pip install google-generativeai")
+    else:
+        st.success("✅ AI Ready - Gemini connected")
         
-        # Under Construction Message
-        st.markdown("""
-        <div style='text-align: center; padding: 3rem 1rem;'>
-            <div style='font-size: 4rem; color: #3b82f6; margin-bottom: 1.5rem;'>
-                <i class="bi bi-gear-fill" style='animation: spin 3s linear infinite;'></i>
-            </div>
-            <h3 style='color: #3b82f6; margin-bottom: 1rem;'>Under Development</h3>
-            <p style='color: #94a3b8; font-size: 1.1rem; line-height: 1.6; max-width: 300px; margin: 0 auto;'>
-                Our AI Financial Advisor is being fine-tuned for professional-grade insights.
-                <br><br>
-                <em style='font-size: 0.9rem; color: #64748b;'>
-                    Coming soon: Real-time market analysis, portfolio recommendations, and expert-level financial Q&A.
-                </em>
-            </p>
-        </div>
-        <style>
-            @keyframes spin {
-                from { transform: rotate(0deg); }
-                to { transform: rotate(360deg); }
-            }
-        </style>
-        """, unsafe_allow_html=True)
+        # Chat history display
+        if st.session_state.ai_chat_history:
+            chat_container = st.container()
+            with chat_container:
+                for msg in st.session_state.ai_chat_history[-4:]:
+                    if msg['role'] == 'user':
+                        st.markdown(f"**🧑 You:** {msg['content']}")
+                    else:
+                        st.markdown(f"**🤖 AI:** {msg['content']}")
+                st.markdown("---")
         
-        st.markdown('</div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Input area
+        user_q = st.text_input("Ask a question:", key="ai_input", placeholder="e.g., Is this stock overvalued?")
+        
+        c1, c2, c3 = st.columns([2, 1, 1])
+        with c1:
+            if st.button("Send", key="send_ai", use_container_width=True):
+                if user_q.strip():
+                    st.session_state.ai_chat_history.append({'role': 'user', 'content': user_q})
+                    with st.spinner("🤔 Thinking..."):
+                        try:
+                            result = st.session_state.ai_advisor.ask(user_q, company_data, 'general')
+                            response = result.get('response', 'No response') if result else 'No response'
+                            st.session_state.ai_chat_history.append({'role': 'assistant', 'content': response})
+                        except Exception as e:
+                            st.session_state.ai_chat_history.append({'role': 'assistant', 'content': f"Error: {e}"})
+                    st.rerun()
+        with c2:
+            if st.button("Clear", key="clear_ai", use_container_width=True):
+                st.session_state.ai_chat_history = []
+                st.rerun()
+        with c3:
+            if st.button("Close", key="close_ai", use_container_width=True):
+                st.session_state.show_ai_chat = False
+                st.rerun()
+        
+        # Quick questions
+        st.caption("Quick questions:")
+        q1, q2, q3 = st.columns(3)
+        with q1:
+            if st.button("📊 Overvalued?", key="q1"):
+                st.session_state.ai_chat_history.append({'role': 'user', 'content': "Is this stock overvalued?"})
+                with st.spinner("Analyzing..."):
+                    try:
+                        r = st.session_state.ai_advisor.ask("Is this stock overvalued?", company_data, 'general')
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': r.get('response', 'No response')})
+                    except Exception as e:
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': str(e)})
+                st.rerun()
+        with q2:
+            if st.button("⚠️ Risks?", key="q2"):
+                st.session_state.ai_chat_history.append({'role': 'user', 'content': "What are the key risks?"})
+                with st.spinner("Analyzing..."):
+                    try:
+                        r = st.session_state.ai_advisor.ask("What are the key risks?", company_data, 'general')
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': r.get('response', 'No response')})
+                    except Exception as e:
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': str(e)})
+                st.rerun()
+        with q3:
+            if st.button("📝 Summary", key="q3"):
+                st.session_state.ai_chat_history.append({'role': 'user', 'content': "Give me a brief financial summary"})
+                with st.spinner("Analyzing..."):
+                    try:
+                        r = st.session_state.ai_advisor.ask("Give me a brief financial summary", company_data, 'general')
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': r.get('response', 'No response')})
+                    except Exception as e:
+                        st.session_state.ai_chat_history.append({'role': 'assistant', 'content': str(e)})
+                st.rerun()
+    
+    st.markdown("---")
 
 # ==========================================
 # MAIN CONTENT

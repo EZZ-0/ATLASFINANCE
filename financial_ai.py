@@ -79,24 +79,48 @@ class FinancialAI:
         """Initialize Google Gemini"""
         try:
             import google.generativeai as genai
+            print("[AI] Importing google.generativeai... OK")
             
-            api_key = os.getenv('GEMINI_API_KEY')
+            # Check multiple possible env var names
+            api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY') or os.getenv('GOOGLE_GEMINI_API_KEY')
             if not api_key:
-                print("⚠️  GEMINI_API_KEY not found in .env file")
+                print("[AI ERROR] API key not found. Set GEMINI_API_KEY or GOOGLE_API_KEY")
                 return None
+            print(f"[AI] API key found: {api_key[:8]}...")
             
             genai.configure(api_key=api_key)
-            model_name = os.getenv('GEMINI_MODEL', 'gemini-2.0-flash-exp')
-            model = genai.GenerativeModel(model_name)
+            print("[AI] Configured genai with API key")
             
-            print(f"✅ Gemini initialized: {model_name}")
-            return model
+            # Try Gemini 2.x models (current API)
+            models_to_try = [
+                os.getenv('GEMINI_MODEL', 'gemini-2.0-flash'),
+                'gemini-2.0-flash',
+                'gemini-2.5-flash',
+                'gemini-flash-latest'
+            ]
             
-        except ImportError:
-            print("⚠️  google-generativeai not installed. Run: pip install google-generativeai")
+            for model_name in models_to_try:
+                try:
+                    print(f"[AI] Trying model: {model_name}")
+                    model = genai.GenerativeModel(model_name)
+                    # Quick test
+                    test_response = model.generate_content("Say OK")
+                    print(f"[AI] ✅ Model {model_name} works!")
+                    return model
+                except Exception as e:
+                    print(f"[AI] Model {model_name} failed: {str(e)[:60]}")
+                    continue
+            
+            print("[AI] No working model found")
+            return None
+            
+        except ImportError as ie:
+            print(f"[AI ERROR] google-generativeai not installed: {ie}")
             return None
         except Exception as e:
-            print(f"⚠️  Gemini initialization failed: {e}")
+            print(f"[AI ERROR] Gemini initialization failed: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     def _init_ollama(self):
@@ -258,13 +282,16 @@ Be comprehensive but concise. Use professional financial terminology but explain
         # Check 2: Impossible values
         if 'growth rate' in response.lower():
             # Check for unrealistic growth (>200%)
-            growth_numbers = [float(n.replace(',','')) for n in numbers_in_response if float(n.replace(',','')) > 100]
-            if any(g > 200 for g in growth_numbers):
-                warnings.append("Unrealistic growth rate mentioned")
-                confidence -= 20
+            try:
+                growth_numbers = [float(n.replace(',','')) for n in numbers_in_response if float(n.replace(',','')) > 100]
+                if any(g > 200 for g in growth_numbers):
+                    warnings.append("Unrealistic growth rate mentioned")
+                    confidence -= 20
+            except (ValueError, TypeError):
+                pass  # Skip if can't parse numbers
         
         # Check 3: Negative P/E logic
-        if pe_ratio and pe_ratio < 0:
+        if pe_ratio and isinstance(pe_ratio, (int, float)) and pe_ratio < 0:
             if 'negative earnings' not in response.lower() and 'loss' not in response.lower():
                 warnings.append("Negative P/E not explained properly")
                 confidence -= 15

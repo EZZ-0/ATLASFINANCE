@@ -66,7 +66,7 @@ DATA_SOURCES = {
 
 # AI Models
 AI_CONFIG = {
-    'primary_model': 'gemini-2.0-flash-exp',
+    'primary_model': 'gemini-2.0-flash',  # Updated to stable model
     'fallback_model': 'ollama/llama3.1',
     'temperature': 0.3,
     'max_tokens': 2000,
