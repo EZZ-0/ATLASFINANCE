@@ -171,7 +171,56 @@ class USAFinancialExtractor:
     """
     Extracts financial data from USA public companies using multiple sources.
     Prioritizes SEC API for accuracy, falls back to yfinance for speed.
+    Now with FIELD-LEVEL FALLBACK for gap filling.
     """
+    
+    # Field priority map: which source to try first for each field type
+    FIELD_SOURCE_PRIORITY = {
+        # Financial statements - SEC most accurate
+        'revenue': ['sec', 'yfinance'],
+        'net_income': ['sec', 'yfinance'],
+        'total_assets': ['sec', 'yfinance'],
+        'total_liabilities': ['sec', 'yfinance'],
+        'total_equity': ['sec', 'yfinance'],
+        'operating_income': ['sec', 'yfinance'],
+        'gross_profit': ['sec', 'yfinance'],
+        'total_debt': ['sec', 'yfinance'],
+        'cash_and_equivalents': ['sec', 'yfinance'],
+        'free_cash_flow': ['sec', 'yfinance'],
+        
+        # Market data - yfinance better for real-time
+        'current_price': ['yfinance', 'sec'],
+        'market_cap': ['yfinance', 'sec'],
+        'volume': ['yfinance'],
+        'shares_outstanding': ['yfinance', 'sec'],
+        'beta': ['yfinance'],
+        'fifty_two_week_high': ['yfinance'],
+        'fifty_two_week_low': ['yfinance'],
+        
+        # Ratios - calculated from source data
+        'pe_ratio': ['yfinance', 'sec'],
+        'forward_pe': ['yfinance'],
+        'peg_ratio': ['yfinance'],
+        'price_to_book': ['yfinance', 'sec'],
+        'price_to_sales': ['yfinance', 'sec'],
+        'debt_to_equity': ['yfinance', 'sec'],
+        'current_ratio': ['yfinance', 'sec'],
+        'quick_ratio': ['yfinance', 'sec'],
+        'roe': ['yfinance', 'sec'],
+        'roa': ['yfinance', 'sec'],
+        
+        # Company info
+        'sector': ['yfinance', 'sec'],
+        'industry': ['yfinance', 'sec'],
+        'employees': ['yfinance', 'sec'],
+        'description': ['yfinance', 'sec'],
+        'company_name': ['yfinance', 'sec'],
+        
+        # Analyst/sentiment
+        'analyst_rating': ['yfinance'],
+        'target_price': ['yfinance'],
+        'recommendation': ['yfinance'],
+    }
     
     def __init__(self, user_agent: str = "AtlasFinancialIntelligence/2.0 (Educational Research; Python 3.13; Contact: research@atlas-fi.com)"):
         """
@@ -199,6 +248,9 @@ class USAFinancialExtractor:
             "company_info": 604800,    # 7 days for company info
             "default": 3600            # 1 hour default
         }
+        
+        # Track extraction sources for transparency
+        self._extraction_sources = {}
     
     # ==========================================
     # API REQUEST HELPERS WITH RETRY
@@ -919,7 +971,7 @@ class USAFinancialExtractor:
         if not is_valid:
             return {"status": "error", "message": result}
         
-        # AUTO mode: Try SEC first, fallback to yfinance
+        # AUTO mode: Try SEC first, fallback to yfinance, then FILL GAPS
         if source == "auto":
             print(f"\n[INFO] AUTO MODE: Extracting {ticker} ({result})")
             
@@ -927,10 +979,15 @@ class USAFinancialExtractor:
             sec_data = self.extract_from_sec(ticker, filing_types=filing_types)
             if "status" not in sec_data or sec_data["status"] != "error":
                 financials = sec_data
+                primary_source = "sec"
             else:
                 print("[WARN] SEC extraction failed, trying Yahoo Finance...")
                 # Fallback to yfinance
                 financials = self.extract_from_yfinance(ticker, fiscal_year_offset=fiscal_year_offset)
+                primary_source = "yfinance"
+            
+            # PHASE 1: Field-level gap filling
+            financials = self._fill_data_gaps(ticker, financials, primary_source)
         
         # Manual source selection
         elif source == "sec":
@@ -959,6 +1016,113 @@ class USAFinancialExtractor:
         if "status" not in financials or financials.get("status") != "error":
             self._cache_set(cache_key, financials, cache_type="financials")
             _logger.info(f"Cached financial data for {ticker}")
+        
+        return financials
+    
+    # ==========================================
+    # 4B. FIELD-LEVEL GAP FILLING (PHASE 1)
+    # ==========================================
+    
+    def _fill_data_gaps(self, ticker: str, financials: Dict, primary_source: str) -> Dict:
+        """
+        Fill missing fields by trying alternate sources.
+        
+        This is PHASE 1 of multi-source fusion:
+        - Identifies gaps (missing/null values)
+        - Tries alternate sources for just those fields
+        - Tracks which source provided each field
+        
+        Args:
+            ticker: Stock symbol
+            financials: Primary extraction results
+            primary_source: Which source was used ('sec' or 'yfinance')
+        
+        Returns:
+            financials dict with gaps filled
+        """
+        if not YFINANCE_AVAILABLE:
+            return financials
+        
+        # Track sources for transparency
+        if '_sources' not in financials:
+            financials['_sources'] = {}
+        
+        gaps_filled = 0
+        
+        # Fields to check for gaps
+        critical_fields = [
+            'current_price', 'market_cap', 'pe_ratio', 'forward_pe', 'peg_ratio',
+            'price_to_book', 'price_to_sales', 'roe', 'roa', 'debt_to_equity',
+            'current_ratio', 'quick_ratio', 'revenue_growth', 'earnings_growth',
+            'dividend_yield', 'beta', 'sector', 'industry', 'employees',
+            'fifty_two_week_high', 'fifty_two_week_low', 'shares_outstanding',
+            'target_price', 'recommendation'
+        ]
+        
+        # Identify gaps
+        gaps = []
+        for field in critical_fields:
+            value = financials.get(field)
+            if value is None or value == 'N/A' or value == '' or value == 0:
+                gaps.append(field)
+        
+        if not gaps:
+            print(f"   [GAP FILL] No gaps detected")
+            return financials
+        
+        print(f"   [GAP FILL] Found {len(gaps)} gaps: {', '.join(gaps[:5])}{'...' if len(gaps) > 5 else ''}")
+        
+        # If primary was SEC, try yfinance for gaps
+        if primary_source == 'sec':
+            try:
+                stock = yf.Ticker(ticker)
+                info = stock.info
+                
+                for field in gaps:
+                    # Map our field names to yfinance field names
+                    yf_field_map = {
+                        'current_price': ['currentPrice', 'regularMarketPrice'],
+                        'market_cap': ['marketCap'],
+                        'pe_ratio': ['trailingPE'],
+                        'forward_pe': ['forwardPE'],
+                        'peg_ratio': ['pegRatio'],
+                        'price_to_book': ['priceToBook'],
+                        'price_to_sales': ['priceToSalesTrailing12Months'],
+                        'roe': ['returnOnEquity'],
+                        'roa': ['returnOnAssets'],
+                        'debt_to_equity': ['debtToEquity'],
+                        'current_ratio': ['currentRatio'],
+                        'quick_ratio': ['quickRatio'],
+                        'revenue_growth': ['revenueGrowth'],
+                        'earnings_growth': ['earningsGrowth'],
+                        'dividend_yield': ['dividendYield'],
+                        'beta': ['beta'],
+                        'sector': ['sector'],
+                        'industry': ['industry'],
+                        'employees': ['fullTimeEmployees'],
+                        'fifty_two_week_high': ['fiftyTwoWeekHigh'],
+                        'fifty_two_week_low': ['fiftyTwoWeekLow'],
+                        'shares_outstanding': ['sharesOutstanding'],
+                        'target_price': ['targetMeanPrice'],
+                        'recommendation': ['recommendationKey'],
+                    }
+                    
+                    yf_keys = yf_field_map.get(field, [field])
+                    for yf_key in yf_keys:
+                        value = info.get(yf_key)
+                        if value is not None and value != '' and value != 0:
+                            financials[field] = value
+                            financials['_sources'][field] = 'yfinance'
+                            gaps_filled += 1
+                            break
+                
+                print(f"   [GAP FILL] Filled {gaps_filled} gaps from yfinance")
+                
+            except Exception as e:
+                print(f"   [GAP FILL] yfinance fallback failed: {e}")
+        
+        # If primary was yfinance, we could try SEC for gaps (future enhancement)
+        # For now, yfinance usually has most market data
         
         return financials
     

@@ -159,100 +159,72 @@ class FinancialAI:
     
     def _build_cfa_prompt(self, question: str, company_data: Dict, context_type: str = 'general') -> str:
         """
-        Build professional CFA-level prompt
-        
-        Args:
-            question: User's question
-            company_data: Financial metrics
-            context_type: 'general', 'explanation', 'comparison', 'recommendation'
+        Build prompt that forces AI to use actual extracted data - NO GENERIC RESPONSES
         """
         
-        # Extract key metrics
         ticker = company_data.get('ticker', 'N/A')
         company_name = company_data.get('company_name', ticker)
-        
-        # Financial metrics
-        pe_ratio = company_data.get('pe_ratio', 'N/A')
-        growth = company_data.get('growth_rate', 'N/A')
-        roe = company_data.get('roe', 'N/A')
-        debt_equity = company_data.get('debt_equity', 'N/A')
-        current_ratio = company_data.get('current_ratio', 'N/A')
-        
-        # Market data
-        price = company_data.get('current_price', 'N/A')
-        market_cap = company_data.get('market_cap', 'N/A')
         sector = company_data.get('sector', 'N/A')
         
-        base_prompt = f"""
-You are a CFA-certified financial analyst with 20 years of experience in equity research.
-Your analysis is professional, data-driven, and suitable for institutional investors.
-
-Company: {company_name} ({ticker})
-Sector: {sector}
-
-Key Financial Metrics:
-- Current Price: {price}
-- Market Cap: {market_cap}
-- P/E Ratio: {pe_ratio}
-- Growth Rate: {growth}
-- ROE: {roe}%
-- Debt/Equity: {debt_equity}
-- Current Ratio: {current_ratio}
-
-User Question: {question}
-
-"""
+        # Build data summary from ALL available metrics
+        data_lines = []
+        skip_keys = {'ticker', 'company_name', 'sector', 'industry'}
         
-        # Context-specific instructions
-        if context_type == 'explanation':
-            context_prompt = """
-Provide a clear, professional explanation of the metric.
-Include:
-1. Definition and calculation
-2. What it tells us about this company
-3. Industry context (how it compares to sector average)
-4. Investment implications
-
-Keep explanation concise (3-4 sentences) but authoritative.
-"""
+        for key, value in company_data.items():
+            if key in skip_keys:
+                continue
+            if value in [None, 'N/A', '', 0, 'N/A%']:
+                continue
+                
+            # Format numbers nicely
+            try:
+                if isinstance(value, (int, float)):
+                    if abs(value) >= 1e9:
+                        formatted = f"${value/1e9:.2f}B"
+                    elif abs(value) >= 1e6:
+                        formatted = f"${value/1e6:.2f}M"
+                    elif abs(value) >= 1e3:
+                        formatted = f"${value/1e3:.1f}K"
+                    elif abs(value) < 1 and abs(value) > 0 and 'ratio' not in key.lower():
+                        formatted = f"{value*100:.1f}%"
+                    else:
+                        formatted = f"{value:.2f}"
+                else:
+                    formatted = str(value)
+                
+                # Clean up the key name
+                clean_key = key.replace('_', ' ').title()
+                data_lines.append(f"• {clean_key}: {formatted}")
+            except:
+                continue
         
-        elif context_type == 'comparison':
-            context_prompt = """
-Provide a comprehensive comparison:
-1. Key metrics side-by-side
-2. Strengths and weaknesses of each
-3. Which is better for different investor profiles
-4. Risk-adjusted recommendation
-
-Be balanced and objective.
-"""
+        data_block = "\n".join(data_lines) if data_lines else "Limited data available"
         
-        elif context_type == 'recommendation':
-            context_prompt = """
-Provide investment recommendation:
-1. Current valuation assessment (Overvalued/Fair/Undervalued)
-2. Key catalysts and risks
-3. Target price range (if applicable)
-4. Investment rating: Buy / Hold / Sell
-5. Suitability for different investor types
+        prompt = f"""You are a direct financial analyst. Answer using the ACTUAL DATA provided below.
 
-IMPORTANT: Include disclaimer that this is analysis, not financial advice.
-"""
-        
-        else:  # general
-            context_prompt = """
-Provide professional analysis addressing the question.
-Include:
-1. Direct answer to the question
-2. Supporting financial data
-3. Industry context
-4. Investment implications
-5. Key risks or considerations
+═══════════════════════════════════════
+COMPANY: {company_name} ({ticker})
+SECTOR: {sector}
+═══════════════════════════════════════
 
-Be comprehensive but concise. Use professional financial terminology but explain when necessary.
-"""
+EXTRACTED FINANCIAL DATA:
+{data_block}
+
+═══════════════════════════════════════
+USER QUESTION: {question}
+═══════════════════════════════════════
+
+RULES (FOLLOW STRICTLY):
+1. START with the direct answer using numbers from above
+2. NEVER say "I cannot provide" or "check external sources" - DATA IS ABOVE
+3. Keep response under 150 words
+4. If asked about a metric, give the NUMBER first, then 1-2 sentences of context
+5. Compare to typical ranges (e.g., "P/E of 25 is above S&P average of ~22")
+6. If metric not in data, say "Not in extracted data" - don't lecture
+
+RESPOND:"""
         
-        return base_prompt + context_prompt
+        return prompt
     
     def _validate_response(self, response: str, company_data: Dict) -> Tuple[bool, int, List[str]]:
         """

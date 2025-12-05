@@ -1685,22 +1685,44 @@ if st.session_state.show_ai_chat:
             import traceback
             traceback.print_exc()
     
-    # Build company data
+    # Build COMPREHENSIVE company data for AI - pass ALL extracted metrics
     company_data = {}
     if st.session_state.financials:
         fin = st.session_state.financials
+        
+        # Basic info
         company_data = {
             'ticker': st.session_state.get('ticker', 'N/A'),
             'company_name': fin.get('company_name', st.session_state.get('ticker', 'N/A')),
             'sector': fin.get('sector', 'N/A'),
+            'industry': fin.get('industry', 'N/A'),
             'current_price': fin.get('current_price', 'N/A'),
             'market_cap': fin.get('market_cap', 'N/A'),
-            'pe_ratio': fin.get('pe_ratio', 'N/A'),
-            'growth_rate': fin.get('revenue_growth', 'N/A'),
-            'roe': fin.get('roe', 'N/A'),
-            'debt_equity': fin.get('debt_to_equity', 'N/A'),
-            'current_ratio': fin.get('current_ratio', 'N/A'),
         }
+        
+        # Add ALL ratios if available
+        if 'ratios' in fin:
+            try:
+                ratios_df = fin['ratios']
+                if hasattr(ratios_df, 'empty') and not ratios_df.empty:
+                    latest_col = ratios_df.columns[0]
+                    for idx in ratios_df.index:
+                        val = ratios_df.loc[idx, latest_col]
+                        if pd.notna(val) and val not in [None, 'N/A', '']:
+                            company_data[str(idx)] = val
+            except Exception:
+                pass
+        
+        # Add key metrics directly from fin dict
+        key_metrics = ['pe_ratio', 'forward_pe', 'peg_ratio', 'price_to_book', 'price_to_sales',
+                       'revenue', 'net_income', 'gross_margin', 'operating_margin', 'profit_margin',
+                       'roe', 'roa', 'roic', 'current_ratio', 'quick_ratio', 'debt_to_equity',
+                       'revenue_growth', 'earnings_growth', 'free_cash_flow', 'dividend_yield',
+                       'eps', 'book_value', 'total_debt', 'total_cash', 'shares_outstanding',
+                       'beta', 'fifty_two_week_high', 'fifty_two_week_low', 'average_volume']
+        for key in key_metrics:
+            if key in fin and fin[key] not in [None, 'N/A', '', 0]:
+                company_data[key] = fin[key]
     
     # AI Chat Container - Visible at top of page
     st.markdown("---")
