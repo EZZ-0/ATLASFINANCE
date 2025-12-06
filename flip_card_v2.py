@@ -1,22 +1,18 @@
 """
-FLIP CARD V2.2 - Professional with Real Equations
-=================================================
-Pure CSS flip animation with actual component breakdown.
-
-Back of card shows:
-- Formula with REAL numbers from extraction
-- Brief actionable insight
-- Color-coded benchmark status
+FLIP CARD V2.3 - Proper Streamlit Layout
+========================================
+Each card rendered in its own Streamlit column.
+Same size as st.metric() boxes.
 """
 
 import streamlit as st
 import streamlit.components.v1 as components
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 import pandas as pd
 import hashlib
 
 # ============================================================================
-# METRIC DEFINITIONS WITH COMPONENT KEYS
+# METRIC CONFIGURATIONS
 # ============================================================================
 
 METRIC_CONFIG = {
@@ -27,7 +23,6 @@ METRIC_CONFIG = {
         "insight": "Investor sentiment per $1 earnings",
         "benchmark": (15, 25),
         "higher_is_better": False,
-        "valid_range": (0, 500),
         "unit": "x"
     },
     "ROE": {
@@ -37,7 +32,6 @@ METRIC_CONFIG = {
         "insight": "Profit per shareholder dollar",
         "benchmark": (10, 20),
         "higher_is_better": True,
-        "valid_range": (-100, 200),
         "unit": "%"
     },
     "Debt_to_Equity": {
@@ -47,67 +41,42 @@ METRIC_CONFIG = {
         "insight": "Leverage risk. <1 is conservative",
         "benchmark": (0.5, 1.5),
         "higher_is_better": False,
-        "valid_range": (0, 50),
         "unit": "x"
     },
     "Gross_Margin": {
         "name": "Gross Margin",
         "formula_template": "({revenue} - {cogs}) ÷ {revenue}",
-        "components": ["revenue", "cogs", "gross_profit"],
+        "components": ["revenue", "cogs"],
         "insight": "Pricing power. >40% is strong",
         "benchmark": (30, 50),
         "higher_is_better": True,
-        "valid_range": (-50, 100),
         "unit": "%"
-    },
-    "Net_Margin": {
-        "name": "Net Margin",
-        "formula_template": "{net_income} ÷ {revenue}",
-        "components": ["net_income", "revenue"],
-        "insight": "Bottom line per $1 revenue",
-        "benchmark": (5, 15),
-        "higher_is_better": True,
-        "valid_range": (-100, 100),
-        "unit": "%"
-    },
-    "Current_Ratio": {
-        "name": "Current Ratio",
-        "formula_template": "{current_assets} ÷ {current_liab}",
-        "components": ["current_assets", "current_liab"],
-        "insight": "Short-term liquidity. >1.5 comfortable",
-        "benchmark": (1.0, 2.0),
-        "higher_is_better": True,
-        "valid_range": (0, 20),
-        "unit": "x"
     },
     "FCF_Yield": {
         "name": "FCF Yield",
         "formula_template": "{fcf} ÷ {market_cap}",
         "components": ["fcf", "market_cap"],
-        "insight": "Cash generation vs price. >5% attractive",
+        "insight": "Cash generation vs price",
         "benchmark": (3, 8),
         "higher_is_better": True,
-        "valid_range": (-50, 50),
         "unit": "%"
     },
     "Dividend_Yield": {
-        "name": "Div. Yield",
+        "name": "Div Yield",
         "formula_template": "{annual_div} ÷ {price}",
         "components": ["annual_div", "price"],
-        "insight": "Income return. >4% is high yield",
+        "insight": "Income return. >4% high yield",
         "benchmark": (2, 5),
         "higher_is_better": True,
-        "valid_range": (0, 20),
         "unit": "%"
     },
     "Beta": {
         "name": "Beta",
         "formula_template": "Cov(Stock,Mkt) ÷ Var(Mkt)",
         "components": [],
-        "insight": "Volatility vs market. >1 = more volatile",
+        "insight": "Volatility vs market",
         "benchmark": (0.8, 1.2),
         "higher_is_better": None,
-        "valid_range": (-2, 5),
         "unit": ""
     },
     "EPS": {
@@ -115,9 +84,8 @@ METRIC_CONFIG = {
         "formula_template": "{net_income} ÷ {shares}",
         "components": ["net_income", "shares"],
         "insight": "Earnings per share",
-        "benchmark": (1, 10),
+        "benchmark": None,
         "higher_is_better": True,
-        "valid_range": (-100, 1000),
         "unit": "$"
     },
     "current_price": {
@@ -127,42 +95,38 @@ METRIC_CONFIG = {
         "insight": "Compare to intrinsic value",
         "benchmark": None,
         "higher_is_better": None,
-        "valid_range": (0.01, 100000),
         "unit": "$"
     },
     "market_cap": {
         "name": "Market Cap",
         "formula_template": "{price} × {shares}",
         "components": ["price", "shares"],
-        "insight": "Company size. Large cap >$10B",
+        "insight": "Company size. >$10B = large cap",
         "benchmark": None,
         "higher_is_better": None,
-        "valid_range": (1e6, 1e14),
         "unit": "$"
     }
 }
 
 
-def fmt_num(val: Any, short: bool = True) -> str:
-    """Format number for display in equation."""
+def fmt_short(val: Any) -> str:
+    """Format number short for equations."""
     if val is None:
         return "N/A"
     try:
         num = float(val)
         if pd.isna(num):
             return "N/A"
-        if short:
-            if abs(num) >= 1e12:
-                return f"${num/1e12:.1f}T"
-            elif abs(num) >= 1e9:
-                return f"${num/1e9:.1f}B"
-            elif abs(num) >= 1e6:
-                return f"${num/1e6:.1f}M"
-            elif abs(num) >= 1000:
-                return f"${num/1000:.1f}K"
-            else:
-                return f"${num:.2f}"
-        return f"{num:.2f}"
+        if abs(num) >= 1e12:
+            return f"${num/1e12:.1f}T"
+        elif abs(num) >= 1e9:
+            return f"${num/1e9:.1f}B"
+        elif abs(num) >= 1e6:
+            return f"${num/1e6:.0f}M"
+        elif abs(num) >= 1000:
+            return f"${num/1000:.0f}K"
+        else:
+            return f"${num:.2f}"
     except:
         return "N/A"
 
@@ -170,158 +134,138 @@ def fmt_num(val: Any, short: bool = True) -> str:
 def get_color(value: float, metric_key: str) -> str:
     """Get color based on benchmark."""
     if value is None:
-        return "#6b7280"  # Gray
+        return "#6b7280"
     
     config = METRIC_CONFIG.get(metric_key, {})
     benchmark = config.get("benchmark")
     higher_is_better = config.get("higher_is_better")
     
     if benchmark is None or higher_is_better is None:
-        return "#60a5fa"  # Blue neutral
+        return "#60a5fa"
     
     low, high = benchmark
     
     if higher_is_better:
         if value >= high:
-            return "#10b981"  # Green
+            return "#10b981"
         elif value <= low:
-            return "#ef4444"  # Red
+            return "#ef4444"
         else:
-            return "#f59e0b"  # Yellow
+            return "#f59e0b"
     else:
         if value <= low:
-            return "#10b981"  # Green
+            return "#10b981"
         elif value >= high:
-            return "#ef4444"  # Red
+            return "#ef4444"
         else:
-            return "#f59e0b"  # Yellow
+            return "#f59e0b"
 
 
-def format_value(value: Any, unit: str, metric_key: str) -> str:
-    """Format the main display value."""
+def format_display(value: Any, unit: str, metric_key: str) -> tuple:
+    """Format value and return (formatted_string, numeric_for_color)."""
     if value is None:
-        return "N/A"
+        return "N/A", None
     
     try:
         num = float(value)
         if pd.isna(num):
-            return "N/A"
+            return "N/A", None
     except:
-        return "N/A"
+        return "N/A", None
     
-    # Handle decimal-to-percentage conversion
-    if unit == "%" and metric_key in ["ROE", "Gross_Margin", "Net_Margin", "FCF_Yield", "Dividend_Yield"]:
+    # Handle conversions
+    display_num = num
+    if unit == "%" and metric_key in ["ROE", "Gross_Margin", "FCF_Yield", "Dividend_Yield"]:
         if abs(num) < 1:
-            num = num * 100
+            display_num = num * 100
     
-    # Handle D/E stored as percentage
     if metric_key == "Debt_to_Equity" and num > 10:
-        num = num / 100
+        display_num = num / 100
     
-    # Format
+    # Format string
     if unit == "$":
-        if abs(num) >= 1e12:
-            return f"${num/1e12:.2f}T"
-        elif abs(num) >= 1e9:
-            return f"${num/1e9:.2f}B"
-        elif abs(num) >= 1e6:
-            return f"${num/1e6:.2f}M"
+        if abs(display_num) >= 1e12:
+            formatted = f"${display_num/1e12:.2f}T"
+        elif abs(display_num) >= 1e9:
+            formatted = f"${display_num/1e9:.2f}B"
+        elif abs(display_num) >= 1e6:
+            formatted = f"${display_num/1e6:.2f}M"
         else:
-            return f"${num:.2f}"
+            formatted = f"${display_num:.2f}"
     elif unit == "%":
-        return f"{num:.2f}%"
+        formatted = f"{display_num:.2f}%"
     elif unit == "x":
-        return f"{num:.2f}x"
+        formatted = f"{display_num:.2f}x"
     else:
-        return f"{num:.2f}"
+        formatted = f"{display_num:.2f}"
+    
+    return formatted, display_num
 
 
-def build_equation_html(metric_key: str, components: Dict) -> str:
-    """Build the actual equation with real numbers."""
+def build_equation(metric_key: str, comp: Dict) -> str:
+    """Build equation with real numbers."""
     config = METRIC_CONFIG.get(metric_key, {})
     template = config.get("formula_template", "")
     
     if not template:
         return ""
     
-    # Replace placeholders with actual values
-    equation = template
-    for comp_name in config.get("components", []):
-        comp_val = components.get(comp_name)
-        formatted = fmt_num(comp_val)
-        equation = equation.replace("{" + comp_name + "}", formatted)
+    result = template
+    for c in config.get("components", []):
+        val = comp.get(c)
+        result = result.replace("{" + c + "}", fmt_short(val))
     
-    # If any placeholders remain, they weren't found
-    if "{" in equation:
-        return template  # Return template without values
-    
-    return equation
+    return result
 
 
-def create_flip_card(
+def render_single_flip_card(
     metric_key: str,
     value: Any,
     label: str,
-    components: Dict,
-    card_id: str = None
-) -> str:
-    """Create a flip card with real equation on back."""
-    
-    if card_id is None:
-        card_id = hashlib.md5(f"{metric_key}_{label}".encode()).hexdigest()[:8]
+    comp: Dict,
+    card_id: str
+) -> None:
+    """Render one flip card using st.components.v1.html in current column."""
     
     config = METRIC_CONFIG.get(metric_key, {})
     unit = config.get("unit", "")
     insight = config.get("insight", "")
     benchmark = config.get("benchmark")
     
-    # Format value and get color
-    formatted = format_value(value, unit, metric_key)
-    
-    # Get actual numeric for color calculation
-    try:
-        num_val = float(value) if value else None
-        if num_val and unit == "%" and abs(num_val) < 1:
-            num_val = num_val * 100
-        if metric_key == "Debt_to_Equity" and num_val and num_val > 10:
-            num_val = num_val / 100
-    except:
-        num_val = None
-    
+    formatted, num_val = format_display(value, unit, metric_key)
     color = get_color(num_val, metric_key)
+    equation = build_equation(metric_key, comp)
     
-    # Build equation with actual numbers
-    equation = build_equation_html(metric_key, components)
-    
-    # Benchmark text
-    bench_html = ""
+    bench_text = ""
     if benchmark:
         low, high = benchmark
-        bench_html = f"<span style='color:#6e7681;font-size:0.55rem;'>Benchmark: {low}-{high}{unit}</span>"
+        bench_text = f"{low}-{high}{unit}"
     
+    # HTML for single card - fits in st.column
     html = f"""
     <style>
-        .fc-{card_id} {{
-            perspective: 800px;
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        .flip-wrap {{
+            perspective: 1000px;
             width: 100%;
-            height: 85px;
+            height: 100px;
             cursor: pointer;
-            -webkit-tap-highlight-color: transparent;
         }}
-        .fc-inner-{card_id} {{
+        .flip-inner {{
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.5s ease;
             transform-style: preserve-3d;
         }}
-        .fc-{card_id}:hover .fc-inner-{card_id} {{
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
+        .flip-wrap:hover .flip-inner {{
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-radius: 8px;
         }}
-        .fc-{card_id}.flipped .fc-inner-{card_id} {{
+        .flip-wrap.flipped .flip-inner {{
             transform: rotateY(180deg);
         }}
-        .fc-front-{card_id}, .fc-back-{card_id} {{
+        .flip-front, .flip-back {{
             position: absolute;
             width: 100%;
             height: 100%;
@@ -331,106 +275,63 @@ def create_flip_card(
             display: flex;
             flex-direction: column;
             justify-content: center;
-            padding: 8px 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            border-left: 3px solid {color};
-            background: linear-gradient(145deg, #1a2332 0%, #0d1117 100%);
+            padding: 12px;
+            background: linear-gradient(180deg, #262c36 0%, #1a1f27 100%);
+            border: 1px solid #363d47;
         }}
-        .fc-back-{card_id} {{
+        .flip-back {{
             transform: rotateY(180deg);
         }}
-        .fc-lbl-{card_id} {{
+        .label {{
             color: #8b949e;
-            font-size: 0.65rem;
+            font-size: 0.75rem;
             font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            margin-bottom: 3px;
+            margin-bottom: 6px;
         }}
-        .fc-val-{card_id} {{
+        .value {{
             color: {color};
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            font-family: 'SF Mono', 'Consolas', monospace;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }}
-        .fc-eq-{card_id} {{
+        .equation {{
             color: #58a6ff;
-            font-size: 0.6rem;
+            font-size: 0.7rem;
             font-family: 'SF Mono', 'Consolas', monospace;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            margin-bottom: 6px;
+            word-break: break-all;
         }}
-        .fc-ins-{card_id} {{
+        .insight {{
             color: #c9d1d9;
-            font-size: 0.62rem;
-            line-height: 1.25;
+            font-size: 0.7rem;
+            line-height: 1.3;
+        }}
+        .bench {{
+            color: #6e7681;
+            font-size: 0.6rem;
+            margin-top: 4px;
         }}
     </style>
-    <div class="fc-{card_id}" onclick="this.classList.toggle('flipped')">
-        <div class="fc-inner-{card_id}">
-            <div class="fc-front-{card_id}">
-                <div class="fc-lbl-{card_id}">{label}</div>
-                <div class="fc-val-{card_id}">{formatted}</div>
+    <div class="flip-wrap" onclick="this.classList.toggle('flipped')">
+        <div class="flip-inner">
+            <div class="flip-front">
+                <div class="label">{label}</div>
+                <div class="value">{formatted}</div>
             </div>
-            <div class="fc-back-{card_id}">
-                <div class="fc-eq-{card_id}">{equation}</div>
-                <div class="fc-ins-{card_id}">{insight}</div>
-                {bench_html}
+            <div class="flip-back">
+                <div class="equation">{equation}</div>
+                <div class="insight">{insight}</div>
+                <div class="bench">{bench_text}</div>
             </div>
         </div>
     </div>
     """
     
-    return html
-
-
-def render_flip_cards_grid(metrics: List[Dict], components: Dict, columns: int = 5) -> None:
-    """Render grid of flip cards."""
-    
-    if not metrics:
-        return
-    
-    rows = (len(metrics) + columns - 1) // columns
-    height = rows * 95 + 15
-    
-    grid_html = f"""
-    <style>
-        .flip-grid {{
-            display: grid;
-            grid-template-columns: repeat({columns}, 1fr);
-            gap: 8px;
-            padding: 4px;
-        }}
-        @media (max-width: 900px) {{
-            .flip-grid {{ grid-template-columns: repeat(3, 1fr); }}
-        }}
-        @media (max-width: 600px) {{
-            .flip-grid {{ grid-template-columns: repeat(2, 1fr); }}
-        }}
-    </style>
-    <div class="flip-grid">
-    """
-    
-    for i, m in enumerate(metrics):
-        card = create_flip_card(
-            metric_key=m.get("key", f"m{i}"),
-            value=m.get("value"),
-            label=m.get("label", "Metric"),
-            components=components,
-            card_id=f"c{i}_{hashlib.md5(str(m).encode()).hexdigest()[:4]}"
-        )
-        grid_html += f"<div>{card}</div>"
-    
-    grid_html += "</div>"
-    
-    components_module = components  # Avoid name conflict
-    st.components.v1.html(grid_html, height=height, scrolling=False)
+    components.html(html, height=110)
 
 
 def render_dashboard_flip_cards(financials: Dict) -> None:
-    """Render dashboard with actual equation components."""
+    """Render dashboard flip cards using Streamlit columns."""
     
     info = financials.get('info', {})
     market_data = financials.get('market_data', {})
@@ -455,77 +356,69 @@ def render_dashboard_flip_cards(financials: Dict) -> None:
                         return v
         return default
     
-    # Extract all component values for equations
-    price = get_val(['currentPrice', 'current_price', 'regularMarketPrice'])
+    # Extract components for equations
+    price = get_val(['currentPrice', 'current_price'])
     eps = get_val(['trailingEps', 'eps'])
     net_income = get_val(['netIncome', 'net_income'])
     revenue = get_val(['totalRevenue', 'revenue'])
     gross_profit = get_val(['grossProfit', 'gross_profit'])
-    cogs = None
-    if revenue and gross_profit:
-        cogs = revenue - gross_profit
+    cogs = (revenue - gross_profit) if revenue and gross_profit else None
     total_debt = get_val(['totalDebt', 'total_debt'])
     equity = get_val(['totalStockholderEquity', 'stockholdersEquity', 'total_equity'])
     shares = get_val(['sharesOutstanding', 'shares_outstanding'])
     market_cap = get_val(['marketCap', 'market_cap'])
     fcf = get_val(['freeCashflow', 'free_cash_flow'])
     annual_div = get_val(['dividendRate', 'annual_dividend'])
-    current_assets = get_val(['totalCurrentAssets', 'current_assets'])
-    current_liab = get_val(['totalCurrentLiabilities', 'current_liabilities'])
     
-    # Components dict for equation building
     comp = {
-        "price": price,
-        "eps": eps,
-        "net_income": net_income,
-        "revenue": revenue,
-        "gross_profit": gross_profit,
-        "cogs": cogs,
-        "total_debt": total_debt,
-        "equity": equity,
-        "shares": shares,
-        "market_cap": market_cap,
-        "fcf": fcf,
-        "annual_div": annual_div,
-        "current_assets": current_assets,
-        "current_liab": current_liab
+        "price": price, "eps": eps, "net_income": net_income, "revenue": revenue,
+        "cogs": cogs, "total_debt": total_debt, "equity": equity, "shares": shares,
+        "market_cap": market_cap, "fcf": fcf, "annual_div": annual_div
     }
     
-    # Calculate derived values
+    # Get metric values
     pe_ratio = get_val(['trailingPE', 'PE_Ratio', 'pe_ratio'])
     roe = get_val(['ROE', 'roe', 'returnOnEquity'])
     de_ratio = get_val(['Debt_to_Equity', 'debt_to_equity', 'debtToEquity'])
     gross_margin = get_val(['Gross_Margin', 'gross_margin', 'grossMargins'])
-    
-    fcf_yield = None
-    if fcf and market_cap and market_cap > 0:
-        fcf_yield = (fcf / market_cap) * 100
-    
+    fcf_yield = (fcf / market_cap * 100) if fcf and market_cap and market_cap > 0 else None
     div_yield = get_val(['dividendYield'])
     if div_yield and div_yield < 1:
         div_yield = div_yield * 100
-    
     beta = get_val(['beta'])
-    
-    metrics = [
-        {"key": "PE_Ratio", "value": pe_ratio, "label": "P/E"},
-        {"key": "current_price", "value": price, "label": "Price"},
-        {"key": "ROE", "value": roe, "label": "ROE"},
-        {"key": "Debt_to_Equity", "value": de_ratio, "label": "D/E"},
-        {"key": "Gross_Margin", "value": gross_margin, "label": "Gross Margin"},
-        {"key": "EPS", "value": eps, "label": "EPS"},
-        {"key": "market_cap", "value": market_cap, "label": "Mkt Cap"},
-        {"key": "FCF_Yield", "value": fcf_yield, "label": "FCF Yield"},
-        {"key": "Beta", "value": beta, "label": "Beta"},
-        {"key": "Dividend_Yield", "value": div_yield, "label": "Div Yield"},
-    ]
     
     st.markdown("### Key Metrics")
     st.caption("Click any card to see equation & insight")
     
-    render_flip_cards_grid(metrics, comp, columns=5)
+    # Row 1 - 5 columns (same as st.metric layout)
+    c1, c2, c3, c4, c5 = st.columns(5)
+    
+    with c1:
+        render_single_flip_card("PE_Ratio", pe_ratio, "P/E Ratio", comp, "pe")
+    with c2:
+        render_single_flip_card("current_price", price, "Price", comp, "price")
+    with c3:
+        render_single_flip_card("ROE", roe, "ROE", comp, "roe")
+    with c4:
+        render_single_flip_card("Debt_to_Equity", de_ratio, "D/E Ratio", comp, "de")
+    with c5:
+        render_single_flip_card("Gross_Margin", gross_margin, "Gross Margin", comp, "gm")
+    
+    # Row 2 - 5 columns
+    c6, c7, c8, c9, c10 = st.columns(5)
+    
+    with c6:
+        render_single_flip_card("EPS", eps, "EPS", comp, "eps")
+    with c7:
+        render_single_flip_card("market_cap", market_cap, "Market Cap", comp, "mc")
+    with c8:
+        render_single_flip_card("FCF_Yield", fcf_yield, "FCF Yield", comp, "fcf")
+    with c9:
+        render_single_flip_card("Beta", beta, "Beta", comp, "beta")
+    with c10:
+        render_single_flip_card("Dividend_Yield", div_yield, "Div Yield", comp, "div")
 
 
 # Exports
-METRIC_INSIGHTS = METRIC_CONFIG  # Alias for compatibility
-__all__ = ['render_dashboard_flip_cards', 'render_flip_cards_grid', 'METRIC_INSIGHTS', 'METRIC_CONFIG']
+METRIC_INSIGHTS = METRIC_CONFIG
+__all__ = ['render_dashboard_flip_cards', 'METRIC_INSIGHTS', 'METRIC_CONFIG']
