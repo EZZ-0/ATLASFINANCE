@@ -46,15 +46,24 @@ def cached_extract_financials(
     This prevents rate limiting on Streamlit Cloud.
     
     Note: filing_types must be tuple (not list) for Streamlit caching.
+    IMPORTANT: Error results raise exceptions (not cached).
     """
     extractor = USAFinancialExtractor()
-    return extractor.extract_financials(
+    result = extractor.extract_financials(
         ticker, 
         source=source,
         fiscal_year_offset=fiscal_year_offset,
         filing_types=list(filing_types),  # Convert back to list for the backend
         include_quant=include_quant
     )
+    
+    # DON'T cache error results - raise exception instead
+    # This ensures rate limit errors aren't cached for 1 hour
+    if result.get("status") == "error":
+        error_msg = result.get("message", "Extraction failed")
+        raise Exception(error_msg)
+    
+    return result
 
 def get_cache_key(ticker: str) -> str:
     """Generate a cache key for tracking"""
@@ -1399,7 +1408,21 @@ if not st.session_state.get('data_extracted', False):
                             st.error(f"Extraction failed: {financials.get('message', 'No data returned')}")
                     
                     except Exception as e:
-                        st.error(f"Error during extraction: {str(e)}")
+                        error_str = str(e).lower()
+                        if 'rate limit' in error_str or 'too many requests' in error_str or '429' in error_str:
+                            st.error("⏳ Rate Limited by Yahoo Finance")
+                            st.info("""
+                            **What happened:** Too many requests were made to Yahoo Finance.
+                            
+                            **Solutions:**
+                            1. **Wait 1-2 minutes** and try again
+                            2. **Try a different ticker** - it might be cached
+                            3. **Check back later** - data is cached for 1 hour once loaded
+                            
+                            *This happens on Streamlit Cloud due to shared IP addresses.*
+                            """)
+                        else:
+                            st.error(f"Error during extraction: {str(e)}")
         else:
             st.button("EXTRACT DATA", type="primary", use_container_width=True, disabled=True)
     
