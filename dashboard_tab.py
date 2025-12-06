@@ -18,7 +18,15 @@ import streamlit as st
 import pandas as pd
 from typing import Dict, Any
 
-# Import flip card components with fallback
+# Import flip card V2 (Quizlet-style smooth animation)
+try:
+    from flip_card_v2 import render_dashboard_flip_cards, PROFESSIONAL_DEFINITIONS
+    FLIP_CARDS_V2 = True
+except ImportError:
+    FLIP_CARDS_V2 = False
+    PROFESSIONAL_DEFINITIONS = {}
+
+# Legacy flip cards (fallback)
 try:
     from flip_card_component import FlipCardMetric, RATIO_DEFINITIONS
     FLIP_CARDS_AVAILABLE = True
@@ -43,22 +51,14 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
         st.warning("Load company data first to view dashboard")
         return
     
-    # Depth selector for flip cards (if available)
-    if FLIP_CARDS_AVAILABLE:
-        depth_col1, depth_col2 = st.columns([3, 1])
-        with depth_col1:
-            st.markdown("### Key Metrics")
-            st.caption("Click any metric to see formula & breakdown")
-        with depth_col2:
-            depth = st.radio(
-                "Explanation Level",
-                options=["beginner", "intermediate", "professional"],
-                format_func=lambda x: {"beginner": "Beginner", "intermediate": "Intermediate", "professional": "CFA Level"}[x],
-                horizontal=True,
-                label_visibility="collapsed",
-                key="dashboard_depth_selector"
-            )
-        display_key_metrics_flip(financials, depth)
+    # Use V2 Quizlet-style flip cards (smooth animation, no depth selector)
+    if FLIP_CARDS_V2:
+        render_dashboard_flip_cards(financials)
+    elif FLIP_CARDS_AVAILABLE:
+        # Legacy fallback with depth selector
+        st.markdown("### Key Metrics")
+        st.caption("Click any metric to see formula & breakdown")
+        display_key_metrics_flip(financials, "professional")
     else:
         st.markdown("### Key Metrics")
         display_key_metrics(financials)
