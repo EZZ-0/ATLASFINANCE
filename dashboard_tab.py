@@ -20,19 +20,15 @@ from typing import Dict, Any
 
 # Import flip card V2 (Quizlet-style smooth animation)
 try:
-    from flip_card_v2 import render_dashboard_flip_cards, PROFESSIONAL_DEFINITIONS
+    from flip_card_v2 import render_dashboard_flip_cards, METRIC_INSIGHTS
     FLIP_CARDS_V2 = True
-except ImportError:
+    print("[DEBUG] flip_card_v2 imported successfully")
+except ImportError as e:
     FLIP_CARDS_V2 = False
-    PROFESSIONAL_DEFINITIONS = {}
+    METRIC_INSIGHTS = {}
+    print(f"[DEBUG] flip_card_v2 import failed: {e}")
 
-# Legacy flip cards (fallback)
-try:
-    from flip_card_component import FlipCardMetric, RATIO_DEFINITIONS
-    FLIP_CARDS_AVAILABLE = True
-except ImportError:
-    FLIP_CARDS_AVAILABLE = False
-    RATIO_DEFINITIONS = {}
+# NO LEGACY FLIP CARDS - removed the old button-based implementation
 
 def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
     """
@@ -51,15 +47,11 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
         st.warning("Load company data first to view dashboard")
         return
     
-    # Use V2 Quizlet-style flip cards (smooth animation, no depth selector)
+    # V2 Quizlet-style flip cards (pure CSS animation, no server round-trip)
     if FLIP_CARDS_V2:
         render_dashboard_flip_cards(financials)
-    elif FLIP_CARDS_AVAILABLE:
-        # Legacy fallback with depth selector
-        st.markdown("### Key Metrics")
-        st.caption("Click any metric to see formula & breakdown")
-        display_key_metrics_flip(financials, "professional")
     else:
+        # Simple metrics fallback (NO old button-based flip - too slow)
         st.markdown("### Key Metrics")
         display_key_metrics(financials)
     
