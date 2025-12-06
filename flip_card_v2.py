@@ -234,10 +234,21 @@ def render_single_flip_card(
     
     formatted, num_val = format_display(value, unit, metric_key)
     color = get_color(num_val, metric_key)
-    equation = build_equation(metric_key, comp)
+    
+    # Only show equation if value is available
+    is_na = formatted == "N/A" or num_val is None
+    if is_na:
+        equation = ""
+        insight = "Data not available from source"
+        color = "#6b7280"  # Gray for N/A
+    else:
+        equation = build_equation(metric_key, comp)
+        # If equation still has N/A, simplify it
+        if "N/A" in equation:
+            equation = config.get("formula_template", "").replace("{", "").replace("}", "")
     
     bench_text = ""
-    if benchmark:
+    if benchmark and not is_na:
         low, high = benchmark
         bench_text = f"{low}-{high}{unit}"
     
@@ -283,10 +294,11 @@ def render_single_flip_card(
             transform: rotateY(180deg);
         }}
         .label {{
-            color: #8b949e;
-            font-size: 0.75rem;
-            font-weight: 500;
-            margin-bottom: 6px;
+            color: #c9d1d9;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
         }}
         .value {{
             color: {color};
@@ -296,19 +308,19 @@ def render_single_flip_card(
         }}
         .equation {{
             color: #58a6ff;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
             font-family: 'SF Mono', 'Consolas', monospace;
             margin-bottom: 6px;
             word-break: break-all;
         }}
         .insight {{
-            color: #c9d1d9;
-            font-size: 0.7rem;
-            line-height: 1.3;
+            color: #e6edf3;
+            font-size: 0.72rem;
+            line-height: 1.35;
         }}
         .bench {{
-            color: #6e7681;
-            font-size: 0.6rem;
+            color: #8b949e;
+            font-size: 0.65rem;
             margin-top: 4px;
         }}
     </style>
