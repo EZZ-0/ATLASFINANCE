@@ -29,6 +29,17 @@ from balance_sheet_health import analyze_balance_sheet_health
 from management_effectiveness import analyze_management_effectiveness
 from growth_quality import analyze_growth_quality
 
+# Import flip card metrics with fallback
+try:
+    from analysis_tab_metrics import (
+        render_earnings_flip_metrics, render_dividend_flip_metrics,
+        render_valuation_flip_metrics, render_cashflow_flip_metrics,
+        render_balance_flip_metrics, render_management_flip_metrics,
+        render_growth_flip_metrics, FLIP_CARDS_AVAILABLE
+    )
+except ImportError:
+    FLIP_CARDS_AVAILABLE = False
+
 
 def icon(name: str, size: str = '1em') -> str:
     """
@@ -82,17 +93,21 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if earnings_data['status'] == 'success':
             metrics = earnings_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Earnings Score", f"{metrics.get('earnings_score', 0)}/100",
-                         help="Overall earnings quality: Beat rate + Surprise + Growth + Consistency")
-            with col2:
-                st.metric("Beat Rate", f"{metrics.get('beat_rate', 0)}%")
-            with col3:
-                st.metric("Avg Surprise", f"{metrics.get('average_surprise_pct', 0)}%")
-            with col4:
-                st.metric("Quality Ratio", f"{metrics.get('quality_ratio', 0):.2f}")
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_earnings_flip_metrics(earnings_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Earnings Score", f"{metrics.get('earnings_score', 0)}/100",
+                             help="Overall earnings quality: Beat rate + Surprise + Growth + Consistency")
+                with col2:
+                    st.metric("Beat Rate", f"{metrics.get('beat_rate', 0)}%")
+                with col3:
+                    st.metric("Avg Surprise", f"{metrics.get('average_surprise_pct', 0)}%")
+                with col4:
+                    st.metric("Quality Ratio", f"{metrics.get('quality_ratio', 0):.2f}")
             
             st.markdown("---")
             
@@ -139,17 +154,21 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if dividend_data['status'] == 'success':
             metrics = dividend_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Dividend Score", f"{metrics.get('dividend_score', 0)}/100",
-                         help="Overall dividend quality: Yield + Growth + Sustainability + Consistency")
-            with col2:
-                st.metric("Annual Dividend", f"${metrics.get('annual_dividend', 0):.2f}")
-            with col3:
-                st.metric("Yield", f"{metrics.get('dividend_yield', 0)}%")
-            with col4:
-                st.metric("Payout Ratio", f"{metrics.get('payout_ratio', 0)}%")
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_dividend_flip_metrics(dividend_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Dividend Score", f"{metrics.get('dividend_score', 0)}/100",
+                             help="Overall dividend quality: Yield + Growth + Sustainability + Consistency")
+                with col2:
+                    st.metric("Annual Dividend", f"${metrics.get('annual_dividend', 0):.2f}")
+                with col3:
+                    st.metric("Yield", f"{metrics.get('dividend_yield', 0)}%")
+                with col4:
+                    st.metric("Payout Ratio", f"{metrics.get('payout_ratio', 0)}%")
             
             st.markdown("---")
             
@@ -209,6 +228,11 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         
         if valuation_data['status'] == 'success':
             metrics = valuation_data['metrics']
+            
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_valuation_flip_metrics(valuation_data)
+                st.markdown("---")
             
             # P/E Ratios
             st.markdown(f"#### {icon('percent', '1.1em')} P/E Ratios", unsafe_allow_html=True)
@@ -284,19 +308,23 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if cashflow_data['status'] == 'success':
             metrics = cashflow_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("CF Score", f"{metrics.get('cashflow_score', 0)}/100",
-                         help="Cash flow quality: FCF Consistency + Conversion + Earnings Quality + Margins")
-            with col2:
-                if 'free_cash_flow' in metrics:
-                    fcf = metrics['free_cash_flow'] / 1e9
-                    st.metric("FCF", f"${fcf:.2f}B")
-            with col3:
-                st.metric("FCF Margin", f"{metrics.get('fcf_margin', 0)}%")
-            with col4:
-                st.metric("OCF Margin", f"{metrics.get('ocf_margin', 0)}%")
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_cashflow_flip_metrics(cashflow_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("CF Score", f"{metrics.get('cashflow_score', 0)}/100",
+                             help="Cash flow quality: FCF Consistency + Conversion + Earnings Quality + Margins")
+                with col2:
+                    if 'free_cash_flow' in metrics:
+                        fcf = metrics['free_cash_flow'] / 1e9
+                        st.metric("FCF", f"${fcf:.2f}B")
+                with col3:
+                    st.metric("FCF Margin", f"{metrics.get('fcf_margin', 0)}%")
+                with col4:
+                    st.metric("OCF Margin", f"{metrics.get('ocf_margin', 0)}%")
             
             st.markdown("---")
             
@@ -349,19 +377,23 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if bs_data['status'] == 'success':
             metrics = bs_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("BS Score", f"{metrics.get('balance_sheet_score', 0)}/100",
-                         help="Balance sheet strength: Liquidity + Leverage + Asset Quality + Debt Coverage")
-            with col2:
-                st.metric("Current Ratio", metrics.get('current_ratio', 'N/A'))
-            with col3:
-                st.metric("D/E Ratio", metrics.get('debt_to_equity', 'N/A'))
-            with col4:
-                if 'working_capital' in metrics:
-                    wc = metrics['working_capital'] / 1e9
-                    st.metric("Working Capital", f"${wc:.2f}B")
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_balance_flip_metrics(bs_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("BS Score", f"{metrics.get('balance_sheet_score', 0)}/100",
+                             help="Balance sheet strength: Liquidity + Leverage + Asset Quality + Debt Coverage")
+                with col2:
+                    st.metric("Current Ratio", metrics.get('current_ratio', 'N/A'))
+                with col3:
+                    st.metric("D/E Ratio", metrics.get('debt_to_equity', 'N/A'))
+                with col4:
+                    if 'working_capital' in metrics:
+                        wc = metrics['working_capital'] / 1e9
+                        st.metric("Working Capital", f"${wc:.2f}B")
             
             st.markdown("---")
             
@@ -421,17 +453,21 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if mgmt_data['status'] == 'success':
             metrics = mgmt_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Mgmt Score", f"{metrics.get('management_score', 0)}/100",
-                         help="Management effectiveness: ROE + ROA + Asset Efficiency + Profitability + Productivity")
-            with col2:
-                st.metric("ROE", f"{metrics.get('return_on_equity', 'N/A')}%")
-            with col3:
-                st.metric("ROA", f"{metrics.get('return_on_assets', 'N/A')}%")
-            with col4:
-                st.metric("Asset Turnover", metrics.get('asset_turnover', 'N/A'))
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_management_flip_metrics(mgmt_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Mgmt Score", f"{metrics.get('management_score', 0)}/100",
+                             help="Management effectiveness: ROE + ROA + Asset Efficiency + Profitability + Productivity")
+                with col2:
+                    st.metric("ROE", f"{metrics.get('return_on_equity', 'N/A')}%")
+                with col3:
+                    st.metric("ROA", f"{metrics.get('return_on_assets', 'N/A')}%")
+                with col4:
+                    st.metric("Asset Turnover", metrics.get('asset_turnover', 'N/A'))
             
             st.markdown("---")
             
@@ -518,17 +554,21 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         if growth_data['status'] == 'success':
             metrics = growth_data['metrics']
             
-            # Top-level metrics
-            col1, col2, col3, col4 = st.columns(4)
-            with col1:
-                st.metric("Growth Score", f"{metrics.get('growth_quality_score', 0)}/100",
-                         help="Growth quality: Revenue Growth + Consistency + Profitability Trend + Self-Funding Ability")
-            with col2:
-                st.metric("Revenue Growth", f"{metrics.get('revenue_growth_rate', 'N/A')}%")
-            with col3:
-                st.metric("Earnings Growth", f"{metrics.get('earnings_growth_rate', 'N/A')}%")
-            with col4:
-                st.metric("Momentum", metrics.get('growth_momentum', 'N/A'))
+            # Flip card metrics at top (if available)
+            if FLIP_CARDS_AVAILABLE:
+                render_growth_flip_metrics(growth_data)
+            else:
+                # Fallback to standard metrics
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("Growth Score", f"{metrics.get('growth_quality_score', 0)}/100",
+                             help="Growth quality: Revenue Growth + Consistency + Profitability Trend + Self-Funding Ability")
+                with col2:
+                    st.metric("Revenue Growth", f"{metrics.get('revenue_growth_rate', 'N/A')}%")
+                with col3:
+                    st.metric("Earnings Growth", f"{metrics.get('earnings_growth_rate', 'N/A')}%")
+                with col4:
+                    st.metric("Momentum", metrics.get('growth_momentum', 'N/A'))
             
             st.markdown("---")
             
