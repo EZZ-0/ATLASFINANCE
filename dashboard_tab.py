@@ -8,11 +8,23 @@ Layout: 2x3 grid + summary metrics
 - Profitability  | Cash Flow
 - Valuation      | Growth Metrics
 - Summary Cards (full width)
+
+Phase 1: Flip Card Integration
+- Key metrics now use FlipCardMetric for educational breakdown
+- Click any metric to see formula, components, and 3-depth explanation
 """
 
 import streamlit as st
 import pandas as pd
 from typing import Dict, Any
+
+# Import flip card components with fallback
+try:
+    from flip_card_component import FlipCardMetric, RATIO_DEFINITIONS
+    FLIP_CARDS_AVAILABLE = True
+except ImportError:
+    FLIP_CARDS_AVAILABLE = False
+    RATIO_DEFINITIONS = {}
 
 def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
     """
@@ -31,9 +43,25 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
         st.warning("Load company data first to view dashboard")
         return
     
-    # Summary metrics at top
-    st.markdown("### Key Metrics")
-    display_key_metrics(financials)
+    # Depth selector for flip cards (if available)
+    if FLIP_CARDS_AVAILABLE:
+        depth_col1, depth_col2 = st.columns([3, 1])
+        with depth_col1:
+            st.markdown("### Key Metrics")
+            st.caption("Click any metric to see formula & breakdown")
+        with depth_col2:
+            depth = st.radio(
+                "Explanation Level",
+                options=["beginner", "intermediate", "professional"],
+                format_func=lambda x: {"beginner": "Beginner", "intermediate": "Intermediate", "professional": "CFA Level"}[x],
+                horizontal=True,
+                label_visibility="collapsed",
+                key="dashboard_depth_selector"
+            )
+        display_key_metrics_flip(financials, depth)
+    else:
+        st.markdown("### Key Metrics")
+        display_key_metrics(financials)
     
     st.markdown("---")
     st.markdown("### Charts Overview")
@@ -321,6 +349,340 @@ def display_key_metrics(financials: Dict[str, Any]):
                 st.metric("Free Cash Flow", 'N/A')
         else:
             st.metric("Free Cash Flow", 'N/A')
+
+
+def display_key_metrics_flip(financials: Dict[str, Any], depth: str = "beginner"):
+    """
+    Display key metrics as flip cards with educational breakdown
+    
+    Args:
+        financials: Financial data dictionary
+        depth: Explanation level (beginner, intermediate, professional)
+    """
+    
+    # Helper function to extract metrics (same as original)
+    def get_metric(key, default=None):
+        # Try top-level first
+        value = financials.get(key, None)
+        if value is not None and value != 'N/A':
+            return value
+        
+        # Try in ratios (transposed DataFrame)
+        ratios = financials.get('ratios', None)
+        if ratios is not None and isinstance(ratios, pd.DataFrame) and not ratios.empty:
+            ratio_mapping = {
+                'current_price': 'Current_Price',
+                'pe_ratio': 'PE_Ratio',
+                'roe': 'ROE',
+                'revenue': 'Revenue',
+                'net_income': 'Net_Income',
+                'debt_to_equity': 'Debt_to_Equity'
+            }
+            if key in ratios.index:
+                val = ratios.loc[key].iloc[0] if len(ratios.columns) > 0 else default
+                if pd.notna(val):
+                    return val
+            mapped_key = ratio_mapping.get(key)
+            if mapped_key and mapped_key in ratios.index:
+                val = ratios.loc[mapped_key].iloc[0] if len(ratios.columns) > 0 else default
+                if pd.notna(val):
+                    return val
+        
+        # Try in market_data dict
+        market_data = financials.get('market_data', {})
+        if isinstance(market_data, dict) and key in market_data:
+            return market_data[key]
+        
+        # Try in info dict
+        info = financials.get('info', {})
+        if isinstance(info, dict) and key in info:
+            return info[key]
+        
+        # Try income statement
+        income = financials.get('income_statement', pd.DataFrame())
+        if not income.empty and isinstance(income.index[0], str):
+            search_terms = {'revenue': ['Total Revenue', 'Revenue'], 'net_income': ['Net Income']}
+            for search_term in search_terms.get(key, [key]):
+                for idx in income.index:
+                    if search_term.lower() in str(idx).lower():
+                        val = income.loc[idx, income.columns[0]]
+                        if pd.notna(val):
+                            return val
+        
+        return default
+    
+    # Get info dict for additional metrics
+    info = financials.get('info', {})
+    
+    # Define all 10 metrics with their configurations
+    metrics_config = [
+        # Row 1
+        {"key": "PE_Ratio", "value": get_metric('pe_ratio'), "label": "P/E Ratio", 
+         "unit": "x", "higher_is_better": False, "benchmark_low": 15, "benchmark_high": 25},
+        {"key": "current_price", "value": get_metric('current_price'), "label": "Current Price", 
+         "unit": "$", "higher_is_better": True},
+        {"key": "revenue", "value": get_metric('revenue'), "label": "Revenue (TTM)", 
+         "unit": "$", "format_large": True, "higher_is_better": True},
+        {"key": "net_income", "value": get_metric('net_income'), "label": "Net Income", 
+         "unit": "$", "format_large": True, "higher_is_better": True},
+        {"key": "ROE", "value": get_metric('roe'), "label": "ROE", 
+         "unit": "%", "is_pct": True, "higher_is_better": True, "benchmark_low": 10, "benchmark_high": 20},
+        # Row 2
+        {"key": "EPS", "value": info.get('trailingEps'), "label": "EPS (TTM)", 
+         "unit": "$", "higher_is_better": True},
+        {"key": "forward_eps", "value": info.get('forwardEps'), "label": "Forward EPS", 
+         "unit": "$", "higher_is_better": True},
+        {"key": "market_cap", "value": info.get('marketCap') or get_metric('market_cap'), "label": "Market Cap", 
+         "unit": "$", "format_large": True, "higher_is_better": True},
+        {"key": "Debt_to_Equity", "value": get_metric('debt_to_equity'), "label": "Debt/Equity", 
+         "unit": "x", "higher_is_better": False, "benchmark_low": 0.5, "benchmark_high": 1.5},
+        {"key": "FCF", "value": info.get('freeCashflow'), "label": "Free Cash Flow", 
+         "unit": "$", "format_large": True, "higher_is_better": True},
+    ]
+    
+    # Render Row 1 (5 metrics)
+    cols1 = st.columns(5)
+    for i, config in enumerate(metrics_config[:5]):
+        with cols1[i]:
+            _render_flip_metric(config, financials, depth)
+    
+    # Render Row 2 (5 metrics)
+    cols2 = st.columns(5)
+    for i, config in enumerate(metrics_config[5:]):
+        with cols2[i]:
+            _render_flip_metric(config, financials, depth)
+
+
+def _render_flip_metric(config: Dict, financials: Dict, depth: str):
+    """Render a single flip card metric"""
+    
+    key = config["key"]
+    value = config["value"]
+    label = config["label"]
+    unit = config.get("unit", "")
+    format_large = config.get("format_large", False)
+    is_pct = config.get("is_pct", False)
+    higher_is_better = config.get("higher_is_better", True)
+    benchmark_low = config.get("benchmark_low")
+    benchmark_high = config.get("benchmark_high")
+    
+    # Format the value
+    if value is None or (isinstance(value, float) and pd.isna(value)):
+        formatted_value = "N/A"
+        color = "#6b7280"  # Gray
+    else:
+        try:
+            num_val = float(value)
+            
+            if format_large:
+                if abs(num_val) >= 1e12:
+                    formatted_value = f"${num_val/1e12:.2f}T"
+                elif abs(num_val) >= 1e9:
+                    formatted_value = f"${num_val/1e9:.2f}B"
+                elif abs(num_val) >= 1e6:
+                    formatted_value = f"${num_val/1e6:.2f}M"
+                else:
+                    formatted_value = f"${num_val:,.0f}"
+            elif is_pct:
+                # Handle percentage: if < 1, assume decimal form
+                pct_val = num_val * 100 if abs(num_val) < 1 else num_val
+                formatted_value = f"{pct_val:.1f}%"
+                num_val = pct_val  # Use percentage for benchmarking
+            elif unit == "$":
+                formatted_value = f"${num_val:.2f}"
+            elif unit == "x":
+                # Normalize D/E if it looks like percentage
+                if key == "Debt_to_Equity" and num_val > 10:
+                    num_val = num_val / 100
+                formatted_value = f"{num_val:.2f}x"
+            else:
+                formatted_value = f"{num_val:.2f}"
+            
+            # Determine color based on benchmarks
+            if benchmark_low is not None and benchmark_high is not None:
+                if higher_is_better:
+                    if num_val >= benchmark_high:
+                        color = "#22c55e"  # Green
+                    elif num_val <= benchmark_low:
+                        color = "#ef4444"  # Red
+                    else:
+                        color = "#f59e0b"  # Yellow
+                else:
+                    if num_val <= benchmark_low:
+                        color = "#22c55e"  # Green (low is good)
+                    elif num_val >= benchmark_high:
+                        color = "#ef4444"  # Red (high is bad)
+                    else:
+                        color = "#f59e0b"  # Yellow
+            else:
+                color = "#60a5fa"  # Blue (neutral)
+                
+        except (ValueError, TypeError):
+            formatted_value = str(value) if value else "N/A"
+            color = "#6b7280"
+    
+    # Get definition from RATIO_DEFINITIONS
+    definition = RATIO_DEFINITIONS.get(key, {})
+    
+    # Build back content
+    if definition:
+        formula = definition.get("formula", "")
+        explanation = definition.get("explanations", {}).get(depth, "")
+        components = definition.get("components", [])
+    else:
+        formula = ""
+        explanation = f"No detailed definition available for {label}."
+        components = []
+    
+    # Create unique key for this card
+    card_key = f"flip_{key}_{id(financials)}"
+    
+    # Initialize flip state
+    if card_key not in st.session_state:
+        st.session_state[card_key] = False
+    
+    # Render the flip card using HTML/CSS
+    is_flipped = st.session_state[card_key]
+    
+    # Build component values string
+    comp_str = ""
+    if components:
+        comp_vals = []
+        for comp in components[:3]:  # Max 3 components
+            comp_val = _get_component_value(comp, financials)
+            if comp_val:
+                comp_vals.append(f"{comp.replace('_', ' ').title()}: {comp_val}")
+        if comp_vals:
+            comp_str = " | ".join(comp_vals)
+    
+    st.markdown(f"""
+    <style>
+        .flip-container-{card_key} {{
+            perspective: 1000px;
+            height: 130px;
+            margin-bottom: 10px;
+        }}
+        .flip-card-{card_key} {{
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            border-radius: 12px;
+        }}
+        .flip-card-{card_key}.flipped {{
+            transform: rotateY(180deg);
+        }}
+        .flip-front-{card_key}, .flip-back-{card_key} {{
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }}
+        .flip-front-{card_key} {{
+            background: linear-gradient(145deg, #1a1a2e, #16213e);
+            border-left: 4px solid {color};
+        }}
+        .flip-back-{card_key} {{
+            background: linear-gradient(145deg, #16213e, #1a1a2e);
+            border-left: 4px solid {color};
+            transform: rotateY(180deg);
+            text-align: left;
+            font-size: 0.75rem;
+            overflow-y: auto;
+        }}
+        .metric-label {{
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-bottom: 4px;
+        }}
+        .metric-value {{
+            color: {color};
+            font-size: 1.8rem;
+            font-weight: 700;
+        }}
+        .formula-text {{
+            color: #60a5fa;
+            font-family: monospace;
+            font-size: 0.7rem;
+            margin: 4px 0;
+        }}
+        .explanation-text {{
+            color: #cbd5e1;
+            font-size: 0.7rem;
+            line-height: 1.3;
+        }}
+        .components-text {{
+            color: #94a3b8;
+            font-size: 0.65rem;
+            margin-top: 4px;
+        }}
+    </style>
+    <div class="flip-container-{card_key}">
+        <div class="flip-card-{card_key} {'flipped' if is_flipped else ''}">
+            <div class="flip-front-{card_key}">
+                <div class="metric-label">{label}</div>
+                <div class="metric-value">{formatted_value}</div>
+            </div>
+            <div class="flip-back-{card_key}">
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">{label}</div>
+                <div class="formula-text">{formula if formula else 'N/A'}</div>
+                <div class="explanation-text">{explanation[:150]}{'...' if len(explanation) > 150 else ''}</div>
+                <div class="components-text">{comp_str if comp_str else ''}</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Toggle button (small, below the card)
+    if st.button("↻", key=f"btn_{card_key}", help="Click to flip"):
+        st.session_state[card_key] = not st.session_state[card_key]
+        st.rerun()
+
+
+def _get_component_value(component: str, financials: Dict) -> str:
+    """Extract and format a component value from financials"""
+    
+    # Try various sources
+    info = financials.get('info', {})
+    market_data = financials.get('market_data', {})
+    
+    # Map component names to data keys
+    mappings = {
+        'current_price': ('current_price', market_data, '$'),
+        'eps': ('trailingEps', info, '$'),
+        'shares_outstanding': ('sharesOutstanding', info, 'shares'),
+        'net_income': ('netIncome', info, '$'),
+        'total_equity': ('totalEquity', info, '$'),
+        'total_debt': ('totalDebt', info, '$'),
+    }
+    
+    if component in mappings:
+        key, source, fmt = mappings[component]
+        val = source.get(key)
+        if val:
+            try:
+                num = float(val)
+                if fmt == '$':
+                    if abs(num) >= 1e9:
+                        return f"${num/1e9:.1f}B"
+                    elif abs(num) >= 1e6:
+                        return f"${num/1e6:.1f}M"
+                    return f"${num:.2f}"
+                return f"{num:,.0f}"
+            except:
+                pass
+    
+    return ""
 
 
 def display_quick_insights(financials: Dict[str, Any]):
