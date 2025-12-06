@@ -99,6 +99,11 @@ from quant_tab import render_quant_tab
 from enhanced_tables import enhanced_dataframe, create_sortable_table
 from investment_summary import render_investment_summary_tab
 from dashboard_tab import render_dashboard_tab
+from data_tab_metrics import (
+    render_income_metrics, render_balance_metrics, render_cashflow_metrics,
+    render_price_metrics, render_ratio_metrics, render_growth_metrics,
+    FLIP_CARDS_AVAILABLE as DATA_FLIP_AVAILABLE
+)
 
 # Advanced UI Components (Phase 7 - UI/UX Enhancement)
 from ui_components import (
@@ -2031,6 +2036,11 @@ else:
         
         with sub_tab1:
             st.subheader("Income Statement (Annual)")
+            
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_income_metrics(st.session_state.financials)
+            
             income = st.session_state.financials.get("income_statement", pd.DataFrame())
             
             if not income.empty:
@@ -2049,6 +2059,11 @@ else:
         
         with sub_tab2:
             st.subheader("Balance Sheet (Annual)")
+            
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_balance_metrics(st.session_state.financials)
+            
             balance = st.session_state.financials.get("balance_sheet", pd.DataFrame())
             
             if not balance.empty:
@@ -2067,6 +2082,11 @@ else:
         
         with sub_tab3:
             st.subheader("Cash Flow Statement (Annual)")
+            
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_cashflow_metrics(st.session_state.financials)
+            
             cashflow = st.session_state.financials.get("cash_flow", pd.DataFrame())
             
             if not cashflow.empty:
@@ -2088,6 +2108,10 @@ else:
         
         with sub_tab4:
             st.subheader("Historical Stock Prices")
+            
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_price_metrics(st.session_state.financials)
             
             market_data = st.session_state.financials.get("market_data", {})
             historical_prices = market_data.get("historical_prices", pd.DataFrame())
@@ -2279,6 +2303,10 @@ else:
         with sub_tab5:
             st.subheader("Key Financial Ratios")
             
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_ratio_metrics(st.session_state.financials)
+            
             ratios = extractor.calculate_ratios(st.session_state.financials)
             growth = extractor.calculate_growth_rates(st.session_state.financials)
             
@@ -2346,6 +2374,10 @@ else:
         
         with sub_tab6:
             st.markdown(f"### {icon('graph-up-arrow')} Comprehensive Growth Analysis", unsafe_allow_html=True)
+            
+            # Flip card metrics at top
+            if DATA_FLIP_AVAILABLE:
+                render_growth_metrics(st.session_state.financials)
             
             growth = st.session_state.financials.get("growth_rates", {})
             
