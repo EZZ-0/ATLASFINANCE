@@ -158,7 +158,18 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                     
                     # Create peer DataFrame for display
                     peer_df = pd.DataFrame(peer_result['peers'])
-                    peer_df['market_cap'] = peer_df['market_cap'].apply(lambda x: f"${x/1e9:.2f}B" if x else "N/A")
+                    
+                    # Safely handle market_cap column (may not exist)
+                    if 'market_cap' in peer_df.columns:
+                        peer_df['market_cap'] = peer_df['market_cap'].apply(lambda x: f"${x/1e9:.2f}B" if x and x > 0 else "N/A")
+                    else:
+                        peer_df['market_cap'] = "N/A"
+                    
+                    # Ensure all required columns exist
+                    for col in ['ticker', 'name', 'industry', 'similarity_score']:
+                        if col not in peer_df.columns:
+                            peer_df[col] = "N/A"
+                    
                     peer_df = peer_df[['ticker', 'name', 'industry', 'market_cap', 'similarity_score']]
                     peer_df.columns = ['Ticker', 'Company', 'Industry', 'Market Cap', 'Match Score']
                     
