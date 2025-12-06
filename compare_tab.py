@@ -26,6 +26,14 @@ import pandas as pd
 import numpy as np
 from typing import Dict
 
+# Cached extraction to prevent rate limiting
+@st.cache_data(ttl=3600, show_spinner=False)
+def _cached_extract_for_compare(ticker: str) -> dict:
+    """Cached extraction wrapper for compare tab"""
+    from usa_backend import USAFinancialExtractor
+    extractor = USAFinancialExtractor()
+    return extractor.extract_financials(ticker)
+
 # Import smart_dataframe with fallback for graceful degradation
 try:
     from ui_components import smart_dataframe
@@ -451,9 +459,10 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
         
         if add_button and compare_ticker:
             if compare_ticker not in st.session_state.comparison_data:
-                with st.spinner(f"Adding {compare_ticker}..."):
+                with st.spinner(f"Adding {compare_ticker}... (cached for 1 hour)"):
                     try:
-                        data = extractor.extract_financials(compare_ticker)
+                        # Use cached extraction to prevent rate limiting
+                        data = _cached_extract_for_compare(compare_ticker)
                         if "status" not in data or data["status"] != "error":
                             st.session_state.comparison_data[compare_ticker] = data
                             st.success(f"✅ Added {compare_ticker}")
@@ -461,7 +470,11 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                         else:
                             st.error(f"❌ {data['message']}")
                     except Exception as e:
-                        st.error(f"❌ Failed: {e}")
+                        error_str = str(e).lower()
+                        if 'rate limit' in error_str or 'too many requests' in error_str:
+                            st.error("⏳ Rate limited - try again in 1-2 minutes")
+                        else:
+                            st.error(f"❌ Failed: {e}")
             else:
                 st.warning(f"{compare_ticker} already in comparison")
         

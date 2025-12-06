@@ -17,6 +17,7 @@ import os
 import base64
 from datetime import datetime
 import time
+import hashlib
 
 # ==========================================
 # BACKGROUND IMAGE TOGGLE (Easy to undo)
@@ -26,6 +27,42 @@ ENABLE_BACKGROUND_IMAGE = True
 
 # Import our modules
 from usa_backend import USAFinancialExtractor
+
+# ==========================================
+# CACHING - Prevent Rate Limiting
+# ==========================================
+# Cache financial data for 1 hour to avoid hitting Yahoo Finance repeatedly
+@st.cache_data(ttl=3600, show_spinner=False)
+def cached_extract_financials(
+    ticker: str, 
+    source: str = "auto",
+    fiscal_year_offset: int = 0,
+    filing_types: tuple = ("10-K", "10-Q"),  # Must be tuple for caching (hashable)
+    include_quant: bool = True
+) -> dict:
+    """
+    Cached wrapper for financial extraction.
+    TTL=3600 seconds (1 hour) - data is refreshed hourly.
+    This prevents rate limiting on Streamlit Cloud.
+    
+    Note: filing_types must be tuple (not list) for Streamlit caching.
+    """
+    extractor = USAFinancialExtractor()
+    return extractor.extract_financials(
+        ticker, 
+        source=source,
+        fiscal_year_offset=fiscal_year_offset,
+        filing_types=list(filing_types),  # Convert back to list for the backend
+        include_quant=include_quant
+    )
+
+def get_cache_key(ticker: str) -> str:
+    """Generate a cache key for tracking"""
+    return hashlib.md5(f"{ticker}_{datetime.now().strftime('%Y%m%d%H')}".encode()).hexdigest()[:8]
+
+def clear_ticker_cache(ticker: str):
+    """Clear cache for a specific ticker (for force refresh)"""
+    cached_extract_financials.clear()
 from dcf_modeling import DCFModel
 from visualization import FinancialVisualizer
 from format_helpers import format_dataframe_for_display, format_dataframe_for_csv, prepare_table_for_display, external_link, format_large_number, format_change, format_financial_number
@@ -791,6 +828,13 @@ with st.sidebar:
             help="Run advanced quantitative analysis with historical pricing and Fama-French 3-Factor regression"
         )
         
+        # Force refresh toggle (bypass cache)
+        force_refresh = st.checkbox(
+            "Force Refresh (bypass cache)",
+            value=False,
+            help="Clear cached data and fetch fresh from source. Use sparingly to avoid rate limits."
+        )
+        
         # Theme Switcher (moved here from top)
         st.write("")  # Just spacing
         from config.theme_presets import get_theme_names
@@ -835,12 +879,19 @@ with st.sidebar:
     
     if st.button("🔍 SEARCH", type="primary", use_container_width=True):
         if ticker_input:
-            with st.spinner(f"Extracting {ticker_input}..."):
+            # Clear cache if force refresh is enabled
+            if force_refresh:
+                clear_ticker_cache(ticker_input)
+                st.toast("Cache cleared - fetching fresh data")
+            
+            cache_status = "fetching fresh data" if force_refresh else "cached for 1 hour"
+            with st.spinner(f"Extracting {ticker_input}... ({cache_status})"):
                 try:
-                    result = extractor.extract_financials(
+                    # Use cached extraction to prevent rate limiting
+                    result = cached_extract_financials(
                         ticker_input, 
                         source=source_map[data_source],
-                        filing_types=filing_types,
+                        filing_types=tuple(filing_types),  # Convert to tuple for caching
                         include_quant=include_quant
                     )
                     
@@ -881,7 +932,21 @@ with st.sidebar:
                         st.success(success_msg)
                         st.rerun()
                 except Exception as e:
-                    st.error(f"Extraction failed: {e}")
+                    error_str = str(e).lower()
+                    if 'rate limit' in error_str or 'too many requests' in error_str or '429' in error_str:
+                        st.error("⏳ Rate Limited by Yahoo Finance")
+                        st.info("""
+                        **What happened:** Too many requests were made to Yahoo Finance.
+                        
+                        **Solutions:**
+                        1. **Wait 1-2 minutes** and try again
+                        2. **Try a different ticker** - it might be cached
+                        3. **Check back later** - data is cached for 1 hour once loaded
+                        
+                        *This happens on Streamlit Cloud due to shared IP addresses.*
+                        """)
+                    else:
+                        st.error(f"Extraction failed: {e}")
         else:
             st.warning("Please enter a ticker symbol")
     
@@ -1300,7 +1365,7 @@ if not st.session_state.get('data_extracted', False):
         # EXTRACT button (actually runs extraction)
         if landing_ticker:
             if st.button("EXTRACT DATA", type="primary", use_container_width=True, key="landing_extract"):
-                with st.spinner(f"Extracting financial data for {landing_ticker}..."):
+                with st.spinner(f"Extracting financial data for {landing_ticker}... (cached for 1 hour)"):
                     try:
                         # Get settings from sidebar defaults
                         data_source_map = {
@@ -1314,11 +1379,11 @@ if not st.session_state.get('data_extracted', False):
                         filing_types_list = ["10-K"]
                         include_quant_analysis = False
                         
-                        # Run extraction
-                        financials = extractor.extract_financials(
+                        # Use cached extraction to prevent rate limiting
+                        financials = cached_extract_financials(
                             ticker=landing_ticker,
                             source=selected_source,
-                            filing_types=filing_types_list,
+                            filing_types=tuple(filing_types_list),  # Tuple for caching
                             include_quant=include_quant_analysis
                         )
                         
