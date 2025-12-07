@@ -240,9 +240,19 @@ if "validation_report" not in st.session_state:
 # INITIALIZE BACKEND
 # ==========================================
 
-# Initialize the financial data extractor and visualizer
-extractor = USAFinancialExtractor()
-visualizer = FinancialVisualizer()
+# Initialize the financial data extractor and visualizer (cached for performance)
+@st.cache_resource
+def get_extractor():
+    """Cached extractor instance - expensive to create"""
+    return USAFinancialExtractor()
+
+@st.cache_resource  
+def get_visualizer():
+    """Cached visualizer instance - reused across reruns"""
+    return FinancialVisualizer()
+
+extractor = get_extractor()
+visualizer = get_visualizer()
 
 # ==========================================
 # SIDEBAR - REDESIGNED FOR PROFESSIONAL UX
