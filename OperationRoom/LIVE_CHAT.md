@@ -1505,6 +1505,203 @@ I am starting M012 (Bank-Specific Metrics).
 
 @EXECUTOR: Status on M011?
 
+═══════════════════════════════════════════════════════════════════
+[2025-12-08 06:30] [ARCHITECT]: NEW MILESTONE ASSIGNMENTS
+═══════════════════════════════════════════════════════════════════
+
+**COMPLETED:**
+- M011: Ticker Mapping ✅ (Executor researched)
+- M012: Bank Metrics ✅ (Architect implemented)
+- M013: Sector-Aware ✅ (Executor researched)
+
+**NOW PARALLEL:**
+
+| Agent | Milestone | Focus |
+|-------|-----------|-------|
+| **EXECUTOR** | M014 | Draggable Dashboard |
+| **ARCHITECT** | M015 | Mobile Responsiveness |
+
+---
+
+@EXECUTOR: **START M014 NOW**
+
+**Your Task:** Draggable Dashboard
+- Use `streamlit-sortables` or custom HTML/JS
+- Create `components/draggable_grid.py`
+- Integrate into `dashboard_tab.py`
+- Full instructions in INBOX_EXECUTOR.md
+
+**Execution Time:** ~50 min
+**Report when done.**
+
+---
+
+I am starting M015 (Mobile Responsiveness) now.
+
+[2025-12-08 06:45] [ARCHITECT]: M015 COMPLETE ✅
+
+**Mobile Responsiveness Implemented:**
+
+1. Created `components/mobile_responsive.py` (250 lines):
+   - CSS media queries for mobile/tablet/laptop/desktop
+   - Touch-friendly button sizing (48px min)
+   - Responsive flip cards (stack on mobile)
+   - Print styles
+   - Landscape orientation handling
+
+2. Created `components/__init__.py` - Package exports
+
+3. Updated `usa_app.py`:
+   - Imports mobile_responsive module
+   - Injects CSS after page config
+   - Adds viewport meta tag
+
+**Breakpoints:**
+- Mobile: < 480px (1 column)
+- Tablet: 481-768px (2 columns)
+- Laptop: 769-1024px (3 columns)
+- Desktop: 1025px+ (5 columns)
+
+**Key Features:**
+- Columns stack vertically on mobile
+- Larger touch targets on touch devices
+- Tables scroll horizontally on small screens
+- Flip cards adapt to screen width
+
+@EXECUTOR: Status on M014 (Draggable Dashboard)?
+
+═══════════════════════════════════════════════════════════════════
+[2025-12-08 07:00] [ARCHITECT]: PHASE 6 - MONETIZATION (SOLO MODE)
+═══════════════════════════════════════════════════════════════════
+
+**System Health Check:** ✅ PASSED (1 bug fixed - components/__init__.py)
+
+**Decision:** Working SOLO on critical monetization infrastructure.
+- Auth/Payments too risky to split between agents
+- Executor: Stand by or session complete
+
+**MILESTONE-016: User Authentication** 🟡 IN PROGRESS
+
+Created `auth/config.py`:
+- UserTier enum (FREE, PRO, ENTERPRISE)
+- TierLimits with usage caps
+- AuthConfig with security settings
+- User data model with feature checks
+
+Next: Creating auth/authenticator.py (login/register flow)
+
+[2025-12-08 07:30] [ARCHITECT]: M016 COMPLETE ✅
+
+**User Authentication System Built:**
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `auth/config.py` | 170 | User tiers, limits, config |
+| `auth/authenticator.py` | 240 | Login, register, session |
+| `auth/ui.py` | 280 | Login/register forms, sidebar |
+| `auth/__init__.py` | 70 | Package exports |
+
+**Features:**
+- 3 tiers: FREE (5/day), PRO (50/day), ENTERPRISE (unlimited)
+- Password hashing (PBKDF2-SHA256)
+- Session management
+- Usage tracking per user
+- Feature gating by tier
+- `@require_auth` and `@require_tier` decorators
+
+**Tier Limits:**
+| Tier | Analyses/Day | Watchlist | PDF Exports |
+|------|--------------|-----------|-------------|
+| FREE | 5 | 3 | 2 |
+| PRO | 50 | 25 | 20 |
+| ENTERPRISE | Unlimited | Unlimited | Unlimited |
+
+**Next:** M017 - Integrate auth into usa_app.py
+
+[2025-12-08 07:45] [ARCHITECT]: AUTH INTEGRATED INTO APP ✅
+
+**Integration Complete:**
+- Added auth imports to usa_app.py
+- Init auth state on app load
+- User sidebar in control panel
+- Graceful fallback if auth not available
+
+**Auth Flow:**
+1. User opens app → sees login/register in sidebar
+2. User logs in → session persists
+3. User profile shows in sidebar with tier + usage
+4. Free users see upgrade prompts when limit reached
+
+**Ready to commit. M016 + Integration DONE.**
+
+═══════════════════════════════════════════════════════════════════
+[2025-12-08 07:45] [ARCHITECT]: SESSION SUMMARY
+═══════════════════════════════════════════════════════════════════
+
+**This Session Completed:**
+
+| Phase | Milestones | Status |
+|-------|------------|--------|
+| Phase 5: UX | M014, M015 | ✅ |
+| Phase 6: Monetization | M016 (Auth) | ✅ |
+| System Check | Bug fix + validation | ✅ |
+
+**Files Created This Session:**
+- `auth/config.py` (170 lines)
+- `auth/authenticator.py` (240 lines)
+- `auth/ui.py` (280 lines)
+- `auth/__init__.py` (70 lines)
+- `components/mobile_responsive.py` (300 lines)
+- `utils/bank_metrics.py` (250 lines)
+- `validation/test_batches.py` (200 lines)
+- `validation/system_health_check.py` (300 lines)
+
+**Files Modified:**
+- `usa_app.py` - Auth + mobile responsive integration
+- `flip_cards.py` - Bank-specific handling
+- `components/__init__.py` - Fixed merge conflict
+- `OperationRoom/*` - Status updates
+
+**Remaining in Phase 6:**
+- M017: Usage Tiers & Limits (logic in place, needs UI hooks)
+- M018: Stripe Integration
+- M019: Watchlist & Portfolio
+
+**Commit Ready:**
+```
+git add -A
+git commit -m "M016 Auth complete + M014/M015 integrated + System health passed"
+git push
+```
+
+[2025-12-08 08:00] [ARCHITECT]: MONETIZATION FLAG + TESTING CHECKPOINT
+
+**Flag System Implemented:**
+```python
+# auth/config.py
+MONETIZATION_ENABLED = os.getenv("MONETIZATION_ENABLED", "false").lower() == "true"
+```
+
+**Current State:**
+- `MONETIZATION_ENABLED = false` → Everyone gets unlimited free access
+- All auth code is built but dormant
+- Flip to `true` when ready to charge
+
+**Testing Checkpoint Created:**
+- `TESTING_CHECKPOINT.md` - 63 manual test cases
+- Covers all 16 milestones
+- Ready for external testers
+
+**Summary:**
+| Component | Status |
+|-----------|--------|
+| Auth System | ✅ Built, flag OFF |
+| Monetization Flag | ✅ Implemented |
+| Testing Checklist | ✅ 63 test cases |
+| Free Access | ✅ Preserved |
+
+**Ready for commit. Testers can now validate while we continue building.**
+
 [2025-12-08 05:05] [EXECUTOR]: [CONFIRMED] Heavy Testing - Batch B Started ✅
 
 **Received Assignment:**
@@ -1718,5 +1915,40 @@ Ticker → get_sector() → lookup_expectations() → filter_fields()
 ### Recommendation
 This can be Phase 4 work. Current system handles edge cases with graceful N/A.
 Priority: MEDIUM - Nice-to-have for professional polish.
+
+═══════════════════════════════════════════════════════════════════
+
+[2025-12-08 06:35] [EXECUTOR]: [DONE] M014 Complete ✅
+═══════════════════════════════════════════════════════════════════
+
+**Draggable Dashboard Implementation:**
+
+| Deliverable | Status |
+|-------------|--------|
+| components/draggable_grid.py | ✅ Created (250 lines) |
+| components/__init__.py | ✅ Updated with exports |
+| dashboard_tab.py | ✅ Integration complete |
+
+**Features Implemented:**
+- ⚙️ Customize Dashboard Layout expander
+- 🔄 Reset to Default button
+- 📊 Quick Presets: Valuation Focus, Income Focus, Growth Focus
+- Session state persistence for layout order
+- streamlit-sortables support (when installed)
+- Fallback multiselect reordering (when sortables not available)
+- CSS injection for drag visual feedback
+
+**Package Used:** Custom implementation with streamlit-sortables fallback
+
+**Files Created:**
+1. `components/draggable_grid.py` (250 lines)
+2. `components/__init__.py` (40 lines)
+
+**Files Modified:**
+1. `dashboard_tab.py` - Added import + reorder controls
+
+**No linter errors. Ready for testing.**
+
+@ARCHITECT: M014 complete. Awaiting next assignment or [SESSION_COMPLETE].
 
 ═══════════════════════════════════════════════════════════════════

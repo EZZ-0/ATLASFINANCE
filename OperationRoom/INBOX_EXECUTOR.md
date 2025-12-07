@@ -25,54 +25,110 @@ For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
 
 ---
 
-## CURRENT ASSIGNMENT: MILESTONE-011 - Ticker Mapping
+## CURRENT ASSIGNMENT: MILESTONE-014 - Draggable Dashboard
 
-**Testing Phase Complete.** Now implementing fixes from test findings.
+M011 & M013 research COMPLETE ✅. Now implementing next feature.
 
-### YOUR TASK: Fix Bad Tickers
+---
 
-From heavy testing, 3 tickers failed:
-- `SQ` → Should be `XYZ` or needs special handling (Block Inc renamed)
-- `ZOOM` → Should be `ZM` (Zoom Video Communications)
-- `WBA` → Walgreens Boots Alliance (possibly delisted, verify)
+### OBJECTIVE
+
+Create a customizable dashboard where users can:
+- Drag & drop metric cards to rearrange
+- Save their preferred layout
+- Reset to default
+
+### WHY THIS MATTERS
+- Personalization = User retention
+- Professional feel = Worth paying for
+- Differentiator from competitors
+
+---
 
 ### DELIVERABLES
 
-1. **Create `utils/ticker_mapper.py`:**
+**1. Create `components/draggable_grid.py`:**
+
+Use `streamlit-sortables` or custom HTML/JS implementation.
+
 ```python
-TICKER_ALIASES = {
-    "ZOOM": "ZM",       # Common mistake
-    "SQ": "SQ",         # Verify if still valid
-    "GOOGLE": "GOOGL",  # Common mistake
-    "FACEBOOK": "META", # Old name
-}
+# Research: streamlit-sortables package
+# pip install streamlit-sortables
 
-def normalize_ticker(ticker: str) -> str:
-    """Map common aliases to correct tickers."""
-    return TICKER_ALIASES.get(ticker.upper(), ticker.upper())
+from streamlit_sortables import sort_items
+
+def render_draggable_dashboard(metrics: list) -> list:
+    """
+    Render metrics in a draggable grid.
+    Returns new order after user drags.
+    """
+    sorted_items = sort_items(metrics, direction="horizontal")
+    return sorted_items
 ```
 
-2. **Integrate into `usa_backend.py`:**
-   - Call `normalize_ticker()` before yfinance API calls
-   - Add validation for 404 errors → suggest corrections
+**2. Persist Layout in Session State:**
 
-3. **Verify WBA status:**
-   - Check if delisted or renamed
-   - Update mapper accordingly
+```python
+if 'dashboard_layout' not in st.session_state:
+    st.session_state.dashboard_layout = DEFAULT_LAYOUT
 
-### REPORT WHEN DONE
-
-Post in LIVE_CHAT:
+# Save after drag
+st.session_state.dashboard_layout = new_order
 ```
-[EXECUTOR]: M011 Complete
-- Created utils/ticker_mapper.py
-- Integrated into usa_backend.py
-- WBA status: [your finding]
+
+**3. Add Reset Button:**
+
+```python
+if st.button("Reset Layout"):
+    st.session_state.dashboard_layout = DEFAULT_LAYOUT
+    st.rerun()
 ```
 
 ---
 
-Architect working on M012 (Bank-Specific Metrics) in parallel.
+### FILES TO CREATE/MODIFY
+
+| File | Action |
+|------|--------|
+| `components/draggable_grid.py` | CREATE - Main component |
+| `dashboard_tab.py` | MODIFY - Integrate draggable |
+| `requirements.txt` | ADD - streamlit-sortables |
+
+---
+
+### EXECUTION STEPS
+
+1. Research `streamlit-sortables` or alternatives (5 min)
+2. Create `components/draggable_grid.py` (20 min)
+3. Integrate into `dashboard_tab.py` (15 min)
+4. Test with 3 tickers (10 min)
+5. Post completion in LIVE_CHAT
+
+---
+
+### SUCCESS CRITERIA
+
+- [ ] Metrics can be dragged to new positions
+- [ ] Layout persists during session
+- [ ] Reset button works
+- [ ] No performance degradation
+- [ ] Works on all tested tickers
+
+---
+
+### REPORT FORMAT
+
+```
+[EXECUTOR]: M014 Complete ✅
+- Created components/draggable_grid.py
+- Integrated into dashboard_tab.py
+- Package used: [streamlit-sortables / custom]
+- Tested: AAPL, JPM, NVDA
+```
+
+---
+
+Architect working on M015 (Mobile Responsiveness) in parallel.
 
 ---
 

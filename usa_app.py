@@ -39,6 +39,39 @@ try:
 except ImportError:
     FLIP_CARDS_ENABLED = False
 
+# Import mobile responsiveness (MILESTONE-015)
+try:
+    from components.mobile_responsive import inject_responsive_css, inject_viewport_meta
+    MOBILE_RESPONSIVE = True
+except ImportError:
+    MOBILE_RESPONSIVE = False
+
+# Import authentication (MILESTONE-016)
+try:
+    from auth import (
+        init_session_state as init_auth_state,
+        is_authenticated,
+        get_current_user,
+        render_auth_page,
+        render_user_sidebar,
+        check_usage_limit,
+        update_user_usage,
+    )
+    from auth.config import is_monetization_active
+    AUTH_ENABLED = True
+except ImportError:
+    AUTH_ENABLED = False
+    def init_auth_state(): pass
+    def is_authenticated(): return True
+    def get_current_user(): return None
+    def render_user_sidebar(): pass
+    def check_usage_limit(): return True
+    def update_user_usage(u): pass
+    def is_monetization_active(): return False
+
+# Only show auth UI if monetization is active
+AUTH_ACTIVE = AUTH_ENABLED and is_monetization_active()
+
 # Initialize validator (singleton pattern)
 _validator = DataValidator()
 
@@ -210,11 +243,22 @@ st.set_page_config(
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
 
+# Initialize authentication (MILESTONE-016)
+if AUTH_ENABLED:
+    init_auth_state()
+
 # ==========================================
 # INJECT ALL CSS (from app_css.py)
 # ==========================================
 bg_image_path = os.path.join(os.path.dirname(__file__), "Background_1.png")
 inject_all_css(enable_background=ENABLE_BACKGROUND_IMAGE, bg_image_path=bg_image_path)
+
+# ==========================================
+# INJECT MOBILE RESPONSIVE CSS (MILESTONE-015)
+# ==========================================
+if MOBILE_RESPONSIVE:
+    inject_responsive_css()
+    inject_viewport_meta()
 
 # NOTE: Main CSS moved to app_css.py (~500 lines saved)
 # To modify styling, edit app_css.py
@@ -286,6 +330,11 @@ with st.sidebar:
         <p style='color: #94a3b8; font-size: 0.85rem; margin: 0.3rem 0 0 0;'>Configure & Extract Financial Data</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # User Profile Section (MILESTONE-016)
+    # Only show if monetization is active (flag controlled)
+    if AUTH_ACTIVE:
+        render_user_sidebar()
     
     # Theme Selector (MILESTONE-006)
     selected_theme = render_theme_selector(position='sidebar', key='main_theme_selector')

@@ -31,6 +31,17 @@ except ImportError:
         METRICS = {}
         def render_dashboard_metrics(f): pass
 
+# Import draggable grid for layout customization (MILESTONE-014)
+try:
+    from components.draggable_grid import (
+        render_reorder_controls, 
+        inject_drag_styles,
+        GridConfig
+    )
+    DRAGGABLE_AVAILABLE = True
+except ImportError:
+    DRAGGABLE_AVAILABLE = False
+
 # NO LEGACY FLIP CARDS - removed the old button-based implementation
 
 def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
@@ -49,6 +60,12 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
     if not financials:
         st.warning("Load company data first to view dashboard")
         return
+    
+    # Inject drag styles for visual feedback (M014)
+    if DRAGGABLE_AVAILABLE:
+        inject_drag_styles()
+        # Layout customization controls
+        render_reorder_controls(GridConfig(columns=5))
     
     # V2 Quizlet-style flip cards (pure CSS animation, no server round-trip)
     if FLIP_CARDS_AVAILABLE:
