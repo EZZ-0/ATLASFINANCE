@@ -817,25 +817,52 @@ When working on your own tasks (complex work you do yourself):
   [ ] CONTINUE to next task (don't stop)
 
 ================================================================================
-3.6 SIGNALING SESSION COMPLETE
+3.6 SIGNALING SESSION COMPLETE (WITH CHECKPOINT VALIDATION)
 ================================================================================
 
 When ALL work for this session is done:
 
-  1. Ensure all Executor tasks are validated
-  2. Post in LIVE_CHAT:
-     "[TIMESTAMP] [ARCHITECT]: [ALL_TASKS_ASSIGNED] No more Executor tasks."
-  3. Complete any remaining work yourself
-  4. Post in LIVE_CHAT:
-     "[TIMESTAMP] [ARCHITECT]: [SESSION_COMPLETE] All work done."
-  5. Update ROADMAP.md:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  CHECKPOINT VALIDATION (REQUIRED BEFORE SESSION COMPLETE)               │
+  │  ═══════════════════════════════════════════════════════                │
+  │                                                                         │
+  │  STEP 1: STOP NEW WORK                                                  │
+  │  Post: "[VALIDATION_CHECKPOINT] Stopping for cross-validation."         │
+  │                                                                         │
+  │  STEP 2: ARCHITECT VALIDATES ALL EXECUTOR TASKS                         │
+  │  For each Executor [DONE] task:                                         │
+  │  - Read the files they created/modified                                 │
+  │  - Check acceptance criteria                                            │
+  │  - Look for gaps, bugs, or quality issues                               │
+  │  - Post: "[VALIDATED] TASK-EXXX" or request revision                    │
+  │                                                                         │
+  │  STEP 3: EXECUTOR VALIDATES ALL ARCHITECT TASKS                         │
+  │  For each Architect [DONE] task:                                        │
+  │  - Read the files they created/modified                                 │
+  │  - Check for obvious issues or gaps                                     │
+  │  - Post: "[VALIDATED] TASK-AXXX" or flag concerns                       │
+  │                                                                         │
+  │  STEP 4: FIX ANY ISSUES                                                 │
+  │  If issues found → Fix them → Re-validate                               │
+  │                                                                         │
+  │  STEP 5: CONFIRM ALL VALIDATED                                          │
+  │  Post: "[VALIDATION_COMPLETE] All tasks validated. X/X passed."         │
+  │                                                                         │
+  │  STEP 6: SESSION COMPLETE                                               │
+  │  Only NOW post: "[SESSION_COMPLETE]"                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  After validation checkpoint:
+  1. Post: "[SESSION_COMPLETE] All work done and validated."
+  2. Update ROADMAP.md:
      - Mark completed tasks as ✅
      - Update milestone status
      - Add entry to "Session History"
-  6. Update MISSION_CONTROL.md with session summary
-  7. Report to User:
+  3. Update MISSION_CONTROL.md with session summary
+  4. Report to User:
      - What was accomplished (reference milestone)
-     - Any issues encountered
+     - Validation results
+     - Any issues found and fixed
      - What's next on the roadmap
 
 ================================================================================
@@ -893,9 +920,14 @@ AFTER COMPLETING EACH TASK:
   [ ] Move to COMPLETED_TASKS.md
   [ ] Continue to next task
 
-SESSION END:
-  [ ] Post [ALL_TASKS_ASSIGNED]
-  [ ] Post [SESSION_COMPLETE]
+SESSION END (CHECKPOINT VALIDATION):
+  [ ] Post [VALIDATION_CHECKPOINT] - stop new work
+  [ ] Validate ALL Executor [DONE] tasks
+  [ ] Post [VALIDATED] for each passing task
+  [ ] Wait for Executor to validate YOUR tasks
+  [ ] Fix any issues found
+  [ ] Post [VALIDATION_COMPLETE] X/X passed
+  [ ] ONLY THEN: Post [SESSION_COMPLETE]
   [ ] Update ROADMAP.md (Session History)
   [ ] Update MISSION_CONTROL.md
   [ ] Report summary to User
@@ -1163,7 +1195,17 @@ AFTER COMPLETING EACH TASK:
   [ ] Add to COMPLETED_TASKS.md
   [ ] Go back for next task (DON'T STOP)
 
+WHEN [VALIDATION_CHECKPOINT] RECEIVED:
+  [ ] STOP new work immediately
+  [ ] Validate ALL Architect [DONE] tasks:
+      - Read files they created/modified
+      - Check for obvious issues or gaps
+      - Post [VALIDATED] TASK-AXXX for each passing task
+      - Flag concerns if issues found
+  [ ] Wait for [VALIDATION_COMPLETE]
+
 SESSION END:
+  [ ] Confirm [VALIDATION_COMPLETE] received
   [ ] Confirm [SESSION_COMPLETE] received
   [ ] Post signing off message
 
@@ -1226,18 +1268,21 @@ ALWAYS use a prefix. This makes messages scannable.
   │  [UNLOCK]            │  Releasing a file                                 │
   │  [STATUS]            │  Requesting or providing full status dump         │
   │  [HANDOFF]           │  Transferring work to other agent                 │
-  │  [BATCH_READY]       │  Architect: ALL Executor tasks are defined        │
-  │  [TASK_READY]        │  Architect: Individual task ready (legacy)        │
-  │  [ALL_TASKS_ASSIGNED]│  Architect: No more tasks coming                  │
-  │  [SESSION_COMPLETE]  │  Architect: All work done, session over           │
-  │  [DECISION_NEEDED]   │  Architect: User input required                   │
-  │  [FILLER_CONFIRM]    │  Architect: Asking User about filler tasks        │
-  │  [AGENT_ERROR]       │  CRITICAL: Agent malfunction, report to User      │
-  │  [PROTOCOL_BREAK]    │  Other agent not following protocol               │
-  └──────────────────────┴───────────────────────────────────────────────────┘
+  │  [BATCH_READY]           │  Architect: ALL Executor tasks are defined    │
+  │  [TASK_READY]            │  Architect: Individual task ready (legacy)    │
+  │  [ALL_TASKS_ASSIGNED]    │  Architect: No more tasks coming              │
+  │  [VALIDATION_CHECKPOINT] │  Architect: Stop work, begin validation       │
+  │  [VALIDATED]             │  Either: Task passed validation               │
+  │  [VALIDATION_COMPLETE]   │  Architect: All tasks validated, X/X passed   │
+  │  [SESSION_COMPLETE]      │  Architect: All work done AND validated       │
+  │  [DECISION_NEEDED]       │  Architect: User input required               │
+  │  [FILLER_CONFIRM]        │  Architect: Asking User about filler tasks    │
+  │  [AGENT_ERROR]           │  CRITICAL: Agent malfunction, report to User  │
+  │  [PROTOCOL_BREAK]        │  Other agent not following protocol           │
+  └──────────────────────────┴───────────────────────────────────────────────┘
 
-NOTE: [WAITING_FOR_TASKS] and [WAITING] should rarely occur in Batch Mode.
-      If Executor is waiting, Architect did not plan correctly.
+NOTE: [SESSION_COMPLETE] requires [VALIDATION_COMPLETE] first!
+      No session ends without checkpoint validation.
 
 ================================================================================
 5.3 SESSION SIGNALS (BATCH MODE)
@@ -1647,25 +1692,50 @@ When you cannot proceed:
 8.1 CROSS-VALIDATION PROTOCOL
 ================================================================================
 
-Before a task is truly complete, the OTHER agent reviews it.
+THERE ARE TWO TYPES OF VALIDATION:
 
-  AFTER COMPLETING TASK:
-  1. Post [DONE] in LIVE_CHAT
-  2. Continue with next task (don't wait)
-  3. Architect will validate when they see [DONE]
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  TYPE 1: INLINE VALIDATION (Optional - During Work)                     │
+  │  ═══════════════════════════════════════════════════                    │
+  │                                                                         │
+  │  When the other agent posts [DONE], you MAY validate between your       │
+  │  own tasks. This is optional during Batch Mode to maintain speed.       │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
 
-  THE REVIEWER:
-  1. Read the completion message
-  2. Check the files changed
-  3. Verify acceptance criteria met
-  4. Test if applicable
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  TYPE 2: CHECKPOINT VALIDATION (REQUIRED - At Milestone End)            │
+  │  ══════════════════════════════════════════════════════════             │
+  │                                                                         │
+  │  Before posting [SESSION_COMPLETE], BOTH agents MUST:                   │
+  │                                                                         │
+  │  1. STOP all new work                                                   │
+  │  2. Architect posts: "[VALIDATION_CHECKPOINT]"                          │
+  │  3. EACH agent validates ALL of the OTHER agent's completed tasks       │
+  │  4. Post [VALIDATED] for each task that passes                          │
+  │  5. Request revision for any issues found                               │
+  │  6. Fix issues and re-validate                                          │
+  │  7. Post: "[VALIDATION_COMPLETE] X/X tasks passed"                      │
+  │  8. ONLY THEN can Architect post [SESSION_COMPLETE]                     │
+  │                                                                         │
+  │  THIS IS MANDATORY. No session ends without checkpoint validation.      │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  WHAT TO CHECK DURING VALIDATION:
+  ─────────────────────────────────
+  - Files created/modified exist and are correct
+  - Acceptance criteria from task are met
+  - No obvious bugs or gaps
+  - Code follows project patterns
+  - Research docs are complete and accurate
+  - Tests pass (if applicable)
 
   IF APPROVED:
-  Post: "[VALIDATED] TASK-EXXX looks good."
+  Post: "[VALIDATED] TASK-EXXX. [Brief note on what you checked]"
 
-  IF ISSUES:
+  IF ISSUES FOUND:
   Post: "TASK-EXXX needs revision: [specific issues]"
-  Original agent fixes and reports [DONE] again.
+  Original agent fixes → Reports [DONE] again → Re-validate
 
 ================================================================================
 8.2 SUBMITTING TO R&D
@@ -1835,15 +1905,20 @@ SESSION:
   5. Post [BATCH_READY]
   6. Post [SYNC]
   7. Work CONTINUOUSLY on your own tasks
-  8. Validate Executor's [DONE] tasks
-  9. When ALL work done → Post [SESSION_COMPLETE]
-  10. Report to User
+  
+SESSION END (CHECKPOINT VALIDATION):
+  8. Post [VALIDATION_CHECKPOINT] - stop new work
+  9. Validate ALL Executor tasks → Post [VALIDATED] each
+  10. Wait for Executor to validate your tasks
+  11. Post [VALIDATION_COMPLETE] X/X passed
+  12. Post [SESSION_COMPLETE]
+  13. Report to User
 
-BATCH MODE RULES:
+RULES:
   ✅ Executor tasks can depend on Executor tasks (E001→E002)
   ✅ Your tasks can depend on Executor tasks (E005→A003)
   ❌ Executor tasks CANNOT depend on your tasks
-  - If filler tasks needed, ask User first
+  ❌ No [SESSION_COMPLETE] without [VALIDATION_COMPLETE]
 
 ================================================================================
 10.2 EXECUTOR QUICK REFERENCE (BATCH MODE)
@@ -1858,40 +1933,43 @@ WHEN USER SENDS ".":
   6. Handle internal dependencies (E001→E002) by ordering work
   7. Process ALL tasks in priority order
   8. When all done → Post "All Executor tasks complete"
-  9. Wait for [SESSION_COMPLETE] → Sign off
 
-BATCH MODE BENEFITS:
+WHEN [VALIDATION_CHECKPOINT] RECEIVED:
+  9. STOP new work
+  10. Validate ALL Architect tasks → Post [VALIDATED] each
+  11. Wait for [VALIDATION_COMPLETE]
+  12. Wait for [SESSION_COMPLETE] → Sign off
+
+KEY RULES:
   ✅ You ALWAYS have work (no waiting for Architect)
   ✅ All tasks defined upfront
-  ✅ Only wait for [BATCH_READY] at start
-  ✅ Internal deps (E001→E002) are normal - just order work
+  ✅ MUST validate Architect's work at checkpoint
 
 ================================================================================
 10.3 MESSAGE PREFIX TABLE
 ================================================================================
 
-  PREFIX                USE WHEN
-  ────────────────────────────────────────────────
-  [SYNC]                Starting session
-  [Q]                   Question (need answer)
-  [A]                   Answer to question
-  [UPDATE]              Progress update
-  [DONE]                Task completed
-  [VALIDATED]           Confirmed other's work
-  [URGENT]              Immediate attention
-  [BLOCKED]             Cannot proceed
-  [LOCK]                Claiming file
-  [UNLOCK]              Releasing file
-  [STATUS]              Status dump
-  [HANDOFF]             Transferring work
-  [TASK_READY]          Task ready for Executor
-  [WAITING_FOR_TASKS]   Executor waiting
-  [WAITING]             Task not ready yet
-  [ALL_TASKS_ASSIGNED]  No more tasks coming
-  [SESSION_COMPLETE]    All work done
-  [DECISION_NEEDED]     User input required
-  [AGENT_ERROR]         Agent problem - report to User
-  [PROTOCOL_BREAK]      Other agent violating protocol
+  PREFIX                   USE WHEN
+  ────────────────────────────────────────────────────────
+  [SYNC]                   Starting session
+  [Q]                      Question (need answer)
+  [A]                      Answer to question
+  [UPDATE]                 Progress update
+  [DONE]                   Task completed (needs validation)
+  [VALIDATED]              Confirmed other's work passes
+  [VALIDATION_CHECKPOINT]  Architect: Stop work, begin validation
+  [VALIDATION_COMPLETE]    Architect: All X/X tasks validated
+  [URGENT]                 Immediate attention
+  [BLOCKED]                Cannot proceed
+  [LOCK]                   Claiming file
+  [UNLOCK]                 Releasing file
+  [STATUS]                 Status dump
+  [HANDOFF]                Transferring work
+  [BATCH_READY]            ALL Executor tasks defined
+  [SESSION_COMPLETE]       All work done AND validated
+  [DECISION_NEEDED]        User input required
+  [AGENT_ERROR]            Agent problem - report to User
+  [PROTOCOL_BREAK]         Other agent violating protocol
 
 ================================================================================
 10.4 SESSION SIGNAL TABLE (BATCH MODE)
@@ -1901,14 +1979,16 @@ BATCH MODE BENEFITS:
   ─────────────────────────────────────────────────────────
   [FILLER_CONFIRM]         Architect   Asking User about filler tasks
   [BATCH_READY]            Architect   ALL Executor tasks are defined
-  [ALL_TASKS_ASSIGNED]     Architect   (Same as BATCH_READY)
-  [SESSION_COMPLETE]       Architect   Stop, session over
+  [VALIDATION_CHECKPOINT]  Architect   Stop new work, begin validation
+  [VALIDATED]              Either      Task passed validation check
+  [VALIDATION_COMPLETE]    Architect   All X/X tasks validated
+  [SESSION_COMPLETE]       Architect   All work done AND validated
   [DECISION_NEEDED]        Architect   User must decide
   [AGENT_ERROR] @USER      Either      STOP - problem occurred
   [PROTOCOL_BREAK] @USER   Either      Other agent malfunctioning
 
-  NOTE: In Batch Mode, [WAITING_FOR_TASKS] should NOT occur.
-        Executor always has work until all tasks are done.
+  NOTE: [SESSION_COMPLETE] requires [VALIDATION_COMPLETE] first!
+        Both agents must validate each other's work at checkpoint.
 
 ================================================================================
 ================================================================================
@@ -1953,8 +2033,13 @@ BATCH MODE BENEFITS:
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
   ╔═══════════════════════════════════════════════════════════════════════════╗
-  ║  ARCHITECT: DO NOT forget to signal [SESSION_COMPLETE]                    ║
-  ║  → INSTEAD: Always end session properly so Executor knows to stop         ║
+  ║  ARCHITECT: DO NOT post [SESSION_COMPLETE] without validation             ║
+  ║  → INSTEAD: First [VALIDATION_CHECKPOINT], validate all tasks, then end   ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT skip checkpoint validation - quality over speed!                  ║
+  ║  → INSTEAD: Both agents validate each other's work before session ends    ║
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
   ╔═══════════════════════════════════════════════════════════════════════════╗

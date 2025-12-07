@@ -356,7 +356,10 @@ If you create a task where Executor must wait for your work:
 ## SIGNALS YOU MUST USE
 [FILLER_CONFIRM] = Asking User about filler tasks
 [BATCH_READY] = ALL Executor tasks are defined in inbox
-[SESSION_COMPLETE] = All work done, session over
+[VALIDATION_CHECKPOINT] = Stop work, begin cross-validation
+[VALIDATED] = Task passed your validation check
+[VALIDATION_COMPLETE] = All X/X tasks validated by both agents
+[SESSION_COMPLETE] = All work done AND validated (AFTER validation!)
 [DECISION_NEEDED] = User must provide input
 [AGENT_ERROR] @USER = You have a problem - STOP and report
 [PROTOCOL_BREAK] @USER @EXECUTOR = Executor not following protocol
@@ -447,10 +450,17 @@ Internal dependencies (E001→E002) are fine - just order your work.
 
 ## SIGNALS YOU MUST USE
 [SYNC] = Starting session
-[DONE] TASK-EXXX = Task completed
+[DONE] TASK-EXXX = Task completed (needs validation)
+[VALIDATED] = Architect's task passed your validation
 [Q] = Question for Architect
 [AGENT_ERROR] @USER = You have a problem - STOP and report
 [PROTOCOL_BREAK] @USER @ARCHITECT = Architect not following protocol
+
+## WHEN [VALIDATION_CHECKPOINT] RECEIVED
+STOP new work! Validate ALL Architect [DONE] tasks:
+1. Read their files
+2. Check for issues
+3. Post [VALIDATED] TASK-AXXX for each passing task
 
 ## ERROR REPORTING (IMMEDIATE)
 If ANY problem occurs, post immediately in LIVE_CHAT.md:
