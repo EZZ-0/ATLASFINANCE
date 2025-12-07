@@ -27,6 +27,35 @@ ENABLE_BACKGROUND_IMAGE = True
 
 # Import our modules
 from usa_backend import USAFinancialExtractor
+from validation_engine import DataValidator
+from app_css import inject_all_css, get_search_button_css
+from app_landing import render_landing_page, render_ticker_display, render_no_ticker_placeholder
+
+# Initialize validator (singleton pattern)
+_validator = DataValidator()
+
+def validate_and_enrich(ticker: str, financials: dict) -> tuple:
+    """
+    Validate extracted data and return (financials, validation_report).
+    Adds validation metadata to financials dict.
+    """
+    if not financials or financials.get("status") == "error":
+        return financials, None
+    
+    try:
+        report = _validator.validate_extraction(ticker, financials)
+        # Attach validation metadata
+        financials['_validation'] = {
+            'status': report['overall_status'],
+            'quality_score': report['quality_score'],
+            'warnings': report['warnings'][:5],  # Top 5 warnings
+            'errors': report['errors'][:3]  # Top 3 errors
+        }
+        return financials, report
+    except Exception as e:
+        # Don't block extraction if validation fails
+        print(f"[WARN] Validation failed: {e}")
+        return financials, None
 
 # ==========================================
 # CACHING - Prevent Rate Limiting
@@ -173,563 +202,21 @@ st.set_page_config(
 if 'initialized' not in st.session_state:
     st.session_state.initialized = True
 
-st.markdown("""
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" media="print" onload="this.media='all'">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-<noscript>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-</noscript>
-<style>
-    /* Professional Financial Dark Theme - Clean & Readable */
-    :root {
-        --bg-primary: #0f1419;
-        --bg-secondary: #1a1f26;
-        --bg-card: #1e2530;
-        --bg-hover: #252d3a;
-        --text-primary: #f0f4f8;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-        --accent-primary: #3b82f6;
-        --accent-secondary: #10b981;
-        --accent-gold: #f59e0b;
-        --border-subtle: rgba(148, 163, 184, 0.1);
-        --border-accent: rgba(59, 130, 246, 0.3);
-    }
-    
-    .stApp {
-        background: var(--bg-primary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    /* Force Streamlit containers to use our theme */
-    [data-testid="stAppViewContainer"] {
-        background: var(--bg-primary) !important;
-    }
-    
-    [data-testid="stHeader"] {
-        background: rgba(15, 20, 25, 0.95) !important;
-        backdrop-filter: blur(10px);
-    }
-    
-    .main .block-container {
-        background: transparent !important;
-    }
-    
-    /* Global Font Enhancement */
-    * {
-        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-        color: var(--text-primary);
-    }
-    
-    /* Premium Header with Animation */
-    .main-header {
-        font-size: 3rem;
-        font-weight: 700;
-        color: white !important;
-        text-align: center;
-        padding: 1.5rem 0;
-        animation: fadeInDown 0.8s ease-out;
-        letter-spacing: -1px;
-        text-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 
-                     0 2px 4px rgba(0, 0, 0, 0.5);
-    }
-    
-    @keyframes fadeInDown {
-        from {
-            opacity: 0;
-            transform: translateY(-20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    /* Clean Metric Cards - Solid, Readable Design */
-    .metric-card {
-        background: #1e2530 !important;
-        padding: 1.5rem;
-        border-radius: 12px;
-        border: 1px solid rgba(59, 130, 246, 0.15);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    
-    .metric-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-        border-color: rgba(59, 130, 246, 0.3);
-    }
-    
-    /* Streamlit Metrics - Clean Solid Design */
-    [data-testid="stMetric"] {
-        background: #1e2530 !important;
-        padding: 1.2rem;
-        border-radius: 10px;
-        border: 1px solid rgba(59, 130, 246, 0.15);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
-    }
-    
-    [data-testid="stMetric"]:hover {
-        border-color: rgba(59, 130, 246, 0.3);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
-    }
-    
-    /* Professional Tab Styling - Clean Solid Design */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 0.5rem;
-        background-color: #1a1f26 !important;
-        padding: 0.5rem;
-        border-radius: 10px;
-        border: 1px solid rgba(59, 130, 246, 0.12);
-    }
-    
-    .stTabs [data-baseweb="tab"] {
-        height: 48px;
-        background-color: transparent;
-        border-radius: 8px;
-        padding: 0 20px;
-        font-weight: 500;
-        color: var(--text-secondary) !important;
-        transition: all 0.2s ease;
-    }
-    
-    .stTabs [data-baseweb="tab"]:hover {
-        background-color: var(--bg-hover);
-        color: var(--text-primary) !important;
-    }
-    
-    .stTabs [aria-selected="true"] {
-        background: linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%);
-        color: white !important;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-    }
-    
-    /* Enhanced Data Tables - Clean Solid Design */
-    .stDataFrame {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        background-color: #1e2530 !important;
-    }
-    
-    .stDataFrame th {
-        background: #1a1f26 !important;
-        color: var(--text-primary) !important;
-        font-weight: 600;
-        padding: 12px 16px !important;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        border-bottom: 2px solid var(--accent-primary) !important;
-    }
-    
-    .stDataFrame td {
-        padding: 12px 16px !important;
-        border-bottom: 1px solid rgba(148, 163, 184, 0.1);
-        color: var(--text-primary) !important;
-        background-color: #1e2530 !important;
-    }
-    
-    .stDataFrame tr:hover {
-        background-color: #252d3a !important;
-    }
-    
-    /* Sidebar - Clean Solid Design */
-    [data-testid="stSidebar"] {
-        background: linear-gradient(180deg, #1a1f26 0%, #0f1419 100%) !important;
-        border-right: 1px solid rgba(59, 130, 246, 0.12);
-    }
-    
-    [data-testid="stSidebar"] * {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Button Enhancements */
-    .stButton button {
-        background: linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%);
-        color: white !important;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-    }
-    
-    /* Charts Enhancement - Clean Solid Design */
-    .js-plotly-plot {
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-        overflow: hidden;
-        background-color: #1e2530 !important;
-    }
-    
-    /* Expander Styling - Clean Solid Design */
-    .streamlit-expanderHeader {
-        background-color: #1a1f26 !important;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        color: var(--text-primary) !important;
-        border: 1px solid rgba(59, 130, 246, 0.12);
-    }
-    
-    .streamlit-expanderHeader:hover {
-        background-color: #252d3a !important;
-        border-color: rgba(59, 130, 246, 0.25);
-    }
-    
-    /* Metric Value Styling */
-    [data-testid="stMetricValue"] {
-        font-size: 2rem;
-        font-weight: 700;
-        color: var(--accent-primary) !important;
-    }
-    
-    [data-testid="stMetricDelta"] {
-        color: var(--text-secondary) !important;
-    }
-    
-    /* Positive/Negative deltas */
-    [data-testid="stMetricDelta"] svg[data-testid="stMetricDeltaIcon-Up"] ~ div {
-        color: var(--accent-secondary) !important;
-    }
-    
-    [data-testid="stMetricDelta"] svg[data-testid="stMetricDeltaIcon-Down"] ~ div {
-        color: #ef4444 !important;
-    }
-    
-    /* Alert Boxes - Clean Solid Design */
-    .stAlert {
-        border-radius: 10px;
-        border-left-width: 4px;
-        padding: 1rem 1.5rem;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-        background: #1e2530 !important;
-        color: var(--text-primary);
-        border: 1px solid rgba(59, 130, 246, 0.12);
-    }
-    
-    /* Loading Spinner */
-    .stSpinner > div {
-        border-top-color: var(--accent-primary) !important;
-    }
-    
-    /* Scrollbar Styling */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
-        border-radius: 8px;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-        background: var(--bg-hover);
-        border-radius: 8px;
-        border: 2px solid var(--bg-secondary);
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-        background: var(--accent-primary);
-    }
-    
-    /* Input Fields */
-    .stTextInput input, .stSelectbox select, .stNumberInput input {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: 8px;
-    }
-    
-    .stTextInput input:focus, .stSelectbox select:focus, .stNumberInput input:focus {
-        border-color: var(--accent-primary) !important;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
-    }
-    
-    /* Select box dropdown styling */
-    [data-baseweb="select"] {
-        background-color: var(--bg-secondary) !important;
-    }
-    
-    [data-baseweb="select"] > div {
-        background-color: var(--bg-secondary) !important;
-        border-color: var(--border-subtle) !important;
-    }
-    
-    [data-baseweb="popover"] {
-        background-color: var(--bg-card) !important;
-    }
-    
-    [data-baseweb="menu"] {
-        background-color: var(--bg-card) !important;
-    }
-    
-    [data-baseweb="menu"] li {
-        background-color: var(--bg-card) !important;
-    }
-    
-    [data-baseweb="menu"] li:hover {
-        background-color: var(--bg-hover) !important;
-    }
-    
-    /* Checkbox and Radio */
-    .stCheckbox, .stRadio {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Headers */
-    h1, h2, h3, h4, h5, h6 {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Markdown Text */
-    .stMarkdown {
-        color: var(--text-primary) !important;
-    }
-    
-    .stMarkdown p, .stMarkdown span, .stMarkdown li {
-        color: var(--text-primary) !important;
-    }
-    
-    /* Success/Info/Warning/Error Messages */
-    .element-container:has(.stSuccess) .stAlert {
-        background: var(--bg-card);
-        border-left-color: var(--accent-secondary) !important;
-        border: 1px solid rgba(16, 185, 129, 0.25);
-    }
-    
-    .element-container:has(.stInfo) .stAlert {
-        background: var(--bg-card);
-        border-left-color: var(--accent-primary) !important;
-        border: 1px solid rgba(59, 130, 246, 0.25);
-    }
-    
-    .element-container:has(.stWarning) .stAlert {
-        background: var(--bg-card);
-        border-left-color: var(--accent-gold) !important;
-        border: 1px solid rgba(245, 158, 11, 0.25);
-    }
-    
-    .element-container:has(.stError) .stAlert {
-        background: var(--bg-card);
-        border-left-color: #ef4444 !important;
-        border: 1px solid rgba(239, 68, 68, 0.25);
-    }
-    
-    /* Responsive Typography */
-    @media (max-width: 768px) {
-        .main-header {
-            font-size: 2rem;
-        }
-    }
-    
-    /* Fade-in Animation for Content */
-    .element-container {
-        animation: fadeIn 0.4s ease-out;
-    }
-    
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-    
-    /* Table Grid Styling */
-    [data-testid="stDataFrame"] .dvn-scroller {
-        cursor: pointer !important;
-    }
-    
-    [data-testid="stDataFrame"] div[role="grid"] {
-        border: 1px solid var(--border-subtle) !important;
-        border-radius: 8px !important;
-    }
-    
-    [data-testid="stDataFrame"] div[role="columnheader"],
-    [data-testid="stDataFrame"] div[role="gridcell"] {
-        border-right: none !important;
-        border-bottom: 1px solid var(--border-subtle) !important;
-    }
-    
-    /* Clean Alert Style */
-    .stAlert {
-        background: var(--bg-card) !important;
-        border: 1px solid var(--border-subtle) !important;
-        border-left: 3px solid var(--accent-primary) !important;
-        border-radius: 8px !important;
-        padding: 1rem 1.5rem !important;
-        color: var(--text-primary) !important;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
-    }
-    
-    /* Alert types */
-    .stAlert[kind="info"] {
-        border-left-color: var(--accent-primary) !important;
-    }
-    
-    .stAlert[kind="success"] {
-        border-left-color: var(--accent-secondary) !important;
-    }
-    
-    .stAlert[kind="warning"] {
-        border-left-color: var(--accent-gold) !important;
-    }
-    
-    .stAlert[kind="error"] {
-        border-left-color: #ef4444 !important;
-    }
-    
-    /* Number inputs and sliders */
-    [data-testid="stNumberInput"] input {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-    }
-    
-    .stSlider > div > div > div {
-        background-color: var(--accent-primary) !important;
-    }
-    
-    /* Multiselect styling */
-    .stMultiSelect > div > div {
-        background-color: var(--bg-secondary) !important;
-        border-color: var(--border-subtle) !important;
-    }
-    
-    .stMultiSelect span[data-baseweb="tag"] {
-        background-color: var(--accent-primary) !important;
-    }
-    
-    /* Text area styling */
-    .stTextArea textarea {
-        background-color: var(--bg-secondary) !important;
-        color: var(--text-primary) !important;
-        border-color: var(--border-subtle) !important;
-    }
-    
-    /* Caption and small text */
-    .stCaption, small {
-        color: var(--text-muted) !important;
-    }
-    
-    /* Code blocks */
-    code {
-        background-color: var(--bg-secondary) !important;
-        color: var(--accent-gold) !important;
-        padding: 2px 6px;
-        border-radius: 4px;
-    }
-    
-    /* Divider */
-    hr {
-        border-color: var(--border-subtle) !important;
-    }
-    
-    /* ==========================================
-       CHROME IFRAME FIX (ECharts Gauges)
-       Fixes Score Dashboard not appearing in Chrome
-       ========================================== */
-    
-    /* Force iframe visibility for ECharts components */
-    iframe {
-        display: block !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-    }
-    
-    /* Ensure Streamlit custom components (ECharts) render properly */
-    [data-testid="stCustomComponentV1"] {
-        min-height: 200px !important;
-        display: block !important;
-        overflow: visible !important;
-    }
-    
-    /* ECharts iframe specific styling */
-    [data-testid="stCustomComponentV1"] iframe {
-        background: #1e2530 !important;
-        border: none !important;
-        min-height: 200px !important;
-        width: 100% !important;
-    }
-    
-    /* Gauge container fix */
-    .element-container:has(iframe) {
-        min-height: 200px;
-        display: block !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+# ==========================================
+# INJECT ALL CSS (from app_css.py)
+# ==========================================
+bg_image_path = os.path.join(os.path.dirname(__file__), "Background_1.png")
+inject_all_css(enable_background=ENABLE_BACKGROUND_IMAGE, bg_image_path=bg_image_path)
+
+# NOTE: Main CSS moved to app_css.py (~500 lines saved)
+# To modify styling, edit app_css.py
 
 # ==========================================
-# BACKGROUND IMAGE (Toggle: ENABLE_BACKGROUND_IMAGE)
+# [REMOVED] Legacy CSS block was here (lines 213-770)
+# All CSS now loaded from app_css.py via inject_all_css()
 # ==========================================
-# To UNDO: Set ENABLE_BACKGROUND_IMAGE = False at the top of this file
 
-if ENABLE_BACKGROUND_IMAGE:
-    # Load and encode the background image
-    bg_image_path = os.path.join(os.path.dirname(__file__), "Background_1.png")
-    if os.path.exists(bg_image_path):
-        with open(bg_image_path, "rb") as img_file:
-            bg_base64 = base64.b64encode(img_file.read()).decode()
-        
-        st.markdown(f"""
-        <style>
-            /* ==========================================
-               SUBTLE WORLD MAP OVERLAY
-               To disable: Set ENABLE_BACKGROUND_IMAGE = False
-               ========================================== */
-            
-            /* Keep original dark gradient as base */
-            .stApp {{
-                background: var(--bg-primary) !important;
-                position: relative;
-            }}
-            
-            [data-testid="stAppViewContainer"] {{
-                background: var(--bg-primary) !important;
-                position: relative;
-            }}
-            
-            /* World map overlay with subtle opacity */
-            [data-testid="stAppViewContainer"]::before {{
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background-image: url("data:image/png;base64,{bg_base64}");
-                background-size: cover;
-                background-position: center center;
-                background-repeat: no-repeat;
-                opacity: 0.22;
-                pointer-events: none;
-                z-index: 0;
-            }}
-            
-            /* Ensure content stays above overlay */
-            .main .block-container {{
-                position: relative;
-                z-index: 1;
-            }}
-            
-            [data-testid="stSidebar"] {{
-                position: relative;
-                z-index: 1;
-            }}
-</style>
-""", unsafe_allow_html=True)
+# [LEGACY CSS REMOVED - Now loaded from app_css.py via inject_all_css()]
 
 # ==========================================
 # SESSION STATE INITIALIZATION
@@ -746,6 +233,8 @@ if "use_new_model_tab" not in st.session_state:
     st.session_state.use_new_model_tab = False
 if "comparison_data" not in st.session_state:
     st.session_state.comparison_data = {}
+if "validation_report" not in st.session_state:
+    st.session_state.validation_report = None
 
 # ==========================================
 # INITIALIZE BACKEND
@@ -912,8 +401,11 @@ with st.sidebar:
                     if "status" in result and result["status"] == "error":
                         st.error(f"{result['message']}")
                     else:
-                        st.session_state.financials = result
+                        # Validate extracted data
+                        validated_result, validation_report = validate_and_enrich(ticker_input, result)
+                        st.session_state.financials = validated_result
                         st.session_state.ticker = ticker_input
+                        st.session_state.validation_report = validation_report
                         st.session_state.dcf_results = None  # Reset DCF when new data loaded
                         st.session_state.data_extracted = True  # Enable tabs view
                         
@@ -972,6 +464,24 @@ with st.sidebar:
         company_name = st.session_state.financials.get('company_name', 'N/A')
         st.success(f"✓ Loaded: **{st.session_state.ticker}**")
         st.caption(f"Company: {company_name}")
+        
+        # Data Quality Indicator
+        validation = st.session_state.financials.get('_validation', {})
+        if validation:
+            status = validation.get('status', 'UNKNOWN')
+            score = validation.get('quality_score', 0)
+            if status == 'PASS':
+                st.caption(f"Data Quality: ✓ {score}/100")
+            elif status == 'WARN':
+                st.caption(f"Data Quality: ⚠️ {score}/100")
+                warnings = validation.get('warnings', [])
+                if warnings:
+                    with st.expander("View warnings", expanded=False):
+                        for w in warnings[:3]:
+                            st.caption(f"• {w}")
+            elif status == 'FAIL':
+                st.caption(f"Data Quality: ⛔ {score}/100")
+                st.warning("Some data may be inaccurate")
         
         if st.button("🗑️ Clear Data", use_container_width=True):
             st.session_state.financials = None
@@ -1347,147 +857,23 @@ st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; ma
 # ==========================================
 # CENTERED SEARCH BAR (Landing Page Only)
 # ==========================================
+# NOTE: Landing page logic moved to app_landing.py
 
 if not st.session_state.get('data_extracted', False):
-    # Centered container for search
-    col1, col2, col3 = st.columns([1, 2, 1])
-    
-    with col2:
-        # Ticker input
-        landing_ticker = st.text_input(
-            "Ticker Symbol",
-            placeholder="Type ticker (e.g., AAPL, MSFT, TSLA)",
-            label_visibility="visible",
-            key="landing_ticker_input"
-        ).upper().strip()
-        
-        st.markdown("<p style='text-align: center; color: #64748b; margin: 1.2rem 0; font-size: 1.1rem;'>OR</p>", unsafe_allow_html=True)
-        
-        # S&P 500 dropdown
-        landing_sp500 = st.selectbox(
-            "S&P 500 Companies",
-            options=SP500_DISPLAY,
-            label_visibility="visible",
-            key="landing_sp500_select"
-        )
-        
-        if landing_sp500 != "--":
-            landing_ticker = extract_ticker(landing_sp500)
-        
-        st.write("")  # Spacing
-        
-        # EXTRACT button (actually runs extraction)
-        if landing_ticker:
-            if st.button("EXTRACT DATA", type="primary", use_container_width=True, key="landing_extract"):
-                with st.spinner(f"Extracting financial data for {landing_ticker}... (cached for 1 hour)"):
-                    try:
-                        # Get settings from sidebar defaults
-                        data_source_map = {
-                            "Auto (SEC → Yahoo)": "auto",
-                            "SEC API Only": "sec",
-                            "Yahoo Finance Only": "yfinance"
-                        }
-                        
-                        # Use default settings
-                        selected_source = "auto"
-                        filing_types_list = ["10-K"]
-                        include_quant_analysis = False
-                        
-                        # Use cached extraction to prevent rate limiting
-                        financials = cached_extract_financials(
-                            ticker=landing_ticker,
-                            source=selected_source,
-                            filing_types=tuple(filing_types_list),  # Tuple for caching
-                            include_quant=include_quant_analysis
-                        )
-                        
-                        # Check if we got financial data (status field may not exist)
-                        if financials and 'ticker' in financials and 'income_statement' in financials:
-                            # Successful extraction
-                            st.session_state.ticker = landing_ticker
-                            st.session_state.financials = financials
-                            st.session_state.data_extracted = True
-                            st.success(f"✓ Successfully extracted data for {landing_ticker}")
-                            st.rerun()
-                        else:
-                            st.error(f"Extraction failed: {financials.get('message', 'No data returned')}")
-                    
-                    except Exception as e:
-                        error_str = str(e).lower()
-                        if 'rate limit' in error_str or 'too many requests' in error_str or '429' in error_str:
-                            st.error("⏳ Rate Limited by Yahoo Finance")
-                            st.info("""
-                            **What happened:** Too many requests were made to Yahoo Finance.
-                            
-                            **Solutions:**
-                            1. **Wait 1-2 minutes** and try again
-                            2. **Try a different ticker** - it might be cached
-                            3. **Check back later** - data is cached for 1 hour once loaded
-                            
-                            *This happens on Streamlit Cloud due to shared IP addresses.*
-                            """)
-                        else:
-                            st.error(f"Error during extraction: {str(e)}")
-        else:
-            st.button("EXTRACT DATA", type="primary", use_container_width=True, disabled=True)
-    
+    render_landing_page(cached_extract_financials, validate_and_enrich, SP500_DISPLAY, extract_ticker)
     st.stop()  # Don't render tabs until data is extracted
 
 # ==========================================
 # PERSISTENT TICKER DISPLAY (Across All Tabs)
 # ==========================================
+# NOTE: Display functions moved to app_landing.py
 
 if st.session_state.financials and st.session_state.ticker:
     company_name = st.session_state.financials.get('company_name', 'N/A')
     current_price = st.session_state.financials.get('market_data', {}).get('current_price', 'N/A')
-    
-    # Main ticker display
-    st.markdown(f"""
-    <div style='text-align: center; padding: 0.8rem 1.5rem; margin: -1rem auto 0.5rem auto;
-                max-width: 800px;
-                background: linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(59, 130, 246, 0.06) 100%);
-                border: 1px solid rgba(59, 130, 246, 0.25);
-                border-radius: 10px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);'>
-        <div style='display: flex; justify-content: center; align-items: center; gap: 2rem;'>
-            <div style='text-align: center;'>
-                <p style='color: #3b82f6; font-size: 0.8rem; margin: 0; font-weight: 600; letter-spacing: 0.5px;'>TICKER</p>
-                <p style='color: #f0f4f8; font-size: 1.5rem; margin: 0; font-weight: 700;'>{st.session_state.ticker}</p>
-            </div>
-            <div style='width: 2px; height: 40px; background: rgba(59, 130, 246, 0.3);'></div>
-            <div style='text-align: center;'>
-                <p style='color: #3b82f6; font-size: 0.8rem; margin: 0; font-weight: 600; letter-spacing: 0.5px;'>COMPANY</p>
-                <p style='color: #f0f4f8; font-size: 1.2rem; margin: 0; font-weight: 600;'>{company_name}</p>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Centralized Stock Price Display
-    st.markdown(f"""
-    <div style='padding: 0.8rem 1.5rem; margin: 0.5rem auto 1rem auto;
-                max-width: 400px;
-                background: #1e2530;
-                border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 8px;
-                text-align: center;'>
-        <p style='color: #3b82f6; font-size: 0.75rem; margin: 0; font-weight: 600; letter-spacing: 0.5px;'>STOCK PRICE (AT EXTRACTION)</p>
-        <p style='color: #10b981; font-size: 1.8rem; margin: 0.3rem 0 0 0; font-weight: 700;'>${current_price if isinstance(current_price, str) else f'{current_price:.2f}'}</p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_ticker_display(st.session_state.ticker, company_name, current_price)
 else:
-    # Show placeholder when no ticker loaded
-    st.markdown("""
-    <div style='text-align: center; padding: 0.6rem 1.5rem; margin: -1rem auto 1.5rem auto;
-                max-width: 800px;
-                background: rgba(59, 130, 246, 0.05);
-                border: 1px dashed rgba(59, 130, 246, 0.2);
-                border-radius: 10px;'>
-        <p style='color: #64748b; font-size: 0.9rem; margin: 0; font-style: italic;'>
-            <i class="bi bi-info-circle" style="margin-right: 0.5rem;"></i>
-            No ticker loaded - Enter a ticker in the sidebar to begin
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+    render_no_ticker_placeholder()
 
 # ==========================================
 # CUSTOM CONTROL PANEL BUTTON (When Sidebar Collapsed)

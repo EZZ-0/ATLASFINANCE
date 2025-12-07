@@ -288,7 +288,7 @@ def render_single_flip_card(
             justify-content: center;
             padding: 12px;
             background: linear-gradient(180deg, #262c36 0%, #1a1f27 100%);
-            border: 1px solid #363d47;
+            /* border removed - cleaner open layout */
         }}
         .flip-back {{
             transform: rotateY(180deg);
