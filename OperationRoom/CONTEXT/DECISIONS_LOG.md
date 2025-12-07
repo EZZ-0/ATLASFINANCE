@@ -72,6 +72,35 @@ Implement file-based multi-agent coordination system ("Operation Room") for Arch
 
 ---
 
+### DECISION-002: Architect-Only Git Operations
+- **Date:** 2025-12-07
+- **Made By:** User
+- **Category:** Process
+
+**Decision:**
+Only Architect agent can run git commands (add, commit, push). Executor is prohibited from git operations.
+
+**Rationale:**
+- Single source of truth for commits
+- Clean, organized commit history
+- No merge conflicts between agents
+- Minimizes coordination overhead
+- Architect reviews all changes before committing
+
+**Alternatives Considered:**
+1. Both agents commit independently - Risk of conflicts
+2. Executor commits with Architect review - Extra coordination
+
+**Impact:**
+- Executor marks [DONE], Architect commits the work
+- All git operations centralized
+- Cleaner repository history
+
+**References:**
+- OPERATION_ROOM_GUIDE.txt Rule 7
+
+---
+
 ## NOTES
 
 - Reference past decisions to avoid re-discussing settled issues

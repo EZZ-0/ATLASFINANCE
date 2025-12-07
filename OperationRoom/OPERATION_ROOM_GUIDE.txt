@@ -278,6 +278,11 @@ RULE 5: COMPLETE ALL TASKS
 RULE 6: VALIDATE EACH OTHER'S WORK
          Before a task is truly done, the OTHER agent reviews it.
 
+RULE 7: ARCHITECT CONTROLS GIT (CRITICAL)
+         Only Architect commits and pushes to git.
+         Executor NEVER runs git commands.
+         This ensures single source of truth and clean history.
+
 ================================================================================
 1.6 AUTONOMOUS OPERATION (CRITICAL)
 ================================================================================
@@ -772,6 +777,23 @@ As the EXECUTOR, you are responsible for:
 YOU DO NOT communicate with User directly.
 YOU receive all orders from Architect via INBOX_EXECUTOR.md.
 When User sends "." - you enter CONTINUOUS WORK MODE until [SESSION_COMPLETE].
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: NEVER RUN GIT COMMANDS                                         ║
+  ║  ─────────────────────────────────                                        ║
+  ║  • NO git add                                                             ║
+  ║  • NO git commit                                                          ║
+  ║  • NO git push                                                            ║
+  ║  • NO git checkout                                                        ║
+  ║                                                                           ║
+  ║  Only Architect manages git. This ensures:                                ║
+  ║  • Clean commit history                                                   ║
+  ║  • No merge conflicts                                                     ║
+  ║  • Single source of truth                                                 ║
+  ║  • Coordinated releases                                                   ║
+  ║                                                                           ║
+  ║  When you complete work, post [DONE]. Architect will commit.              ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
 
 ================================================================================
 4.2 EXECUTOR SESSION START
@@ -1758,6 +1780,11 @@ REMEMBER:
   ╔═══════════════════════════════════════════════════════════════════════════╗
   ║  DO NOT continue when other agent is not following protocol               ║
   ║  → INSTEAD: Post [PROTOCOL_BREAK] @USER @OTHER_AGENT and wait             ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: DO NOT run any git commands                                    ║
+  ║  → INSTEAD: Post [DONE], Architect will commit your work                  ║
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
 ================================================================================

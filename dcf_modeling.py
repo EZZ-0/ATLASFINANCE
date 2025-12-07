@@ -289,15 +289,90 @@ class DCFModel:
         self.historical_growth = 0.10
     
     # ==========================================
-    # 2. WACC CALCULATION
+    # 2. WACC CALCULATION (Enhanced with CAPM + FRED API)
     # ==========================================
+    
+    def _get_risk_free_rate(self) -> float:
+        """
+        Get current 10-year Treasury rate from FRED API.
+        Falls back to default if API unavailable.
+        
+        Returns:
+            Risk-free rate as decimal (e.g., 0.045 for 4.5%)
+        """
+        try:
+            # Try to import FRED API module
+            from data_sources.fred_api import get_treasury_rate
+            rate = get_treasury_rate()
+            _logger.info(f"Risk-free rate from FRED: {rate:.2%}")
+            return rate
+        except ImportError:
+            _logger.debug("FRED API module not available, using default risk-free rate")
+        except Exception as e:
+            _logger.warning(f"FRED API error: {e}, using default risk-free rate")
+        
+        # Default to current approximate 10-year Treasury rate
+        return 0.045  # 4.5%
+    
+    def _calculate_adjusted_beta(self, raw_beta: float) -> float:
+        """
+        Calculate Bloomberg-adjusted beta using Blume's adjustment.
+        
+        Adjusted Beta = 0.67 × Raw Beta + 0.33
+        
+        This regresses beta toward 1.0 (the market beta), based on the
+        empirical observation that betas tend to mean-revert over time.
+        
+        Args:
+            raw_beta: Raw historical beta from regression
+            
+        Returns:
+            Adjusted beta value
+        """
+        adjusted = 0.67 * raw_beta + 0.33
+        _logger.debug(f"Beta adjustment: {raw_beta:.3f} → {adjusted:.3f}")
+        return adjusted
+    
+    def _calculate_capm_cost_of_equity(self, beta: float, risk_free_rate: float = None) -> float:
+        """
+        Calculate Cost of Equity using Capital Asset Pricing Model (CAPM).
+        
+        Ke = Rf + β × (Rm - Rf)
+        
+        Where:
+        - Rf = Risk-free rate (10-year Treasury)
+        - β = Adjusted beta
+        - Rm - Rf = Equity Risk Premium (historical ~5.5%)
+        
+        Args:
+            beta: Raw beta (will be adjusted automatically)
+            risk_free_rate: Optional override for risk-free rate
+            
+        Returns:
+            Cost of equity as decimal
+        """
+        rf = risk_free_rate if risk_free_rate is not None else self._get_risk_free_rate()
+        adjusted_beta = self._calculate_adjusted_beta(beta)
+        
+        # Equity risk premium (long-term historical average)
+        equity_risk_premium = 0.055  # 5.5%
+        
+        cost_of_equity = rf + adjusted_beta * equity_risk_premium
+        
+        _logger.debug(
+            f"CAPM Cost of Equity: {cost_of_equity:.2%} "
+            f"(Rf={rf:.2%}, β_adj={adjusted_beta:.3f}, ERP={equity_risk_premium:.2%})"
+        )
+        
+        return cost_of_equity
     
     def _calculate_wacc(self) -> Optional[float]:
         """
         Calculate Weighted Average Cost of Capital (WACC) using:
-        - Cost of Equity from Fama-French 3-Factor Model (if available)
+        - Cost of Equity from Fama-French (primary) or CAPM (fallback)
         - Cost of Debt from interest expense / total debt
         - Capital structure weights from market cap and debt
+        - Live risk-free rate from FRED API when available
         
         WACC = (E/(D+E)) × Ke + (D/(D+E)) × Kd × (1-T)
         
@@ -305,15 +380,28 @@ class DCFModel:
             Calculated WACC as decimal, or None if insufficient data
         """
         try:
-            # Get Cost of Equity from quant analysis (Fama-French)
+            # Get risk-free rate first (used in multiple places)
+            risk_free_rate = self._get_risk_free_rate()
+            
+            # Try Fama-French first, then CAPM fallback
             quant = self.financials.get('quant_analysis', {})
             ff_results = quant.get('fama_french', {})
-            
             cost_of_equity = ff_results.get('cost_of_equity_annual')
+            cost_of_equity_source = "Fama-French"
             
+            # Fallback to CAPM if Fama-French not available
             if cost_of_equity is None or cost_of_equity <= 0:
-                _logger.debug(f"No valid cost of equity for {self.ticker}, using default WACC")
-                return None
+                # Try to get beta for CAPM
+                market_data = self.financials.get('market_data', {})
+                raw_beta = market_data.get('beta') or ff_results.get('beta_market')
+                
+                if raw_beta and raw_beta > 0:
+                    cost_of_equity = self._calculate_capm_cost_of_equity(raw_beta, risk_free_rate)
+                    cost_of_equity_source = "CAPM"
+                    _logger.info(f"Using CAPM for {self.ticker} cost of equity: {cost_of_equity:.2%}")
+                else:
+                    _logger.debug(f"No valid beta for {self.ticker}, cannot calculate cost of equity")
+                    return None
             
             # Get market data for weights
             market_data = self.financials.get('market_data', {})
@@ -341,8 +429,8 @@ class DCFModel:
                 # Cap cost of debt at reasonable range (1% - 15%)
                 cost_of_debt = max(0.01, min(0.15, cost_of_debt))
             else:
-                # Use risk-free rate + spread as fallback
-                cost_of_debt = 0.05  # 5% default
+                # Use risk-free rate + credit spread as fallback
+                cost_of_debt = risk_free_rate + 0.015  # Rf + 1.5% spread
             
             # Tax rate (use standard US corporate rate)
             tax_rate = 0.21
@@ -366,18 +454,24 @@ class DCFModel:
             
             _logger.info(
                 f"WACC calculated for {self.ticker}: {wacc:.2%} "
-                f"(Ke={cost_of_equity:.2%}, Kd={cost_of_debt:.2%}, E%={equity_weight:.1%}, D%={debt_weight:.1%})"
+                f"(Ke={cost_of_equity:.2%} [{cost_of_equity_source}], Kd={cost_of_debt:.2%}, "
+                f"E%={equity_weight:.1%}, D%={debt_weight:.1%}, Rf={risk_free_rate:.2%})"
             )
             
             # Store component details for transparency
             self.wacc_components = {
                 'cost_of_equity': cost_of_equity,
+                'cost_of_equity_source': cost_of_equity_source,
                 'cost_of_debt': cost_of_debt,
                 'equity_weight': equity_weight,
                 'debt_weight': debt_weight,
                 'tax_rate': tax_rate,
                 'market_cap': market_cap,
-                'total_debt': total_debt
+                'total_debt': total_debt,
+                'risk_free_rate': risk_free_rate,
+                'adjusted_beta': self._calculate_adjusted_beta(
+                    self.financials.get('market_data', {}).get('beta', 1.0)
+                )
             }
             
             return wacc
@@ -405,11 +499,16 @@ class DCFModel:
             'wacc': self.calculated_wacc,
             'source': self.wacc_source,
             'cost_of_equity': components['cost_of_equity'],
+            'cost_of_equity_source': components.get('cost_of_equity_source', 'Unknown'),
             'cost_of_debt': components['cost_of_debt'],
             'equity_weight': components['equity_weight'],
             'debt_weight': components['debt_weight'],
             'tax_rate': components['tax_rate'],
+            'risk_free_rate': components.get('risk_free_rate', 0.045),
+            'adjusted_beta': components.get('adjusted_beta'),
             'formula': 'WACC = (E/(D+E)) × Ke + (D/(D+E)) × Kd × (1-T)',
+            'capm_formula': 'Ke = Rf + β_adj × ERP' if components.get('cost_of_equity_source') == 'CAPM' else None,
+            'beta_adjustment': '0.67 × raw_beta + 0.33 (Bloomberg adjustment)',
             'calculation': f"({components['equity_weight']:.1%} × {components['cost_of_equity']:.2%}) + "
                           f"({components['debt_weight']:.1%} × {components['cost_of_debt']:.2%} × (1 - {components['tax_rate']:.0%}))"
         }

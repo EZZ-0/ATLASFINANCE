@@ -105,7 +105,400 @@ Actual: [What is happening]
 
 <!-- New tasks go here. Executor processes from top to bottom. -->
 
-[No pending tasks]
+### TASK-E001: Research FRED API and Get Free API Key
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** TASK-E007
+
+**Description:**
+Research the Federal Reserve Economic Data (FRED) API to get real-time Treasury rates. Register for a free API key. Document the endpoint and parameters needed for 10-year Treasury yield (DGS10).
+
+**Step-by-Step Instructions:**
+1. Go to https://fred.stlouisfed.org/
+2. Create a free account
+3. Navigate to API Keys section and generate a key
+4. Find the DGS10 series (10-Year Treasury Constant Maturity Rate)
+5. Document the API endpoint format and required parameters
+6. Test a sample request to verify the key works
+
+**Acceptance Criteria:**
+- [ ] FRED API key obtained and working
+- [ ] DGS10 endpoint URL documented
+- [ ] Sample response format documented
+- [ ] Rate limits documented (requests per minute)
+
+**Expected Output:**
+Create file `research/FRED_API_NOTES.md` with:
+- API key (masked: first 4 chars only for security)
+- Endpoint: `https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&...`
+- Response format example
+- Rate limits
+
+**Rollback Plan:** N/A - research task, no code changes
+
+---
+
+### TASK-E002: Download and Parse Damodaran Sector Benchmarks
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** TASK-E006, TASK-A005
+
+**Description:**
+Download Aswath Damodaran's sector benchmark data from NYU. Parse it into a Python dictionary that can be used for sector comparisons.
+
+**Step-by-Step Instructions:**
+1. Go to https://pages.stern.nyu.edu/~adamodar/
+2. Navigate to "Current Data" → "Industry Data"
+3. Download the spreadsheet with sector averages (PE, ROE, Debt/Equity, etc.)
+4. Parse key metrics: PE, PB, EV/EBITDA, ROE, ROA, Debt/Equity, Gross Margin
+5. Create Python dict with sector as key
+
+**Acceptance Criteria:**
+- [ ] CSV/Excel file downloaded to `data/damodaran_sectors.csv`
+- [ ] Python dict created with at least 10 sectors
+- [ ] Each sector has: pe_median, roe_median, debt_equity_median, gross_margin_median
+- [ ] Source URL and date documented
+
+**Expected Output:**
+Create file `data_sources/damodaran_data.py` with:
+```python
+SECTOR_BENCHMARKS = {
+    'Technology': {'pe': 28.5, 'roe': 0.22, 'debt_equity': 0.35, ...},
+    'Healthcare': {'pe': 24.0, 'roe': 0.16, 'debt_equity': 0.45, ...},
+    # ... more sectors
+}
+DAMODARAN_SOURCE_URL = "https://..."
+DAMODARAN_UPDATE_DATE = "2024-01"
+```
+
+**Rollback Plan:** N/A - new file, just delete if needed
+
+---
+
+### TASK-E003: Validate AAPL Metrics Against External Sources
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** None
+
+**Description:**
+Run the ATLAS engine for AAPL (Apple Inc.) and compare key metrics against Yahoo Finance and other sources. Document any discrepancies.
+
+**Step-by-Step Instructions:**
+1. Run `streamlit run usa_app.py` and extract AAPL
+2. Note down: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
+3. Go to Yahoo Finance AAPL page, note the same metrics
+4. Compare and calculate % difference
+5. Document findings
+
+**Acceptance Criteria:**
+- [ ] ATLAS metrics captured for AAPL
+- [ ] Yahoo Finance metrics captured for AAPL
+- [ ] % difference calculated for each metric
+- [ ] Any discrepancies > 5% flagged
+
+**Expected Output:**
+Create file `validation/baseline_AAPL.md` with:
+```markdown
+# AAPL Baseline Validation
+| Metric | ATLAS | Yahoo | Diff % | Status |
+|--------|-------|-------|--------|--------|
+| P/E | 28.5 | 28.3 | 0.7% | ✅ |
+| ROE | 1.45 | 1.47 | 1.4% | ✅ |
+...
+```
+
+**Rollback Plan:** N/A - documentation only
+
+---
+
+### TASK-E004: Validate MSFT Metrics Against External Sources
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** None
+
+**Description:**
+Same as E003 but for Microsoft (MSFT).
+
+**Step-by-Step Instructions:**
+1. Run ATLAS engine for MSFT
+2. Capture: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
+3. Compare against Yahoo Finance
+4. Document discrepancies
+
+**Acceptance Criteria:**
+- [ ] ATLAS metrics captured for MSFT
+- [ ] Yahoo Finance metrics captured for MSFT
+- [ ] % difference calculated for each metric
+- [ ] Any discrepancies > 5% flagged
+
+**Expected Output:**
+Create file `validation/baseline_MSFT.md` with comparison table
+
+**Rollback Plan:** N/A - documentation only
+
+---
+
+### TASK-E005: Validate JNJ Metrics Against External Sources
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** None
+
+**Description:**
+Same as E003 but for Johnson & Johnson (JNJ) - important because it's healthcare sector, different from tech.
+
+**Step-by-Step Instructions:**
+1. Run ATLAS engine for JNJ
+2. Capture: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
+3. Compare against Yahoo Finance
+4. Document discrepancies
+
+**Acceptance Criteria:**
+- [ ] ATLAS metrics captured for JNJ
+- [ ] Yahoo Finance metrics captured for JNJ
+- [ ] % difference calculated for each metric
+- [ ] Any discrepancies > 5% flagged
+
+**Expected Output:**
+Create file `validation/baseline_JNJ.md` with comparison table
+
+**Rollback Plan:** N/A - documentation only
+
+---
+
+### TASK-E006: Create Sector Mapping Dictionary
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-E002 (need Damodaran sectors first)
+- **Blocks:** TASK-A005
+
+**Description:**
+Create a mapping from yfinance sector names (GICS) to Damodaran sector names. They use different naming conventions.
+
+**Step-by-Step Instructions:**
+1. Review yfinance sector field options (from ticker.info['sector'])
+2. Review Damodaran sector names from E002
+3. Create mapping dict
+4. Handle edge cases (Unknown, empty)
+
+**Acceptance Criteria:**
+- [ ] Mapping covers all major yfinance sectors
+- [ ] Each yfinance sector maps to one Damodaran sector
+- [ ] "Unknown" fallback handled
+
+**Expected Output:**
+Add to `data_sources/damodaran_data.py`:
+```python
+YFINANCE_TO_DAMODARAN = {
+    'Technology': 'Technology',
+    'Healthcare': 'Healthcare',
+    'Financial Services': 'Financial Services',
+    'Consumer Cyclical': 'Consumer Discretionary',
+    # ... all mappings
+    'Unknown': None  # No benchmark available
+}
+```
+
+**Rollback Plan:** N/A - adding to new file
+
+---
+
+### TASK-E007: Implement FRED API Module
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-E001 (need API key and docs)
+- **Blocks:** TASK-A003
+
+**Description:**
+Implement the actual FRED API integration to fetch Treasury rates.
+
+**Step-by-Step Instructions:**
+1. Create new file `data_sources/fred_api.py`
+2. Implement function to fetch 10-year Treasury rate
+3. Add caching (cache for 24 hours - rates don't change often)
+4. Add fallback to hardcoded 4.5% if API fails
+5. Test with actual API call
+
+**Acceptance Criteria:**
+- [ ] `get_treasury_rate()` function works
+- [ ] Rate is cached for 24 hours
+- [ ] Fallback returns 4.5% on error
+- [ ] Logging on API failures
+
+**Expected Output:**
+Create file `data_sources/fred_api.py`:
+```python
+import requests
+from functools import lru_cache
+import time
+
+FRED_API_KEY = "your_key_here"  # Move to .env later
+FALLBACK_TREASURY_RATE = 0.045
+
+@lru_cache(maxsize=1)
+def _fetch_treasury_rate_cached(cache_key: str) -> float:
+    # Implementation here
+    pass
+
+def get_treasury_rate() -> float:
+    """Get current 10-year Treasury rate."""
+    cache_key = time.strftime("%Y-%m-%d")  # Cache per day
+    try:
+        return _fetch_treasury_rate_cached(cache_key)
+    except Exception as e:
+        logger.error(f"FRED API error: {e}")
+        return FALLBACK_TREASURY_RATE
+```
+
+**Rollback Plan:** Delete file if needed
+
+---
+
+### TASK-E008: Cross-Validate WACC Output
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-A003 (Architect's WACC fix must be complete)
+- **Blocks:** None
+
+**Description:**
+After Architect fixes WACC formula, validate the output against analyst estimates.
+
+**Step-by-Step Instructions:**
+1. Wait for TASK-A003 to complete (Architect will signal)
+2. Run DCF for AAPL, MSFT, JNJ
+3. Check WACC values calculated
+4. Compare against GuruFocus or analyst estimates
+5. Verify adjusted beta is being used
+
+**Acceptance Criteria:**
+- [ ] WACC uses live Treasury rate (not hardcoded)
+- [ ] Beta is adjusted (0.67 * raw + 0.33)
+- [ ] WACC within reasonable range (7-12% for most companies)
+- [ ] Documented comparison
+
+**Expected Output:**
+Create file `validation/wacc_validation.md` with results
+
+**Rollback Plan:** N/A - validation only
+
+---
+
+### TASK-E009: Validate FCF Calculator Methods
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-A004 (Architect's FCF calculator must be complete)
+- **Blocks:** None
+
+**Description:**
+After Architect creates FCF calculator, validate each method's output.
+
+**Step-by-Step Instructions:**
+1. Wait for TASK-A004 to complete
+2. For AAPL, manually calculate each FCF method:
+   - Simple: OCF - CapEx
+   - Levered: OCF - CapEx - Interest
+   - Owner Earnings: NI + D&A - CapEx - WC change
+   - FCFF: EBIT*(1-T) + D&A - CapEx - WC change
+3. Compare against module output
+4. Document any discrepancies
+
+**Acceptance Criteria:**
+- [ ] All 4 FCF methods tested
+- [ ] Manual calculation matches module output (within 1%)
+- [ ] Edge cases handled (negative values, missing data)
+
+**Expected Output:**
+Create file `validation/fcf_validation.md` with results
+
+**Rollback Plan:** N/A - validation only
+
+---
+
+### TASK-E010: Full Integration Test
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-07 23:01
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** ALL previous tasks (A001-A006, E001-E009)
+- **Blocks:** None - This is the final validation
+
+**Description:**
+Run complete integration test of all new features.
+
+**Step-by-Step Instructions:**
+1. Start fresh Streamlit session
+2. Run full extraction for AAPL
+3. Verify: WACC uses Treasury rate, FCF has 4 options, benchmarks show
+4. Run DCF and Monte Carlo
+5. Check for any errors or warnings
+6. Document overall status
+
+**Acceptance Criteria:**
+- [ ] No errors during extraction
+- [ ] WACC displayed correctly
+- [ ] FCF selector works
+- [ ] Sector benchmarks visible (percentiles)
+- [ ] Monte Carlo runs successfully
+
+**Expected Output:**
+Create file `validation/integration_test_report.md` with:
+- Pass/Fail status for each feature
+- Screenshots if needed
+- Any issues found
+
+**Rollback Plan:** N/A - validation only
 
 ---
 

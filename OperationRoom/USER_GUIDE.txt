@@ -440,6 +440,7 @@ Then STOP and wait for User.
 - DO NOT guess if instructions unclear - post [Q] and WAIT
 - DO NOT expect User to give you instructions
 - DO NOT ignore problems - report them immediately
+- DO NOT run any git commands (add, commit, push) - Architect handles all git
 
 ## START NOW
 1. Read the full guide: OperationRoom/OPERATION_ROOM_GUIDE.txt
