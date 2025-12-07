@@ -1,6 +1,6 @@
 """
-UNIFIED FLIP CARDS - MILESTONE-008
-==================================
+UNIFIED FLIP CARDS - MILESTONE-008 + MILESTONE-012
+===================================================
 
 Single source of truth for all flip card metrics across the app.
 Click any metric to see formula breakdown + insight.
@@ -10,9 +10,11 @@ Features:
 - Smooth CSS animation (no server round-trip)
 - Color-coded by performance
 - Works in all tabs
+- Bank-specific metric handling (M012)
 
 Author: ATLAS Financial Intelligence
 Created: 2025-12-08 (MILESTONE-008)
+Updated: 2025-12-08 (MILESTONE-012 - Bank handling)
 """
 
 import streamlit as st
@@ -20,6 +22,14 @@ import streamlit.components.v1 as components
 from typing import Dict, Any, Optional, List, Tuple, Union
 import pandas as pd
 import hashlib
+
+# Import bank utilities
+try:
+    from utils.bank_metrics import is_bank, get_bank_display_metrics, BANK_TICKERS
+    BANK_SUPPORT = True
+except ImportError:
+    BANK_SUPPORT = False
+    BANK_TICKERS = set()
 
 
 # ============================================================================
@@ -505,11 +515,19 @@ def render_flip_card_row(
 # DASHBOARD INTEGRATION
 # ============================================================================
 
-def render_dashboard_metrics(financials: Dict) -> None:
-    """Render key dashboard metrics as flip cards."""
+def render_dashboard_metrics(financials: Dict, ticker: str = None) -> None:
+    """
+    Render key dashboard metrics as flip cards.
+    
+    M012: Bank-specific handling - shows P/B instead of D/E/FCF for banks.
+    """
     
     info = financials.get('info', {})
     ratios = financials.get('ratios', pd.DataFrame())
+    
+    # Check if this is a bank (M012)
+    ticker_str = ticker or info.get('symbol', '')
+    is_bank_stock = BANK_SUPPORT and is_bank(ticker_str, info)
     
     def get_val(keys):
         """Get value from multiple sources."""
@@ -542,14 +560,18 @@ def render_dashboard_metrics(financials: Dict) -> None:
     beta = get_val(['beta'])
     div_yield = get_val(['dividendYield'])
     fcf = get_val(['freeCashflow'])
+    pb = get_val(['priceToBook'])
     
     # Calculate FCF Yield
     fcf_yield = (fcf / mcap * 100) if fcf and mcap and mcap > 0 else None
     
     st.markdown("### Key Metrics")
-    st.caption("Click any metric to see formula & insight")
+    if is_bank_stock:
+        st.caption("Click any metric for insight (Bank-specific metrics shown)")
+    else:
+        st.caption("Click any metric to see formula & insight")
     
-    # Row 1
+    # Row 1 - same for all
     c1, c2, c3, c4, c5 = st.columns(5)
     with c1:
         render_flip_card("PE_Ratio", pe)
@@ -558,7 +580,12 @@ def render_dashboard_metrics(financials: Dict) -> None:
     with c3:
         render_flip_card("ROE", roe)
     with c4:
-        render_flip_card("Debt_to_Equity", de)
+        # M012: Banks show P/B instead of D/E (D/E meaningless for banks)
+        if is_bank_stock:
+            render_flip_card("PB_Ratio", pb, "Price/Book", 
+                           "Key bank valuation. <1 undervalued, >2 premium.")
+        else:
+            render_flip_card("Debt_to_Equity", de)
     with c5:
         render_flip_card("Gross_Margin", gm)
     
@@ -569,11 +596,21 @@ def render_dashboard_metrics(financials: Dict) -> None:
     with c7:
         render_flip_card("market_cap", mcap)
     with c8:
-        render_flip_card("FCF_Yield", fcf_yield)
+        # M012: Banks show Dividend Yield instead of FCF (FCF meaningless for banks)
+        if is_bank_stock:
+            render_flip_card("Dividend_Yield", div_yield, "Dividend Yield",
+                           "Bank income return. Major banks pay 2-4%.")
+        else:
+            render_flip_card("FCF_Yield", fcf_yield)
     with c9:
         render_flip_card("Beta", beta)
     with c10:
-        render_flip_card("Dividend_Yield", div_yield)
+        if is_bank_stock:
+            # Show P/B again or another relevant metric
+            render_flip_card("PB_Ratio", pb, "P/TBV Est.",
+                           "Price to Tangible Book (approx).")
+        else:
+            render_flip_card("Dividend_Yield", div_yield)
 
 
 # ============================================================================

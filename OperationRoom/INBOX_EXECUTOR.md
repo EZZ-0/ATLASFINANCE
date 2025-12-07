@@ -25,49 +25,54 @@ For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
 
 ---
 
-## READY TEST BATCHES - JUST RUN THE COMMAND
+## CURRENT ASSIGNMENT: MILESTONE-011 - Ticker Mapping
 
-### BATCH B1: Consumer (Current)
-```powershell
-python validation/test_batches.py --batch B1
-```
-Tickers: XOM, CVX, PFE, KO, PEP, MCD, DIS, NFLX, INTC, AMD, CRM, ORCL, IBM, WMT, COST
+**Testing Phase Complete.** Now implementing fixes from test findings.
 
-### BATCH B2: Healthcare
-```powershell
-python validation/test_batches.py --batch B2
-```
-Tickers: LLY, MRK, TMO, ABT, DHR, AMGN, GILD, VRTX, REGN, ISRG, ZTS, SYK, BDX, EW, IQV
+### YOUR TASK: Fix Bad Tickers
 
-### BATCH B3: Industrials
-```powershell
-python validation/test_batches.py --batch B3
-```
-Tickers: CAT, DE, HON, UPS, UNP, RTX, BA, LMT, GE, MMM, EMR, ETN, ITW, PH, ROK
+From heavy testing, 3 tickers failed:
+- `SQ` → Should be `XYZ` or needs special handling (Block Inc renamed)
+- `ZOOM` → Should be `ZM` (Zoom Video Communications)
+- `WBA` → Walgreens Boots Alliance (possibly delisted, verify)
 
-### BATCH B4: REITs & Utilities
-```powershell
-python validation/test_batches.py --batch B4
+### DELIVERABLES
+
+1. **Create `utils/ticker_mapper.py`:**
+```python
+TICKER_ALIASES = {
+    "ZOOM": "ZM",       # Common mistake
+    "SQ": "SQ",         # Verify if still valid
+    "GOOGLE": "GOOGL",  # Common mistake
+    "FACEBOOK": "META", # Old name
+}
+
+def normalize_ticker(ticker: str) -> str:
+    """Map common aliases to correct tickers."""
+    return TICKER_ALIASES.get(ticker.upper(), ticker.upper())
 ```
-Tickers: AMT, PLD, CCI, EQIX, PSA, SPG, O, DLR, AVB, EQR, NEE, DUK, SO, D, AEP
+
+2. **Integrate into `usa_backend.py`:**
+   - Call `normalize_ticker()` before yfinance API calls
+   - Add validation for 404 errors → suggest corrections
+
+3. **Verify WBA status:**
+   - Check if delisted or renamed
+   - Update mapper accordingly
+
+### REPORT WHEN DONE
+
+Post in LIVE_CHAT:
+```
+[EXECUTOR]: M011 Complete
+- Created utils/ticker_mapper.py
+- Integrated into usa_backend.py
+- WBA status: [your finding]
+```
 
 ---
 
-### HOW TO RUN
-
-1. Pick a batch (B1, B2, B3, or B4)
-2. Run the command
-3. Report saves automatically to `validation/batch_BX_results.md`
-4. Post summary in LIVE_CHAT when done
-
-### CURRENT ASSIGNMENT: B2 (Healthcare)
-
-B1 DONE ✅ - Now run B2:
-```powershell
-python validation/test_batches.py --batch B2
-```
-
-Architect running A3 in parallel.
+Architect working on M012 (Bank-Specific Metrics) in parallel.
 
 ---
 
