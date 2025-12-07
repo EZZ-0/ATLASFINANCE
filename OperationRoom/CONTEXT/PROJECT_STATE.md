@@ -1,8 +1,9 @@
 # PROJECT STATE
 
+<!-- DATA FILE: Current codebase status. For protocols, see: OPERATION_ROOM_GUIDE.txt -->
+
 **Project:** ATLAS Financial Intelligence  
-**Last Updated:** 2025-12-07  
-**Updated By:** [Agent]
+**Last Updated:** 2025-12-07
 
 ---
 

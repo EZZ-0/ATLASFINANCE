@@ -1,16 +1,9 @@
 # ACTIVE TASKS
 
-**Purpose:** Track all currently in-progress work across both agents.  
-**Protocol:** Update this file when starting or completing any task.
-
----
-
-## HOW TO USE
-
-1. **Starting a task:** Add entry under the appropriate agent section
-2. **Completing a task:** Move to COMPLETED_TASKS.md
-3. **Blocked:** Mark as BLOCKED and add entry to CONTEXT/BLOCKERS.md
-4. **Handoff:** Note the receiving agent and update their inbox
+<!-- 
+DATA FILE: Currently in-progress work.
+For protocols, see: OPERATION_ROOM_GUIDE.txt
+-->
 
 ---
 
@@ -22,6 +15,18 @@
 | TASK-A008 | Revision tracking logic | 2025-12-08 00:36 | ✅ DONE | In A007 |
 | TASK-A009 | Revision visualization | 2025-12-08 00:50 | ✅ DONE | 4 chart functions |
 | TASK-A010 | UI integration | 2025-12-08 00:55 | ✅ DONE | Earnings tab updated |
+| TASK-A011 | Enhance with research | - | ⬜ WAITING | For E016 completion |
+
+## EXECUTOR: PENDING (BATCH READY)
+
+| Task ID | Description | Depends On | Status |
+|---------|-------------|------------|--------|
+| TASK-E011 | yfinance research | None | ⬜ PENDING |
+| TASK-E012 | FMP research | None | ⬜ PENDING |
+| TASK-E013 | Alpha Vantage research | None | ⬜ PENDING |
+| TASK-E014 | Live extraction | E011 | ⬜ PENDING |
+| TASK-E015 | API comparison | E011-E013 | ⬜ PENDING |
+| TASK-E016 | Data summary | E014-E015 | ⬜ PENDING |
 
 ---
 

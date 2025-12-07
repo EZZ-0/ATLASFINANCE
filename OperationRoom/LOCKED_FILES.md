@@ -1,23 +1,9 @@
 # LOCKED FILES
 
-**Purpose:** Prevent merge conflicts by claiming files before editing.  
-**Protocol:** ALWAYS claim a file before editing. Release when done.
-
----
-
-## HOW TO USE
-
-### Before Editing Any File:
-
-1. Check if file is already locked below
-2. If locked by other agent: WAIT or coordinate in LIVE_CHAT
-3. If not locked: Add your lock entry
-4. Notify in LIVE_CHAT: "[LOCK] Claimed [file] for [purpose]"
-
-### After Finishing:
-
-1. Remove your lock entry from this file
-2. Notify in LIVE_CHAT: "[UNLOCK] Released [file]"
+<!-- 
+DATA FILE: Files currently claimed for editing.
+For locking protocol, see: OPERATION_ROOM_GUIDE.txt
+-->
 
 ---
 
@@ -26,16 +12,6 @@
 | File | Locked By | Since | Purpose | ETA Release |
 |------|-----------|-------|---------|-------------|
 | - | - | - | - | - |
-
----
-
-## LOCK RULES
-
-1. **One agent per file** - No exceptions
-2. **Lock before first edit** - Not after
-3. **Release promptly** - Don't hoard files
-4. **Communicate** - Always post [LOCK]/[UNLOCK] in LIVE_CHAT
-5. **Emergency override** - If agent unresponsive 30+ min, other can claim with [FORCE_UNLOCK]
 
 ---
 

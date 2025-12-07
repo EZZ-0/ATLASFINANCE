@@ -2,15 +2,29 @@
 ================================================================================
                           OPERATION ROOM GUIDE
                     MULTI-AGENT COORDINATION PROTOCOL
-                              VERSION 3.0
-                        (AUTONOMOUS OPERATION)
+                              VERSION 4.0
+                      (BATCH MODE - SINGLE SOURCE)
 ================================================================================
 ================================================================================
 
-                    ╔══════════════════════════════════════╗
-                    ║  READ THIS ENTIRE GUIDE BEFORE       ║
-                    ║  TAKING ANY ACTION IN THE PROJECT    ║
-                    ╚══════════════════════════════════════╝
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║                                                                           ║
+  ║   🎯 THIS IS THE ONLY FILE YOU NEED TO READ 🎯                           ║
+  ║                                                                           ║
+  ║   This guide is the SINGLE SOURCE OF TRUTH for all protocols.            ║
+  ║   All other Operation Room files are DATA files only.                    ║
+  ║                                                                           ║
+  ║   • ROADMAP.md .............. Data (milestones, tasks)                   ║
+  ║   • LIVE_CHAT.md ............ Data (conversation log)                    ║
+  ║   • INBOX_*.md .............. Data (task assignments)                    ║
+  ║   • ACTIVE_TASKS.md ......... Data (current work)                        ║
+  ║   • COMPLETED_TASKS.md ...... Data (finished work)                       ║
+  ║   • CONTEXT/*.md ............ Data (project state)                       ║
+  ║                                                                           ║
+  ║   DO NOT look for instructions in other files.                           ║
+  ║   EVERYTHING you need is in THIS file.                                   ║
+  ║                                                                           ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
 
 ================================================================================
 TABLE OF CONTENTS
@@ -284,7 +298,65 @@ RULE 7: ARCHITECT CONTROLS GIT (CRITICAL)
          This ensures single source of truth and clean history.
 
 ================================================================================
-1.6 AUTONOMOUS OPERATION (CRITICAL)
+1.6 BATCH MODE TASK PLANNING (CRITICAL)
+================================================================================
+
+THIS IS THE KEY TO EFFICIENT OPERATION:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    BATCH MODE = NO MID-SESSION BLOCKS                   │
+  │  ═══════════════════════════════════════════════════════════════════   │
+  │                                                                         │
+  │  THE PROBLEM (OLD WAY):                                                 │
+  │  ──────────────────────                                                 │
+  │  • Executor gets blocked waiting for Architect task A003 to complete   │
+  │  • Executor posts [WAITING_FOR_TASKS] and sits idle                    │
+  │  • User has to re-trigger Executor after A003 is done                  │
+  │  • Time wasted, user intervention needed                               │
+  │                                                                         │
+  │  THE SOLUTION (BATCH MODE):                                             │
+  │  ──────────────────────────                                             │
+  │  • Architect plans ALL Executor tasks at SESSION START                 │
+  │  • NO Executor task depends on any Architect task                      │
+  │  • Dependencies only exist WITHIN Executor's own task list (E001→E002) │
+  │  • Executor works through their batch without ever waiting on Architect│
+  │  • Session completes with ZERO user re-triggers                        │
+  │                                                                         │
+  │  SMART TASK FILLING:                                                    │
+  │  ────────────────────                                                   │
+  │  If Executor would finish too quickly (light workload):                 │
+  │  1. Architect pulls LOW-PRIORITY tasks from ROADMAP.md bottom          │
+  │  2. Architect asks User: "Adding tasks X, Y, Z to fill Executor's      │
+  │     schedule. OK?"                                                      │
+  │  3. User confirms → Architect adds to batch                            │
+  │  4. User declines → Architect proceeds with lighter batch              │
+  │                                                                         │
+  │  THE RULES:                                                             │
+  │  ───────────                                                            │
+  │  ✅ Executor tasks can depend on OTHER Executor tasks (E001→E002)      │
+  │  ✅ Architect tasks can depend on Executor tasks (E005→A003)           │
+  │  ❌ Executor tasks CANNOT depend on Architect tasks                    │
+  │  ❌ No mid-session [WAITING_FOR_TASKS] - Executor always has work      │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+BATCH MODE WORKFLOW:
+
+  1. User tells Architect what to build
+  2. Architect reads ROADMAP.md and plans:
+     - Which tasks Architect will do (complex/design)
+     - Which tasks Executor will do (implementation/data)
+  3. Architect ensures ZERO Executor→Architect dependencies
+  4. If Executor batch is light, Architect pulls filler tasks from roadmap
+  5. Architect asks User: "Plan includes [filler tasks]. Confirm?"
+  6. User sends "." to Executor
+  7. Architect posts ALL Executor tasks in INBOX_EXECUTOR.md
+  8. Architect posts [BATCH_READY] (all Executor tasks are defined)
+  9. Both work continuously until done
+  10. Executor NEVER waits for Architect
+
+================================================================================
+1.7 AUTONOMOUS OPERATION
 ================================================================================
 
 THIS IS THE KEY DIFFERENCE FROM STOP-START SYSTEMS:
@@ -315,42 +387,51 @@ THIS IS THE KEY DIFFERENCE FROM STOP-START SYSTEMS:
 │  7. Repeat until [SESSION_COMPLETE] signal from Architect                   │
 │  8. Only then stop working                                                  │
 │                                                                             │
-│  THE SIGNALS:                                                               │
-│  ────────────                                                               │
-│  [TASK_READY] - Architect: "Task X is complete and ready for Executor"     │
-│  [WAITING_FOR_TASKS] - Executor: "Inbox empty, waiting for tasks"          │
-│  [ALL_TASKS_ASSIGNED] - Architect: "No more tasks coming this session"     │
-│  [SESSION_COMPLETE] - Architect: "All work done, session finished"         │
-│                                                                             │
+  │  THE SIGNALS (BATCH MODE):                                                  │
+  │  ───────────────────────────                                                │
+  │  [BATCH_READY] - Architect: "All Executor tasks are defined in inbox"      │
+  │  [TASK_READY] - Architect: (Individual signal, optional in batch mode)     │
+  │  [ALL_TASKS_ASSIGNED] - Architect: "No more tasks coming this session"     │
+  │  [SESSION_COMPLETE] - Architect: "All work done, session finished"         │
+  │                                                                             │
+  │  NOTE: [WAITING_FOR_TASKS] should NEVER occur in Batch Mode!               │
+  │        If Executor has nothing to do, Architect failed to plan correctly.  │
+  │                                                                             │
 └─────────────────────────────────────────────────────────────────────────────┘
 
-TIMING DIAGRAM:
+BATCH MODE TIMING DIAGRAM:
 
   User              Architect              Executor
     │                   │                     │
     │──"Build X"───────▶│                     │
-    │                   │ Plans...            │
+    │                   │ Plans ALL tasks     │
+    │                   │ (Batch Mode)        │
+    │◀─"Adding filler"──│                     │
+    │──"OK"────────────▶│                     │
+    │                   │──ALL Tasks (Batch)─▶│
     │──"."─────────────────────────────────▶│
-    │                   │                     │ [SYNC] + [WAITING_FOR_TASKS]
-    │                   │                     │ (keeps checking inbox)
-    │                   │──Creates Task 1──▶│
-    │                   │ [TASK_READY]        │
-    │                   │                     │ Sees task, executes
-    │                   │ Works on own stuff  │ Working...
-    │                   │──Creates Task 2──▶│
-    │                   │ [TASK_READY]        │ Still on Task 1
-    │                   │                     │ Finishes Task 1
-    │                   │                     │ [DONE] Task 1
-    │                   │                     │ Starts Task 2
-    │                   │ [VALIDATED] Task 1  │ Working...
-    │                   │                     │ Finishes Task 2
-    │                   │                     │ [DONE] Task 2
-    │                   │ [VALIDATED] Task 2  │
-    │                   │ [ALL_TASKS_ASSIGNED]│
-    │                   │                     │ No more tasks, waits
+    │                   │ [BATCH_READY]       │ [SYNC]
+    │                   │                     │ Has ALL tasks ready!
+    │                   │ Works on A001       │ Works on E001
+    │                   │ (own complex work)  │ Finishes E001
+    │                   │                     │ [DONE] E001
+    │                   │                     │ Starts E002 (no waiting!)
+    │                   │ Finishes A001       │ Working...
+    │                   │ [DONE] A001         │ Finishes E002
+    │                   │                     │ [DONE] E002
+    │                   │ Works on A002       │ Starts E003 (internal dep OK)
+    │                   │ (uses E001 output)  │ Working...
+    │                   │                     │ Finishes E003
+    │                   │                     │ [DONE] E003
+    │                   │ Finishes A002       │ All Executor tasks done!
+    │                   │ [VALIDATED] all     │
     │                   │ [SESSION_COMPLETE] ─│
     │◀──Report─────────│                     │ Stops
     │                   │                     │
+
+KEY DIFFERENCE:
+  ❌ OLD: Executor waits for A001 → User re-triggers → Executor continues
+  ✅ NEW: Executor NEVER waits for Architect. Always has work to do.
 
 ================================================================================
 ================================================================================
@@ -487,17 +568,19 @@ COMPLETED_TASKS.md
 As the ARCHITECT, you are responsible for:
 
   1. ROADMAP: Maintain ROADMAP.md with milestones, objectives, and progress
-  2. PLANNING: Decide what needs to be done and in what order
-  3. COMPLEX WORK: Handle architecture, design, and difficult tasks yourself
-  4. DELEGATING: Create detailed tasks for Executor in INBOX_EXECUTOR.md
-  5. SIGNALING: Post [TASK_READY] when tasks are ready for Executor
-  6. COORDINATING: Keep work flowing efficiently
-  7. VALIDATING: Review Executor's completed work
-  8. DECIDING: Make final calls on technical approaches
-  9. COMPLETING: Signal [SESSION_COMPLETE] when ALL work is done
+  2. BATCH PLANNING: Plan ALL Executor tasks at SESSION START (see 3.2a)
+  3. NO CROSS-DEPS: Ensure NO Executor task depends on your tasks
+  4. COMPLEX WORK: Handle architecture, design, and difficult tasks yourself
+  5. DELEGATING: Create detailed tasks for Executor in INBOX_EXECUTOR.md
+  6. SIGNALING: Post [BATCH_READY] when all Executor tasks are defined
+  7. COORDINATING: Keep work flowing efficiently
+  8. VALIDATING: Review Executor's completed work
+  9. DECIDING: Make final calls on technical approaches
+  10. COMPLETING: Signal [SESSION_COMPLETE] when ALL work is done
 
 YOU communicate with the User directly.
 YOU create tasks for Executor.
+YOU ensure Executor NEVER waits for you.
 YOU signal when the session is complete.
 YOU are the lead of this development team.
 
@@ -517,15 +600,84 @@ Every time you start a session, do these steps IN ORDER:
   │  [ ] 4. Read INBOX_ARCHITECT.md - check for tasks from Executor         │
   │  [ ] 5. Read ACTIVE_TASKS.md - see what's in progress                   │
   │  [ ] 6. Read LOCKED_FILES.md - see what files are claimed               │
-  │  [ ] 7. Update ROADMAP.md "Current Session Objective"                   │
-  │  [ ] 8. Post [SYNC] message in LIVE_CHAT.md:                            │
-  │                                                                         │
-  │      [TIMESTAMP] [ARCHITECT]: [SYNC] Online. Session: [objective]       │
-  │      Working on MILESTONE-XXX. Will create Executor tasks as needed.    │
-  │                                                                         │
-  │  [ ] 9. Update MISSION_CONTROL.md Quick Status section                  │
-  │  [ ] 10. Begin CONTINUOUS work                                          │
+  │  [ ] 7. Plan BATCH MODE (see 3.2a below) ← CRITICAL!                    │
+  │  [ ] 8. Post [SYNC] message in LIVE_CHAT.md                             │
+  │  [ ] 9. Write ALL Executor tasks to INBOX_EXECUTOR.md                   │
+  │  [ ] 10. Post [BATCH_READY] in LIVE_CHAT.md                             │
+  │  [ ] 11. Begin CONTINUOUS work on your own tasks                        │
   └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+3.2a BATCH MODE PLANNING (CRITICAL - DO THIS BEFORE CREATING ANY TASKS)
+================================================================================
+
+Before creating ANY tasks, plan the entire session:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  BATCH MODE PLANNING CHECKLIST                                          │
+  │  ═════════════════════════════                                          │
+  │                                                                         │
+  │  STEP 1: CATEGORIZE WORK                                                │
+  │  ────────────────────────                                               │
+  │  [ ] List all tasks needed for the milestone                            │
+  │  [ ] Mark each task as: ARCHITECT (complex) or EXECUTOR (implementation)│
+  │  [ ] Complex/design/architecture → ARCHITECT                            │
+  │  [ ] Implementation/data/research/testing → EXECUTOR                    │
+  │                                                                         │
+  │  STEP 2: CHECK FOR CROSS-DEPENDENCIES                                   │
+  │  ────────────────────────────────────                                   │
+  │  [ ] Review Executor tasks: Do ANY depend on your tasks?                │
+  │  [ ] If YES → RESTRUCTURE! Move dependent work to your list             │
+  │  [ ] Executor tasks can ONLY depend on other Executor tasks (E001→E002) │
+  │  [ ] Your tasks CAN depend on Executor tasks (E005 complete → you start)│
+  │                                                                         │
+  │  STEP 3: ESTIMATE WORKLOAD BALANCE                                      │
+  │  ────────────────────────────────                                       │
+  │  [ ] Estimate total Executor time                                       │
+  │  [ ] Estimate your own task time                                        │
+  │  [ ] If Executor would finish early → Go to Step 4                      │
+  │  [ ] If balanced → Skip to Step 5                                       │
+  │                                                                         │
+  │  STEP 4: ADD FILLER TASKS (If Executor would be idle)                   │
+  │  ─────────────────────────────────────────────────────                  │
+  │  [ ] Look at ROADMAP.md "FILLER TASKS (Low Priority)" section           │
+  │  [ ] Pick tasks that don't depend on current milestone                  │
+  │  [ ] ASK USER: "Adding [task names] to fill Executor's schedule. OK?"   │
+  │  [ ] If User approves → Add to Executor batch                           │
+  │  [ ] If User declines → Proceed with lighter batch                      │
+  │                                                                         │
+  │  STEP 5: CREATE THE BATCH                                               │
+  │  ────────────────────────                                               │
+  │  [ ] Write ALL Executor tasks to INBOX_EXECUTOR.md at once              │
+  │  [ ] Include internal dependencies (E001→E002) in task descriptions     │
+  │  [ ] Post [BATCH_READY] in LIVE_CHAT.md                                 │
+  │  [ ] Update ROADMAP.md with task breakdown                              │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+EXAMPLE: Good vs Bad Task Dependencies
+
+  ❌ BAD (Executor waits for Architect):
+  
+     TASK-A001: Design FCF calculator          (Architect)
+     TASK-E001: Implement FCF calculator       (Executor - DEPENDS ON A001!)
+     → Executor gets blocked waiting for A001!
+  
+  ✅ GOOD (No cross-dependencies):
+  
+     TASK-A001: Design FCF calculator          (Architect)
+     TASK-A002: Implement FCF calculator       (Architect - does own design+impl)
+     TASK-E001: Research FRED API              (Executor - independent)
+     TASK-E002: Download Damodaran data        (Executor - independent)
+     TASK-E003: Validate AAPL metrics          (Executor - uses E002)
+     → Executor never waits for Architect!
+  
+  ✅ ALSO GOOD (Architect waits for Executor - this is OK):
+  
+     TASK-E001: Research FRED API              (Executor - goes first)
+     TASK-E002: Implement fred_api.py          (Executor - uses E001)
+     TASK-A001: Integrate FRED into DCF        (Architect - uses E002 when ready)
+     → Architect can wait for Executor. Executor keeps working.
 
 ================================================================================
 3.3 CONTINUOUS WORK MODE
@@ -817,41 +969,36 @@ When User sends ".":
   └─────────────────────────────────────────────────────────────────────────┘
 
 ================================================================================
-4.3 CONTINUOUS WORK MODE (WAIT FOR TASKS)
+4.3 CONTINUOUS WORK MODE (BATCH MODE)
 ================================================================================
 
-THIS IS CRITICAL. You do NOT stop when inbox is empty.
+IN BATCH MODE, YOU ALWAYS HAVE WORK. You never wait for Architect.
 
   ┌─────────────────────────────────────────────────────────────────────────┐
-  │  EXECUTOR CONTINUOUS WORK LOOP                                          │
-  │  ══════════════════════════════                                         │
+  │  EXECUTOR CONTINUOUS WORK LOOP (BATCH MODE)                             │
+  │  ═══════════════════════════════════════════                            │
   │                                                                         │
   │  WHILE (no [SESSION_COMPLETE] signal) DO:                               │
   │                                                                         │
   │    1. Read INBOX_EXECUTOR.md                                            │
   │                                                                         │
-  │    2. IF inbox has PENDING tasks with [TASK_READY] signal:              │
-  │       - Pick highest priority task                                      │
-  │       - Execute it fully (see section 4.5)                              │
+  │    2. IF [BATCH_READY] seen in LIVE_CHAT:                               │
+  │       - ALL tasks are defined - start working immediately               │
+  │       - Pick highest priority unblocked task                            │
+  │       - Check internal dependencies (E001→E002 = wait for E001 first)   │
+  │       - Execute the task fully                                          │
   │       - Post [DONE] when complete                                       │
-  │       - Check LIVE_CHAT for validation                                  │
-  │       - Go to step 1 (check for more tasks)                             │
+  │       - Go to step 1 (get next task)                                    │
   │                                                                         │
-  │    3. IF inbox has PENDING tasks but NO [TASK_READY] signal:            │
-  │       - Task might still be written by Architect                        │
-  │       - Post: "[WAITING] Task exists but not ready. Standing by."       │
-  │       - Wait briefly, then re-check LIVE_CHAT for [TASK_READY]          │
-  │       - When [TASK_READY] appears → Go to step 2                        │
+  │    3. IF [BATCH_READY] NOT seen yet:                                    │
+  │       - Architect is still writing tasks                                │
+  │       - Wait briefly for [BATCH_READY] signal                           │
+  │       - Once seen → Go to step 2                                        │
   │                                                                         │
-  │    4. IF inbox is EMPTY:                                                │
-  │       - Check LIVE_CHAT for [ALL_TASKS_ASSIGNED]                        │
-  │       - If NOT seen: Tasks may be coming                                │
-  │         - Post: "[WAITING_FOR_TASKS] Inbox empty. Standing by."         │
-  │         - Re-read INBOX_EXECUTOR.md after brief pause                   │
-  │         - Go to step 1                                                  │
-  │       - If [ALL_TASKS_ASSIGNED] seen: No more tasks coming              │
-  │         - Post: "All assigned tasks complete. Awaiting session end."    │
-  │         - Wait for [SESSION_COMPLETE]                                   │
+  │    4. IF all tasks COMPLETED:                                           │
+  │       - Post: "All Executor tasks complete."                            │
+  │       - Wait for [SESSION_COMPLETE] from Architect                      │
+  │       - Architect may still be working on their own tasks               │
   │                                                                         │
   │    5. Check LIVE_CHAT.md for [SESSION_COMPLETE] from Architect          │
   │       - If seen → Exit loop, session done                               │
@@ -861,9 +1008,24 @@ THIS IS CRITICAL. You do NOT stop when inbox is empty.
   │  Post: "[SYNC] Session complete. Signing off."                          │
   └─────────────────────────────────────────────────────────────────────────┘
 
-THE KEY DIFFERENCE:
-  ❌ OLD: "Inbox empty. I'm done."
-  ✅ NEW: "Inbox empty. Waiting for tasks. [Keep checking]"
+BATCH MODE BENEFITS:
+  ✅ You ALWAYS have work (unless all tasks are done)
+  ✅ You NEVER wait for Architect's tasks to complete
+  ✅ Internal dependencies (E001→E002) are fine - just order your work
+  ✅ No [WAITING_FOR_TASKS] needed - if you're waiting, something is wrong
+
+IF YOU FIND YOURSELF WAITING:
+  ────────────────────────────
+  If inbox is empty but no [BATCH_READY], wait briefly for the signal.
+  If [BATCH_READY] was posted but inbox is empty → [AGENT_ERROR] @USER
+  Something went wrong with task creation.
+
+INTERNAL DEPENDENCIES (EXECUTOR→EXECUTOR):
+  ─────────────────────────────────────────
+  If E002 depends on E001:
+    1. Work on E001 first (or other independent tasks)
+    2. When E001 is [DONE], start E002
+    3. This is NORMAL and expected in Batch Mode
 
 ================================================================================
 4.4 PROCESSING YOUR INBOX
@@ -938,29 +1100,32 @@ When you finish a task:
   [ ] Do NOT stop working
 
 ================================================================================
-4.7 WHEN INBOX IS EMPTY
+4.7 WHEN ALL TASKS ARE COMPLETED (BATCH MODE)
 ================================================================================
 
-When INBOX_EXECUTOR.md has no PENDING tasks:
+In Batch Mode, inbox should never be "empty" unexpectedly.
 
-  DO NOT SAY: "No tasks. I'm done. Goodbye."
+  NORMAL SITUATION (All tasks done):
+  ──────────────────────────────────
+  1. You've completed all tasks in your batch
+  2. Post: "All Executor tasks complete. [X/X tasks done]"
+  3. Wait for [SESSION_COMPLETE] from Architect
+  4. Architect may still be working on their own tasks
+  5. When [SESSION_COMPLETE] seen → Sign off
 
-  INSTEAD:
+  ABNORMAL SITUATION (Empty inbox, no [BATCH_READY]):
+  ────────────────────────────────────────────────────
+  1. If inbox is empty but [BATCH_READY] was NOT posted:
+     - Architect is still writing tasks
+     - Wait briefly for [BATCH_READY] signal
+     - Once seen → Start working on tasks
 
-  1. Check LIVE_CHAT.md for [ALL_TASKS_ASSIGNED] signal
-  
-  2. IF [ALL_TASKS_ASSIGNED] NOT seen:
-     - More tasks may be coming from Architect
-     - Post: "[WAITING_FOR_TASKS] Inbox empty. Standing by for tasks."
-     - Wait briefly (simulated pause)
-     - Re-read INBOX_EXECUTOR.md
-     - Repeat until tasks appear or [ALL_TASKS_ASSIGNED] is seen
-
-  3. IF [ALL_TASKS_ASSIGNED] seen:
-     - No more tasks coming
-     - Post: "All assigned tasks complete. Awaiting [SESSION_COMPLETE]."
-     - Wait for [SESSION_COMPLETE] signal
-     - When seen → Session is done, you can sign off
+  ERROR SITUATION (Empty inbox after [BATCH_READY]):
+  ──────────────────────────────────────────────────
+  1. If inbox is empty but [BATCH_READY] WAS posted:
+     - Something went wrong!
+     - Post: "[AGENT_ERROR] @USER Inbox empty after [BATCH_READY]"
+     - Wait for User to resolve
 
 ================================================================================
 4.8 EXECUTOR CHECKLIST (Print This)
@@ -1061,43 +1226,54 @@ ALWAYS use a prefix. This makes messages scannable.
   │  [UNLOCK]            │  Releasing a file                                 │
   │  [STATUS]            │  Requesting or providing full status dump         │
   │  [HANDOFF]           │  Transferring work to other agent                 │
-  │  [TASK_READY]        │  Architect: Task is complete and ready            │
-  │  [WAITING_FOR_TASKS] │  Executor: Inbox empty, standing by               │
-  │  [WAITING]           │  Executor: Task exists but not ready yet          │
+  │  [BATCH_READY]       │  Architect: ALL Executor tasks are defined        │
+  │  [TASK_READY]        │  Architect: Individual task ready (legacy)        │
   │  [ALL_TASKS_ASSIGNED]│  Architect: No more tasks coming                  │
   │  [SESSION_COMPLETE]  │  Architect: All work done, session over           │
   │  [DECISION_NEEDED]   │  Architect: User input required                   │
+  │  [FILLER_CONFIRM]    │  Architect: Asking User about filler tasks        │
   │  [AGENT_ERROR]       │  CRITICAL: Agent malfunction, report to User      │
   │  [PROTOCOL_BREAK]    │  Other agent not following protocol               │
   └──────────────────────┴───────────────────────────────────────────────────┘
 
+NOTE: [WAITING_FOR_TASKS] and [WAITING] should rarely occur in Batch Mode.
+      If Executor is waiting, Architect did not plan correctly.
+
 ================================================================================
-5.3 SESSION SIGNALS
+5.3 SESSION SIGNALS (BATCH MODE)
 ================================================================================
 
-These signals control the autonomous workflow:
+These signals control the Batch Mode workflow:
 
   ┌─────────────────────────────────────────────────────────────────────────┐
   │  SIGNAL                  │  FROM      │  MEANING                        │
   ├─────────────────────────────────────────────────────────────────────────┤
-  │  [TASK_READY] TASK-XXX   │  Architect │  Task is written and ready      │
-  │  [WAITING_FOR_TASKS]     │  Executor  │  Inbox empty, waiting           │
-  │  [WAITING]               │  Executor  │  Task not ready yet             │
-  │  [ALL_TASKS_ASSIGNED]    │  Architect │  No more tasks will be added    │
+  │  [FILLER_CONFIRM]        │  Architect │  Asking User about filler tasks │
+  │  [BATCH_READY]           │  Architect │  ALL Executor tasks defined     │
+  │  [TASK_READY] TASK-XXX   │  Architect │  Individual task ready (legacy) │
+  │  [ALL_TASKS_ASSIGNED]    │  Architect │  Implicit with [BATCH_READY]    │
   │  [SESSION_COMPLETE]      │  Architect │  Session done, stop working     │
   │  [DECISION_NEEDED]       │  Architect │  User must provide input        │
   └─────────────────────────────────────────────────────────────────────────┘
 
-WORKFLOW:
+BATCH MODE WORKFLOW:
 
-  1. Architect creates task → Posts [TASK_READY]
-  2. Executor sees [TASK_READY] → Processes task
-  3. Executor finishes → Posts [DONE]
-  4. If inbox empty and no [ALL_TASKS_ASSIGNED] → Posts [WAITING_FOR_TASKS]
-  5. Architect done creating tasks → Posts [ALL_TASKS_ASSIGNED]
-  6. Executor finishes all → Waits for [SESSION_COMPLETE]
-  7. Architect done with everything → Posts [SESSION_COMPLETE]
-  8. Everyone stops
+  1. User tells Architect what to build
+  2. Architect plans all tasks (Batch Mode planning)
+  3. If filler tasks needed → Posts [FILLER_CONFIRM] to User
+  4. User confirms (or not)
+  5. Architect writes ALL Executor tasks to INBOX_EXECUTOR.md
+  6. Architect posts [BATCH_READY] in LIVE_CHAT
+  7. User sends "." to Executor
+  8. Executor sees [BATCH_READY] → Processes ALL tasks in order
+  9. Executor handles internal deps (E001→E002) by ordering work
+  10. Executor finishes all → Posts "All Executor tasks complete"
+  11. Architect finishes own tasks → Posts [SESSION_COMPLETE]
+  12. Everyone stops
+
+KEY DIFFERENCE FROM OLD MODE:
+  ❌ OLD: Executor waits mid-session for Architect tasks
+  ✅ NEW: Executor NEVER waits for Architect - always has work
 
 ================================================================================
 5.4 ASKING QUESTIONS
@@ -1648,41 +1824,47 @@ EXECUTOR continues:
 ================================================================================
 
 ================================================================================
-10.1 ARCHITECT QUICK REFERENCE
+10.1 ARCHITECT QUICK REFERENCE (BATCH MODE)
 ================================================================================
 
 SESSION:
   1. Read all relevant files
-  2. Post [SYNC]
-  3. Work CONTINUOUSLY
-  4. Create tasks → Post [TASK_READY]
-  5. Validate Executor's [DONE] tasks
-  6. When done creating tasks → Post [ALL_TASKS_ASSIGNED]
-  7. When ALL work done → Post [SESSION_COMPLETE]
-  8. Report to User
+  2. Plan BATCH MODE (no cross-dependencies!)
+  3. If filler needed → Ask User: [FILLER_CONFIRM]
+  4. Write ALL Executor tasks to inbox
+  5. Post [BATCH_READY]
+  6. Post [SYNC]
+  7. Work CONTINUOUSLY on your own tasks
+  8. Validate Executor's [DONE] tasks
+  9. When ALL work done → Post [SESSION_COMPLETE]
+  10. Report to User
 
-REMEMBER:
-  - Don't stop after one task
-  - Keep working until everything is done
-  - Signal when session is complete
+BATCH MODE RULES:
+  ✅ Executor tasks can depend on Executor tasks (E001→E002)
+  ✅ Your tasks can depend on Executor tasks (E005→A003)
+  ❌ Executor tasks CANNOT depend on your tasks
+  - If filler tasks needed, ask User first
 
 ================================================================================
-10.2 EXECUTOR QUICK REFERENCE
+10.2 EXECUTOR QUICK REFERENCE (BATCH MODE)
 ================================================================================
 
 WHEN USER SENDS ".":
   1. Post [SYNC]
-  2. Check INBOX_EXECUTOR.md
-  3. If tasks with [TASK_READY] → Work on them
-  4. If inbox empty → Post [WAITING_FOR_TASKS], KEEP CHECKING
-  5. Process ALL tasks
-  6. When [ALL_TASKS_ASSIGNED] + no tasks → Wait for [SESSION_COMPLETE]
-  7. When [SESSION_COMPLETE] → Sign off
+  2. Check LIVE_CHAT for [BATCH_READY]
+  3. If [BATCH_READY] → ALL tasks are defined, start working!
+  4. If NOT [BATCH_READY] → Wait briefly for signal
+  5. Check INBOX_EXECUTOR.md for tasks
+  6. Handle internal dependencies (E001→E002) by ordering work
+  7. Process ALL tasks in priority order
+  8. When all done → Post "All Executor tasks complete"
+  9. Wait for [SESSION_COMPLETE] → Sign off
 
-REMEMBER:
-  - NEVER stop when inbox is empty (unless [SESSION_COMPLETE])
-  - Wait for [TASK_READY] before starting a task
-  - Process ALL tasks, not just one
+BATCH MODE BENEFITS:
+  ✅ You ALWAYS have work (no waiting for Architect)
+  ✅ All tasks defined upfront
+  ✅ Only wait for [BATCH_READY] at start
+  ✅ Internal deps (E001→E002) are normal - just order work
 
 ================================================================================
 10.3 MESSAGE PREFIX TABLE
@@ -1712,19 +1894,21 @@ REMEMBER:
   [PROTOCOL_BREAK]      Other agent violating protocol
 
 ================================================================================
-10.4 SESSION SIGNAL TABLE
+10.4 SESSION SIGNAL TABLE (BATCH MODE)
 ================================================================================
 
   SIGNAL                   FROM        MEANS
   ─────────────────────────────────────────────────────────
-  [TASK_READY] TASK-XXX    Architect   Execute this task
-  [WAITING_FOR_TASKS]      Executor    Need work to do
-  [WAITING]                Executor    Task not ready yet
-  [ALL_TASKS_ASSIGNED]     Architect   No more tasks coming
+  [FILLER_CONFIRM]         Architect   Asking User about filler tasks
+  [BATCH_READY]            Architect   ALL Executor tasks are defined
+  [ALL_TASKS_ASSIGNED]     Architect   (Same as BATCH_READY)
   [SESSION_COMPLETE]       Architect   Stop, session over
   [DECISION_NEEDED]        Architect   User must decide
   [AGENT_ERROR] @USER      Either      STOP - problem occurred
   [PROTOCOL_BREAK] @USER   Either      Other agent malfunctioning
+
+  NOTE: In Batch Mode, [WAITING_FOR_TASKS] should NOT occur.
+        Executor always has work until all tasks are done.
 
 ================================================================================
 ================================================================================
@@ -1733,8 +1917,9 @@ REMEMBER:
 ================================================================================
 
   ╔═══════════════════════════════════════════════════════════════════════════╗
-  ║  EXECUTOR: DO NOT stop when inbox is empty                                ║
-  ║  → INSTEAD: Post [WAITING_FOR_TASKS] and keep checking                    ║
+  ║  ARCHITECT: DO NOT create Executor tasks that depend on your tasks        ║
+  ║  → INSTEAD: Restructure so Executor tasks are independent                 ║
+  ║  → This is the CORE RULE of Batch Mode!                                   ║
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
   ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -1743,8 +1928,8 @@ REMEMBER:
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
   ╔═══════════════════════════════════════════════════════════════════════════╗
-  ║  DO NOT start a task before [TASK_READY] signal                           ║
-  ║  → INSTEAD: Wait - task might still be written by Architect               ║
+  ║  EXECUTOR: DO NOT start before [BATCH_READY] signal                       ║
+  ║  → INSTEAD: Wait briefly - Architect is finishing task definitions        ║
   ╚═══════════════════════════════════════════════════════════════════════════╝
 
   ╔═══════════════════════════════════════════════════════════════════════════╗
@@ -1789,21 +1974,21 @@ REMEMBER:
 
 ================================================================================
 ================================================================================
-                            PART 12: FAQ
+                            PART 12: FAQ (BATCH MODE)
 ================================================================================
 ================================================================================
 
 Q: What if Executor sends "." before Architect has any tasks?
-A: Executor enters waiting mode, posts [WAITING_FOR_TASKS], keeps checking
-   inbox until tasks appear. This is NORMAL - not an error.
+A: Executor waits for [BATCH_READY] signal. Once seen, all tasks are defined
+   and Executor can start working. This wait is brief and expected.
 
 Q: How does Executor know when to stop?
-A: Executor stops ONLY when [SESSION_COMPLETE] is seen in LIVE_CHAT.
-   Until then, keep checking for more tasks.
+A: Executor stops when [SESSION_COMPLETE] is seen AND all their tasks are done.
 
-Q: What if a task is in the inbox but no [TASK_READY] was posted?
-A: The task might still be written. Post [WAITING] and keep checking
-   LIVE_CHAT for the [TASK_READY] signal before starting.
+Q: What if a task in the inbox depends on an Architect task?
+A: THIS SHOULD NOT HAPPEN IN BATCH MODE! Architect must restructure.
+   Executor tasks can only depend on OTHER Executor tasks (E001→E002).
+   If you see this, post [PROTOCOL_BREAK] @USER @ARCHITECT.
 
 Q: What if both agents need the same file?
 A: Higher priority task gets it. Same priority = Architect decides.
@@ -1817,21 +2002,26 @@ Q: What if a task is too complex for Executor?
 A: Executor posts [Q] asking for clarification or breakdown.
    Architect can split it or take it back.
 
-Q: What if there are no more tasks but Architect hasn't signaled?
-A: Check for [ALL_TASKS_ASSIGNED]. If not seen, keep waiting - more tasks
-   might come. If seen, wait for [SESSION_COMPLETE].
-
-Q: When should Architect post [ALL_TASKS_ASSIGNED]?
-A: When Architect knows they won't create any more Executor tasks this session.
-   Executor can still be working on existing tasks.
+Q: When should Architect post [BATCH_READY]?
+A: After ALL Executor tasks are written to INBOX_EXECUTOR.md.
+   This is the signal for Executor to start. No more tasks will be added.
 
 Q: When should Architect post [SESSION_COMPLETE]?
 A: When ALL work is done - both Architect's own work AND all Executor
    tasks validated. This ends the session.
 
+Q: What are "filler tasks"?
+A: Low-priority tasks from ROADMAP.md that Architect adds if Executor
+   would otherwise finish too early. Architect asks User for confirmation
+   before adding them: [FILLER_CONFIRM] "Adding X, Y, Z. OK?"
+
 Q: Can User send multiple "." to Executor?
 A: Not needed. One "." starts continuous mode. Executor works until
    [SESSION_COMPLETE]. Only send another "." if starting a new session.
+
+Q: What if Executor finishes before Architect?
+A: Normal! Executor posts "All Executor tasks complete" and waits for
+   [SESSION_COMPLETE]. Architect may still be working on complex tasks.
 
 ================================================================================
 ================================================================================

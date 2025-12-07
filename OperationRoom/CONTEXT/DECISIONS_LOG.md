@@ -1,32 +1,6 @@
 # DECISIONS LOG
 
-**Purpose:** Record all significant decisions made during development.  
-**Protocol:** Log decisions when made. Reference in future discussions.
-
----
-
-## HOW TO USE
-
-1. Log all architecture, design, and process decisions
-2. Include rationale (why this choice?)
-3. Note alternatives considered
-4. Reference in tasks/discussions for context
-
----
-
-## DECISION TEMPLATE
-
-```markdown
-### DECISION-[XXX]: [Title]
-- **Date:** [YYYY-MM-DD]
-- **Made By:** [Agent(s)]
-- **Category:** Architecture / Design / Process / Data / UI
-
-**Decision:**
-[What was decided]
-
-**Rationale:**
-[Why this choice was made]
+<!-- DATA FILE: Key decisions made. For protocols/templates, see: OPERATION_ROOM_GUIDE.txt -->
 
 **Alternatives Considered:**
 1. [Alternative 1] - [Why rejected]

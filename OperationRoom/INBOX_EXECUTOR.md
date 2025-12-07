@@ -1,702 +1,321 @@
 # INBOX: EXECUTOR
 
-**Owner:** Executor Agent  
-**Purpose:** Tasks and requests assigned TO the Executor  
-**Protocol:** Check this file BEFORE and AFTER every action
+<!-- 
+DATA FILE: Tasks assigned to Executor.
+For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
+-->
 
 ---
 
-## CRITICAL: AUTONOMOUS OPERATION MODE
-
-When User sends "." you enter **CONTINUOUS WORK MODE**:
-
-1. **If inbox has tasks with [TASK_READY] signal** → Execute them
-2. **If inbox has tasks but NO [TASK_READY]** → Wait, task is being written
-3. **If inbox is EMPTY** → Post [WAITING_FOR_TASKS], keep checking
-4. **NEVER STOP** until you see [SESSION_COMPLETE] from Architect
-
-You DO NOT receive instructions from User directly.
-ALL your tasks come from Architect via this file.
-Look for [TASK_READY] signal in LIVE_CHAT before starting any task.
-
----
-
-## ⚠️ ERROR REPORTING
-
-If you experience ANY problem:
+## ⚠️ BATCH MODE ACTIVE
 
 ```
-[TIMESTAMP] [EXECUTOR]: [AGENT_ERROR] @USER
-Problem: [What's wrong]
-Impact: [What this blocks]
-Tried: [What you attempted]
-Need: [What would help]
-```
-
-If Architect is not following protocol:
-
-```
-[TIMESTAMP] [EXECUTOR]: [PROTOCOL_BREAK] @USER @ARCHITECT
-Issue: [What they're doing wrong]
-Expected: [What should happen]
-Actual: [What is happening]
-```
-
-**STOP and wait for User response before continuing.**
-
----
-
-## HOW TO USE THIS INBOX
-
-### For Executor (Owner):
-1. Check this inbox before starting any work
-2. Acknowledge tasks by changing status to `ACKNOWLEDGED`
-3. Update status as you work: `IN_PROGRESS` → `COMPLETED`
-4. Move completed tasks to COMPLETED_TASKS.md
-
-### For Architect (Sender):
-1. Add new tasks at the BOTTOM of the PENDING section
-2. Use the task template below
-3. Set appropriate priority (P0 = urgent, P1 = high, P2 = normal)
-
----
-
-## TASK TEMPLATE
-
-```markdown
-### TASK-E[XXX]: [Task Title]
-- **From:** Architect
-- **Priority:** P0 / P1 / P2
-- **Created:** [YYYY-MM-DD HH:MM]
-- **Deadline:** [Optional]
-- **Est. Time:** [e.g., 2 hours, 30 min]
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** [Task IDs that must complete first, or "None"]
-- **Blocks:** [Task IDs waiting on this, or "None"]
-
-**Description:**
-[Clear description of what needs to be done]
-
-**Acceptance Criteria:**
-- [ ] Criterion 1
-- [ ] Criterion 2
-
-**Context/Files:**
-- [Relevant file paths]
-- [Related decisions]
-
-**Current State:** (For handoffs)
-- [Where previous work stopped]
-- [What's already done]
-- [What's remaining]
-
-**Expected Output:**
-[What should be delivered]
-
-**Rollback Plan:**
-[If this breaks something, how to undo - or "N/A" for low-risk tasks]
+╔════════════════════════════════════════════════════════════════════════════╗
+║  ALL tasks below are INDEPENDENT of Architect tasks.                       ║
+║  You can start working as soon as you see [BATCH_READY] in LIVE_CHAT.      ║
+║  Process in order. Internal dependencies (E→E) are marked.                 ║
+╚════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
 ## PENDING TASKS
 
-<!-- New tasks go here. Executor processes from top to bottom. -->
-
-<!-- MILESTONE-001 TASKS (E001-E010) MOVED TO COMPLETED_TASKS.md -->
-
-═══════════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════════════════════
                     MILESTONE-002: EARNINGS REVISIONS
-═══════════════════════════════════════════════════════════════════
+                         (BATCH MODE COMPLIANT)
+═══════════════════════════════════════════════════════════════════════════════
 
-### TASK-E011: Research yfinance Earnings Estimate Fields
+### TASK-E011: Research yfinance Earnings Fields
 - **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-08 00:35
+- **Priority:** P1 (START HERE)
+- **Created:** 2025-12-08 01:20
 - **Est. Time:** 30 min
 - **Status:** PENDING
 
 **Dependencies:**
-- **Depends On:** None
-- **Blocks:** TASK-E015
+- **Depends On:** None ✅
+- **Blocks:** E014, E015
 
 **Description:**
-Research what earnings revision data is available in yfinance. Document the fields and structure.
+Research ALL earnings-related data available in yfinance. This is foundational research - no Architect work needed first.
 
 **Step-by-Step Instructions:**
-1. Use `yf.Ticker("AAPL")` to explore available attributes
-2. Check `.earnings_dates`, `.earnings_history`, `.analyst_price_targets`
-3. Look for EPS estimates: current quarter, next quarter, current year, next year
-4. Document the data structure and update frequency
-5. Note any limitations
+1. Create a test script or use Python REPL
+2. Run: `import yfinance as yf; stock = yf.Ticker("AAPL")`
+3. Explore these attributes:
+   - `stock.earnings_dates` - Upcoming/past earnings dates
+   - `stock.earnings_history` - Historical EPS data
+   - `stock.analyst_price_targets` - Price target data
+   - `stock.recommendations` - Analyst recommendations
+   - `stock.info` - Look for keys containing 'eps', 'estimate', 'earnings'
+4. For each, capture:
+   - Data structure (DataFrame? Dict?)
+   - Available fields
+   - Sample values
+   - Update frequency (if known)
+5. Note limitations (missing fields, stale data, etc.)
 
 **Acceptance Criteria:**
-- [ ] All yfinance earnings-related fields documented
-- [ ] Sample data structure captured
-- [ ] Limitations noted (if any)
+- [ ] All yfinance earnings attributes documented
+- [ ] Sample output captured for each
+- [ ] Clear summary of what IS and ISN'T available
+- [ ] File created: `research/YFINANCE_EARNINGS_RESEARCH.md`
 
-**Expected Output:**
-Create file `research/YFINANCE_EARNINGS_RESEARCH.md`
+**Testing:**
+Run `python -c "import yfinance as yf; print(yf.Ticker('AAPL').earnings_dates)"` to verify access.
 
-**Rollback Plan:** N/A - research task
+**Rollback:** N/A - research task
 
 ---
 
-### TASK-E012: Research FMP/Alpha Vantage Revision APIs
+### TASK-E012: Research FMP Earnings API
 - **From:** Architect
 - **Priority:** P1
-- **Created:** 2025-12-08 00:35
+- **Created:** 2025-12-08 01:20
 - **Est. Time:** 30 min
 - **Status:** PENDING
 
 **Dependencies:**
-- **Depends On:** None
-- **Blocks:** TASK-E015
+- **Depends On:** None ✅
+- **Blocks:** E015
 
 **Description:**
-Research earnings revision data from FMP and Alpha Vantage as backup sources.
+Research Financial Modeling Prep (FMP) API for earnings estimate data. We already have an FMP API key in the project.
 
 **Step-by-Step Instructions:**
-1. Check FMP API docs for earnings estimates endpoints
-2. Check Alpha Vantage EARNINGS endpoint
-3. Document: endpoint, parameters, response format, rate limits
-4. Compare data quality vs yfinance
+1. Visit: https://site.financialmodelingprep.com/developer/docs
+2. Find these endpoints:
+   - Analyst Estimates
+   - Earnings Surprises
+   - Earnings Calendar
+3. For each endpoint document:
+   - URL format
+   - Required parameters
+   - Response structure (JSON sample)
+   - Rate limits
+   - Free tier availability
+4. Test one endpoint with our existing FMP key (check `.env` or `data_sources/`)
+5. Compare data quality to yfinance
 
 **Acceptance Criteria:**
 - [ ] FMP earnings endpoints documented
-- [ ] Alpha Vantage earnings endpoints documented
-- [ ] Comparison table created
+- [ ] Sample API responses captured
+- [ ] Rate limits noted
+- [ ] Free tier limitations clear
+- [ ] File created: `research/FMP_EARNINGS_API.md`
 
-**Expected Output:**
-Create file `research/EARNINGS_API_COMPARISON.md`
+**Testing:**
+Make one test API call and capture response.
 
-**Rollback Plan:** N/A - research task
+**Rollback:** N/A - research task
 
 ---
 
-### TASK-E013: Validate AAPL Revision Data Extraction
+### TASK-E013: Research Alpha Vantage Earnings API
 - **From:** Architect
 - **Priority:** P1
-- **Created:** 2025-12-08 00:35
+- **Created:** 2025-12-08 01:20
 - **Est. Time:** 30 min
 - **Status:** PENDING
 
 **Dependencies:**
-- **Depends On:** TASK-E011 (need to know fields)
-- **Blocks:** None
+- **Depends On:** None ✅
+- **Blocks:** E015
 
 **Description:**
-Extract and validate earnings revision data for AAPL.
+Research Alpha Vantage API for earnings data. Check if we have an API key already.
 
 **Step-by-Step Instructions:**
-1. Run extraction using yfinance
-2. Capture: Current EPS estimate, 30-day change, 90-day change
-3. Compare against Yahoo Finance website
+1. Visit: https://www.alphavantage.co/documentation/
+2. Find EARNINGS endpoint
+3. Document:
+   - URL format
+   - Response structure
+   - Rate limits (5 calls/min free tier)
+   - Data fields available
+4. Check if we have an Alpha Vantage key (search `.env` files)
+5. If no key, document how to get free one
+
+**Acceptance Criteria:**
+- [ ] Alpha Vantage earnings endpoint documented
+- [ ] Sample response captured (or documented from docs)
+- [ ] Rate limits clear
+- [ ] Key availability noted
+- [ ] File created: `research/ALPHAVANTAGE_EARNINGS_API.md`
+
+**Rollback:** N/A - research task
+
+---
+
+### TASK-E014: Extract Live Earnings Data (3 Tickers)
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 01:20
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** E011 (need to know which fields to extract)
+- **Blocks:** E016
+
+**Description:**
+Using findings from E011, extract actual earnings data for AAPL, MSFT, GOOGL. Validate against external sources.
+
+**Step-by-Step Instructions:**
+1. Using yfinance (based on E011 research):
+   - Extract current EPS estimates for each ticker
+   - Extract earnings history (past 4 quarters)
+   - Get analyst recommendations
+2. For each ticker, visit Yahoo Finance website manually
+3. Compare extracted data vs website data
 4. Document any discrepancies
+5. Calculate accuracy percentage
 
 **Acceptance Criteria:**
-- [ ] AAPL EPS estimates extracted
-- [ ] Revision history captured (if available)
-- [ ] Data validated against external source
+- [ ] Data extracted for AAPL, MSFT, GOOGL
+- [ ] Comparison table: Extracted vs Website
+- [ ] Accuracy score per ticker
+- [ ] Discrepancies documented
+- [ ] File created: `validation/earnings_extraction_validation.md`
 
-**Expected Output:**
-Create file `validation/earnings_AAPL.md`
+**Testing:**
+Data should match Yahoo Finance website within reasonable tolerance.
 
-**Rollback Plan:** N/A - validation only
+**Rollback:** N/A - validation task
 
 ---
 
-### TASK-E014: Validate MSFT Revision Data Extraction
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-08 00:35
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** TASK-E011 (need to know fields)
-- **Blocks:** None
-
-**Description:**
-Same as E013 but for MSFT.
-
-**Acceptance Criteria:**
-- [ ] MSFT EPS estimates extracted
-- [ ] Revision history captured
-- [ ] Data validated
-
-**Expected Output:**
-Create file `validation/earnings_MSFT.md`
-
-**Rollback Plan:** N/A - validation only
-
----
-
-### TASK-E015: Create Tests for Revision Module
+### TASK-E015: Create API Comparison Report
 - **From:** Architect
 - **Priority:** P2
-- **Created:** 2025-12-08 00:35
-- **Est. Time:** 45 min
+- **Created:** 2025-12-08 01:20
+- **Est. Time:** 30 min
 - **Status:** PENDING
 
 **Dependencies:**
-- **Depends On:** TASK-E011, TASK-E012, TASK-A008
+- **Depends On:** E011, E012, E013
 - **Blocks:** None
 
 **Description:**
-Create pytest tests for the earnings revision module.
+Synthesize findings from E011-E013 into a comparison report. Recommend best data source strategy.
+
+**Step-by-Step Instructions:**
+1. Read research files from E011, E012, E013
+2. Create comparison table:
+   | Feature | yfinance | FMP | Alpha Vantage |
+   |---------|----------|-----|---------------|
+   | EPS Estimates | ? | ? | ? |
+   | Revision History | ? | ? | ? |
+   | Rate Limits | ? | ? | ? |
+   | Free Tier | ? | ? | ? |
+   | Data Quality | ? | ? | ? |
+3. Score each source (1-5) for:
+   - Completeness
+   - Accuracy
+   - Reliability
+   - Cost
+4. Recommend primary + fallback strategy
 
 **Acceptance Criteria:**
-- [ ] Test extraction functions
-- [ ] Test revision calculation
-- [ ] Test edge cases (no estimates, missing data)
+- [ ] Comparison table complete
+- [ ] Clear recommendation
+- [ ] Fallback strategy defined
+- [ ] File created: `research/EARNINGS_API_COMPARISON.md`
 
-**Expected Output:**
-Create file `tests/test_earnings_revisions.py`
-
-**Rollback Plan:** N/A - test file
+**Rollback:** N/A - documentation task
 
 ---
 
-### TASK-E016: Integration Test with UI
+### TASK-E016: Document Data Quality Findings
 - **From:** Architect
 - **Priority:** P2
-- **Created:** 2025-12-08 00:35
+- **Created:** 2025-12-08 01:20
 - **Est. Time:** 30 min
 - **Status:** PENDING
 
 **Dependencies:**
-- **Depends On:** TASK-A010 (UI integration must be complete)
-- **Blocks:** None
+- **Depends On:** E014, E015
+- **Blocks:** None (Architect A011 will use this)
 
 **Description:**
-Test the complete earnings revision feature end-to-end.
+Final summary of all earnings data research. This will inform Architect's enhancement of the earnings_revisions.py module.
+
+**Step-by-Step Instructions:**
+1. Consolidate findings from E011-E015
+2. Create summary document covering:
+   - What data is available (and what's NOT)
+   - Best source for each data type
+   - Known limitations
+   - Recommended implementation approach
+3. Identify any gaps that can't be filled
+4. Suggest UI changes if data limitations require them
 
 **Acceptance Criteria:**
-- [ ] Revision data displays in Analysis tab
-- [ ] Charts render correctly
-- [ ] No errors on 5+ different tickers
+- [ ] Comprehensive summary created
+- [ ] Clear recommendations for Architect
+- [ ] Limitations documented
+- [ ] File created: `research/EARNINGS_DATA_SUMMARY.md`
 
-**Expected Output:**
-Create file `validation/earnings_integration_test.md`
+**Context:**
+Architect has already built `earnings_revisions.py` with placeholder logic. This research will determine what's actually possible with real data sources.
 
-**Rollback Plan:** N/A - validation only
+**Rollback:** N/A - documentation task
 
 ---
 
-<!-- OLD MILESTONE-001 TASK (keeping for reference structure) -->
-### TASK-E001: Research FRED API and Get Free API Key
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
+## TASK PROCESSING ORDER
 
-**Dependencies:**
-- **Depends On:** None
-- **Blocks:** TASK-E007
+```
+INDEPENDENT (Start immediately):
+├── E011: yfinance research ────┐
+├── E012: FMP research ─────────┼──► E015: Comparison Report
+└── E013: Alpha Vantage research┘
 
-**Description:**
-Research the Federal Reserve Economic Data (FRED) API to get real-time Treasury rates. Register for a free API key. Document the endpoint and parameters needed for 10-year Treasury yield (DGS10).
+SEQUENTIAL (After E011):
+└── E011 ──► E014: Live extraction ──► E016: Final Summary
 
-**Step-by-Step Instructions:**
-1. Go to https://fred.stlouisfed.org/
-2. Create a free account
-3. Navigate to API Keys section and generate a key
-4. Find the DGS10 series (10-Year Treasury Constant Maturity Rate)
-5. Document the API endpoint format and required parameters
-6. Test a sample request to verify the key works
-
-**Acceptance Criteria:**
-- [ ] FRED API key obtained and working
-- [ ] DGS10 endpoint URL documented
-- [ ] Sample response format documented
-- [ ] Rate limits documented (requests per minute)
-
-**Expected Output:**
-Create file `research/FRED_API_NOTES.md` with:
-- API key (masked: first 4 chars only for security)
-- Endpoint: `https://api.stlouisfed.org/fred/series/observations?series_id=DGS10&...`
-- Response format example
-- Rate limits
-
-**Rollback Plan:** N/A - research task, no code changes
-
----
-
-### TASK-E002: Download and Parse Damodaran Sector Benchmarks
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 45 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** None
-- **Blocks:** TASK-E006, TASK-A005
-
-**Description:**
-Download Aswath Damodaran's sector benchmark data from NYU. Parse it into a Python dictionary that can be used for sector comparisons.
-
-**Step-by-Step Instructions:**
-1. Go to https://pages.stern.nyu.edu/~adamodar/
-2. Navigate to "Current Data" → "Industry Data"
-3. Download the spreadsheet with sector averages (PE, ROE, Debt/Equity, etc.)
-4. Parse key metrics: PE, PB, EV/EBITDA, ROE, ROA, Debt/Equity, Gross Margin
-5. Create Python dict with sector as key
-
-**Acceptance Criteria:**
-- [ ] CSV/Excel file downloaded to `data/damodaran_sectors.csv`
-- [ ] Python dict created with at least 10 sectors
-- [ ] Each sector has: pe_median, roe_median, debt_equity_median, gross_margin_median
-- [ ] Source URL and date documented
-
-**Expected Output:**
-Create file `data_sources/damodaran_data.py` with:
-```python
-SECTOR_BENCHMARKS = {
-    'Technology': {'pe': 28.5, 'roe': 0.22, 'debt_equity': 0.35, ...},
-    'Healthcare': {'pe': 24.0, 'roe': 0.16, 'debt_equity': 0.45, ...},
-    # ... more sectors
-}
-DAMODARAN_SOURCE_URL = "https://..."
-DAMODARAN_UPDATE_DATE = "2024-01"
+FINAL:
+└── E015 + E016 ──► Architect A011 (enhancement)
 ```
 
-**Rollback Plan:** N/A - new file, just delete if needed
+---
+
+## COMPLETED TASKS (This Session)
+
+*None yet*
 
 ---
 
-### TASK-E003: Validate AAPL Metrics Against External Sources
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** None
-- **Blocks:** None
-
-**Description:**
-Run the ATLAS engine for AAPL (Apple Inc.) and compare key metrics against Yahoo Finance and other sources. Document any discrepancies.
-
-**Step-by-Step Instructions:**
-1. Run `streamlit run usa_app.py` and extract AAPL
-2. Note down: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
-3. Go to Yahoo Finance AAPL page, note the same metrics
-4. Compare and calculate % difference
-5. Document findings
-
-**Acceptance Criteria:**
-- [ ] ATLAS metrics captured for AAPL
-- [ ] Yahoo Finance metrics captured for AAPL
-- [ ] % difference calculated for each metric
-- [ ] Any discrepancies > 5% flagged
-
-**Expected Output:**
-Create file `validation/baseline_AAPL.md` with:
-```markdown
-# AAPL Baseline Validation
-| Metric | ATLAS | Yahoo | Diff % | Status |
-|--------|-------|-------|--------|--------|
-| P/E | 28.5 | 28.3 | 0.7% | ✅ |
-| ROE | 1.45 | 1.47 | 1.4% | ✅ |
-...
-```
-
-**Rollback Plan:** N/A - documentation only
-
----
-
-### TASK-E004: Validate MSFT Metrics Against External Sources
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** None
-- **Blocks:** None
-
-**Description:**
-Same as E003 but for Microsoft (MSFT).
-
-**Step-by-Step Instructions:**
-1. Run ATLAS engine for MSFT
-2. Capture: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
-3. Compare against Yahoo Finance
-4. Document discrepancies
-
-**Acceptance Criteria:**
-- [ ] ATLAS metrics captured for MSFT
-- [ ] Yahoo Finance metrics captured for MSFT
-- [ ] % difference calculated for each metric
-- [ ] Any discrepancies > 5% flagged
-
-**Expected Output:**
-Create file `validation/baseline_MSFT.md` with comparison table
-
-**Rollback Plan:** N/A - documentation only
-
----
-
-### TASK-E005: Validate JNJ Metrics Against External Sources
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** None
-- **Blocks:** None
-
-**Description:**
-Same as E003 but for Johnson & Johnson (JNJ) - important because it's healthcare sector, different from tech.
-
-**Step-by-Step Instructions:**
-1. Run ATLAS engine for JNJ
-2. Capture: P/E, ROE, Debt/Equity, Current Ratio, EPS, Revenue
-3. Compare against Yahoo Finance
-4. Document discrepancies
-
-**Acceptance Criteria:**
-- [ ] ATLAS metrics captured for JNJ
-- [ ] Yahoo Finance metrics captured for JNJ
-- [ ] % difference calculated for each metric
-- [ ] Any discrepancies > 5% flagged
-
-**Expected Output:**
-Create file `validation/baseline_JNJ.md` with comparison table
-
-**Rollback Plan:** N/A - documentation only
-
----
-
-### TASK-E006: Create Sector Mapping Dictionary
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** TASK-E002 (need Damodaran sectors first)
-- **Blocks:** TASK-A005
-
-**Description:**
-Create a mapping from yfinance sector names (GICS) to Damodaran sector names. They use different naming conventions.
-
-**Step-by-Step Instructions:**
-1. Review yfinance sector field options (from ticker.info['sector'])
-2. Review Damodaran sector names from E002
-3. Create mapping dict
-4. Handle edge cases (Unknown, empty)
-
-**Acceptance Criteria:**
-- [ ] Mapping covers all major yfinance sectors
-- [ ] Each yfinance sector maps to one Damodaran sector
-- [ ] "Unknown" fallback handled
-
-**Expected Output:**
-Add to `data_sources/damodaran_data.py`:
-```python
-YFINANCE_TO_DAMODARAN = {
-    'Technology': 'Technology',
-    'Healthcare': 'Healthcare',
-    'Financial Services': 'Financial Services',
-    'Consumer Cyclical': 'Consumer Discretionary',
-    # ... all mappings
-    'Unknown': None  # No benchmark available
-}
-```
-
-**Rollback Plan:** N/A - adding to new file
-
----
-
-### TASK-E007: Implement FRED API Module
-- **From:** Architect
-- **Priority:** P1
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 45 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** TASK-E001 (need API key and docs)
-- **Blocks:** TASK-A003
-
-**Description:**
-Implement the actual FRED API integration to fetch Treasury rates.
-
-**Step-by-Step Instructions:**
-1. Create new file `data_sources/fred_api.py`
-2. Implement function to fetch 10-year Treasury rate
-3. Add caching (cache for 24 hours - rates don't change often)
-4. Add fallback to hardcoded 4.5% if API fails
-5. Test with actual API call
-
-**Acceptance Criteria:**
-- [ ] `get_treasury_rate()` function works
-- [ ] Rate is cached for 24 hours
-- [ ] Fallback returns 4.5% on error
-- [ ] Logging on API failures
-
-**Expected Output:**
-Create file `data_sources/fred_api.py`:
-```python
-import requests
-from functools import lru_cache
-import time
-
-FRED_API_KEY = "your_key_here"  # Move to .env later
-FALLBACK_TREASURY_RATE = 0.045
-
-@lru_cache(maxsize=1)
-def _fetch_treasury_rate_cached(cache_key: str) -> float:
-    # Implementation here
-    pass
-
-def get_treasury_rate() -> float:
-    """Get current 10-year Treasury rate."""
-    cache_key = time.strftime("%Y-%m-%d")  # Cache per day
-    try:
-        return _fetch_treasury_rate_cached(cache_key)
-    except Exception as e:
-        logger.error(f"FRED API error: {e}")
-        return FALLBACK_TREASURY_RATE
-```
-
-**Rollback Plan:** Delete file if needed
-
----
-
-### TASK-E008: Cross-Validate WACC Output
-- **From:** Architect
-- **Priority:** P2
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** TASK-A003 (Architect's WACC fix must be complete)
-- **Blocks:** None
-
-**Description:**
-After Architect fixes WACC formula, validate the output against analyst estimates.
-
-**Step-by-Step Instructions:**
-1. Wait for TASK-A003 to complete (Architect will signal)
-2. Run DCF for AAPL, MSFT, JNJ
-3. Check WACC values calculated
-4. Compare against GuruFocus or analyst estimates
-5. Verify adjusted beta is being used
-
-**Acceptance Criteria:**
-- [ ] WACC uses live Treasury rate (not hardcoded)
-- [ ] Beta is adjusted (0.67 * raw + 0.33)
-- [ ] WACC within reasonable range (7-12% for most companies)
-- [ ] Documented comparison
-
-**Expected Output:**
-Create file `validation/wacc_validation.md` with results
-
-**Rollback Plan:** N/A - validation only
-
----
-
-### TASK-E009: Validate FCF Calculator Methods
-- **From:** Architect
-- **Priority:** P2
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 45 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** TASK-A004 (Architect's FCF calculator must be complete)
-- **Blocks:** None
-
-**Description:**
-After Architect creates FCF calculator, validate each method's output.
-
-**Step-by-Step Instructions:**
-1. Wait for TASK-A004 to complete
-2. For AAPL, manually calculate each FCF method:
-   - Simple: OCF - CapEx
-   - Levered: OCF - CapEx - Interest
-   - Owner Earnings: NI + D&A - CapEx - WC change
-   - FCFF: EBIT*(1-T) + D&A - CapEx - WC change
-3. Compare against module output
-4. Document any discrepancies
-
-**Acceptance Criteria:**
-- [ ] All 4 FCF methods tested
-- [ ] Manual calculation matches module output (within 1%)
-- [ ] Edge cases handled (negative values, missing data)
-
-**Expected Output:**
-Create file `validation/fcf_validation.md` with results
-
-**Rollback Plan:** N/A - validation only
-
----
-
-### TASK-E010: Full Integration Test
-- **From:** Architect
-- **Priority:** P2
-- **Created:** 2025-12-07 23:01
-- **Est. Time:** 30 min
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** ALL previous tasks (A001-A006, E001-E009)
-- **Blocks:** None - This is the final validation
-
-**Description:**
-Run complete integration test of all new features.
-
-**Step-by-Step Instructions:**
-1. Start fresh Streamlit session
-2. Run full extraction for AAPL
-3. Verify: WACC uses Treasury rate, FCF has 4 options, benchmarks show
-4. Run DCF and Monte Carlo
-5. Check for any errors or warnings
-6. Document overall status
-
-**Acceptance Criteria:**
-- [ ] No errors during extraction
-- [ ] WACC displayed correctly
-- [ ] FCF selector works
-- [ ] Sector benchmarks visible (percentiles)
-- [ ] Monte Carlo runs successfully
-
-**Expected Output:**
-Create file `validation/integration_test_report.md` with:
-- Pass/Fail status for each feature
-- Screenshots if needed
-- Any issues found
-
-**Rollback Plan:** N/A - validation only
-
----
-
-## ACKNOWLEDGED TASKS
-
-<!-- Tasks the Executor has seen and will work on -->
-
-[None]
+## COMPLETED TASKS (Previous Sessions)
+
+### MILESTONE-001 Tasks
+| Task | Description | Completed |
+|------|-------------|-----------|
+| E001 | FRED API research | 2025-12-07 |
+| E002 | Damodaran CSV download | 2025-12-07 |
+| E003 | Validate AAPL metrics | 2025-12-07 |
+| E004 | Validate MSFT metrics | 2025-12-07 |
+| E005 | Validate JNJ metrics | 2025-12-07 |
+| E006 | Sector mapping | 2025-12-07 |
+| E007 | FRED API implementation | 2025-12-07 |
+| E008 | WACC validation | 2025-12-07 |
+| E009 | FCF validation | 2025-12-07 |
+| E010 | Integration test | 2025-12-07 |
 
 ---
 
 ## NOTES
 
-- P0 tasks require IMMEDIATE attention (interrupt current work)
-- P1 tasks should be started within the current session
-- P2 tasks can be queued for later
-- Always update LIVE_CHAT.md when acknowledging a task
-- Complex tasks may be escalated back to Architect
+**Batch Mode Reminder:**
+- All tasks above are INDEPENDENT of Architect work
+- E011/E012/E013 can run in parallel
+- E014 waits for E011 (internal dependency - OK)
+- E015 waits for E011/E012/E013 (internal - OK)
+- E016 waits for E014/E015 (internal - OK)
+- Architect will do A011 (enhancement) AFTER you finish
 
+**Questions?**
+Post `[Q] TASK-EXXX: [question]` in LIVE_CHAT.md
+
+---

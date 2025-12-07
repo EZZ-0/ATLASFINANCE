@@ -1,33 +1,12 @@
 # BLOCKERS
 
-**Purpose:** Track all issues preventing task completion.  
-**Protocol:** Add blocker immediately when encountered. Remove when resolved.
+<!-- DATA FILE: Active blockers. For protocols/templates, see: OPERATION_ROOM_GUIDE.txt -->
 
 ---
 
 ## ACTIVE BLOCKERS
 
-<!-- Format: One blocker per section. Most urgent at top. -->
-
 ### [No active blockers]
-
----
-
-## BLOCKER TEMPLATE
-
-```markdown
-### BLOCKER-[XXX]: [Title]
-- **Reported By:** [Agent]
-- **Reported:** [YYYY-MM-DD HH:MM]
-- **Blocking:** [Task ID or description]
-- **Severity:** CRITICAL / HIGH / MEDIUM
-- **Status:** OPEN / INVESTIGATING / WAITING / RESOLVED
-
-**Description:**
-[What is the blocker?]
-
-**Impact:**
-[What cannot proceed because of this?]
 
 **Attempted Solutions:**
 1. [What was tried]

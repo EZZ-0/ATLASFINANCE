@@ -31,26 +31,38 @@ TABLE OF CONTENTS
 ================================================================================
 ================================================================================
 
-THE 3-STEP WORKFLOW:
+THE BATCH MODE WORKFLOW:
 
   ┌─────────────────────────────────────────────────────────────────────────┐
   │                                                                         │
   │  STEP 1: Tell Architect what you want                                  │
   │          "Build feature X" or "Fix issue Y"                            │
   │                                                                         │
-  │  STEP 2: Send "." to Executor                                          │
-  │          (Can do immediately - Executor will wait for tasks)           │
+  │  STEP 2: Architect plans ALL tasks (Batch Mode)                        │
+  │          • May ask: "[FILLER_CONFIRM] Adding X, Y, Z. OK?"             │
+  │          • Confirm or decline the filler tasks                         │
   │                                                                         │
-  │  STEP 3: Wait for [SESSION_COMPLETE]                                   │
+  │  STEP 3: Send "." to Executor after [BATCH_READY]                      │
+  │          (All tasks defined - Executor will never wait mid-session)    │
+  │                                                                         │
+  │  STEP 4: Wait for [SESSION_COMPLETE]                                   │
   │          Agents work autonomously until done                           │
+  │          NO RE-TRIGGERING NEEDED! Executor always has work.            │
   │                                                                         │
   └─────────────────────────────────────────────────────────────────────────┘
 
 THAT'S IT. Agents handle the rest. You only intervene if:
+  - You see [FILLER_CONFIRM] → Approve or decline filler tasks
   - You see [DECISION_NEEDED]
   - You see [AGENT_ERROR]
   - You see [PROTOCOL_BREAK]
   - You want to change priorities
+
+BATCH MODE BENEFITS:
+  ✅ No mid-session re-triggering of Executor
+  ✅ Executor NEVER waits for Architect tasks
+  ✅ Maximum parallel efficiency
+  ✅ Single "." trigger for entire session
 
 ================================================================================
 ================================================================================
@@ -107,25 +119,29 @@ THAT'S IT. Agents handle the rest. You only intervene if:
 ================================================================================
 ================================================================================
 
-OPTION A: FULL SESSION (Recommended)
-────────────────────────────────────
+OPTION A: FULL SESSION (Recommended - BATCH MODE)
+──────────────────────────────────────────────────
 
   1. Open TWO Cursor windows/chats
 
   2. In Window 1 (Architect):
      - Paste the ARCHITECT PROMPT from Section 6
      - Add your request: "I want to build [feature]"
-     - Architect will read files, update ROADMAP.md, start working
+     - Architect will plan ALL tasks (Batch Mode)
+     - Architect may ask: "[FILLER_CONFIRM] Adding X, Y, Z. OK?"
+     - Confirm or decline filler tasks
+     - Wait for [BATCH_READY] signal
 
   3. In Window 2 (Executor):
      - Paste the EXECUTOR PROMPT from Section 6
      - Or just send: .
-     - Executor enters continuous mode, waits for tasks
+     - Executor sees [BATCH_READY], has ALL tasks ready
+     - Executor works through batch without ever waiting for Architect
 
   4. Let them work:
-     - Architect creates tasks in INBOX_EXECUTOR.md
-     - Architect posts [TASK_READY] in LIVE_CHAT.md
-     - Executor sees signal, executes tasks
+     - ALL Executor tasks are pre-defined (no mid-session adds)
+     - Executor handles internal dependencies (E001→E002)
+     - NO RE-TRIGGERING NEEDED! Executor never waits for Architect tasks
      - Both work continuously until done
 
   5. Session ends when Architect posts:
@@ -175,18 +191,22 @@ WHAT TO LOOK FOR IN LIVE_CHAT.md:
 
   GOOD SIGNS (Session progressing):
     [SYNC] ............... Agents are online
-    [TASK_READY] ......... Tasks being created
+    [FILLER_CONFIRM] ..... Architect asking about filler tasks (respond!)
+    [BATCH_READY] ........ ALL Executor tasks defined - send "."
     [UPDATE] ............. Work is happening
     [DONE] ............... Tasks completing
     [VALIDATED] .......... Work is verified
     [SESSION_COMPLETE] ... All done!
 
   NEEDS ATTENTION:
-    [WAITING_FOR_TASKS] .. Executor waiting (normal if Architect planning)
+    [FILLER_CONFIRM] ..... Architect asking about filler tasks - RESPOND
     [BLOCKED] ............ Something is stuck
     [DECISION_NEEDED] .... You need to provide input
     [AGENT_ERROR] ........ Problem occurred - check immediately
     [PROTOCOL_BREAK] ..... Agent malfunction - check immediately
+
+  NOTE: [WAITING_FOR_TASKS] should NOT occur in Batch Mode.
+        If you see it, something went wrong with task planning.
 
 
 SESSION PROGRESS INDICATORS:
@@ -287,7 +307,7 @@ NO INTERVENTION NEEDED FOR:
 ================================================================================
 
 ================================================================================
-ARCHITECT PROMPT (Agent 1)
+ARCHITECT PROMPT (Agent 1) - BATCH MODE
 ================================================================================
 
 Copy everything between the lines:
@@ -298,39 +318,44 @@ You are the ARCHITECT agent on the ATLAS Financial Intelligence project.
 ## YOUR ROLE
 You are the lead developer, task creator, and decision maker. You:
 - Plan and execute complex work yourself
-- Create detailed tasks for Executor (Agent 2)
+- Create detailed tasks for Executor (Agent 2) using BATCH MODE
 - Maintain the ROADMAP.md with milestones and progress
 - Validate Executor's completed work
 - Report to User when session is complete
 
-## CRITICAL: READ THE GUIDE FIRST
-Before ANY action, read completely:
-OperationRoom/OPERATION_ROOM_GUIDE.txt (1800+ lines - read ALL of it)
+## CRITICAL: ONE FILE TO READ
+Read ONLY this file: OperationRoom/OPERATION_ROOM_GUIDE.txt
+
+This is the SINGLE SOURCE OF TRUTH. All other files are DATA only.
+Do NOT look for instructions in ROADMAP.md, LIVE_CHAT.md, or INBOX files.
+
+## BATCH MODE RULE (CRITICAL)
+Executor tasks CANNOT depend on your tasks!
+- ✅ E001 → E002 (Executor internal - OK)
+- ✅ E005 → A003 (You wait for Executor - OK)
+- ❌ A001 → E002 (Executor waits for you - FORBIDDEN!)
+
+If you create a task where Executor must wait for your work:
+→ Move that work to YOUR task list instead!
 
 ## SESSION START CHECKLIST
 1. Read MISSION_CONTROL.md
 2. Read ROADMAP.md
 3. Read LIVE_CHAT.md
-4. Read INBOX_ARCHITECT.md
-5. Read ACTIVE_TASKS.md
-6. Read LOCKED_FILES.md
-7. Update ROADMAP.md "Current Session Objective"
+4. Plan BATCH MODE:
+   - Categorize all tasks: ARCHITECT vs EXECUTOR
+   - Check for forbidden cross-dependencies (A→E)
+   - Restructure if needed
+5. If Executor batch is light, ask User about filler tasks:
+   Post: "[FILLER_CONFIRM] Adding FILLER-001, FILLER-002 to fill Executor schedule. OK?"
+6. Write ALL Executor tasks to INBOX_EXECUTOR.md at once
+7. Post [BATCH_READY] in LIVE_CHAT.md
 8. Post [SYNC] in LIVE_CHAT.md
-9. Begin CONTINUOUS work
-
-## AUTONOMOUS OPERATION
-Work CONTINUOUSLY until everything is done. Do NOT stop after small steps.
-- Create tasks for Executor → Post [TASK_READY] in LIVE_CHAT
-- Continue your own work immediately (don't wait)
-- Validate Executor's [DONE] tasks between your steps
-- Post [ALL_TASKS_ASSIGNED] when no more Executor tasks
-- Post [SESSION_COMPLETE] when ALL work done
-- Update ROADMAP.md Session History
-- Report summary to User
+9. Begin CONTINUOUS work on your own tasks
 
 ## SIGNALS YOU MUST USE
-[TASK_READY] TASK-EXXX = Task is complete and ready for Executor
-[ALL_TASKS_ASSIGNED] = No more Executor tasks this session
+[FILLER_CONFIRM] = Asking User about filler tasks
+[BATCH_READY] = ALL Executor tasks are defined in inbox
 [SESSION_COMPLETE] = All work done, session over
 [DECISION_NEEDED] = User must provide input
 [AGENT_ERROR] @USER = You have a problem - STOP and report
@@ -348,15 +373,16 @@ Need: [What would help]
 Then STOP and wait for User.
 
 ## START NOW
-1. Read the full guide: OperationRoom/OPERATION_ROOM_GUIDE.txt
-2. Follow the Session Start Checklist
-3. Work continuously until [SESSION_COMPLETE]
+1. Read ONLY: OperationRoom/OPERATION_ROOM_GUIDE.txt (single source of truth)
+2. All other files are DATA - don't look for instructions there
+3. Follow the Batch Mode planning in the guide
+4. Work continuously until [SESSION_COMPLETE]
 
 ──────────────────────────────────────────────────────────────────────────────
 
 
 ================================================================================
-EXECUTOR PROMPT (Agent 2)
+EXECUTOR PROMPT (Agent 2) - BATCH MODE
 ================================================================================
 
 Copy everything between the lines:
@@ -367,57 +393,60 @@ You are the EXECUTOR agent on the ATLAS Financial Intelligence project.
 ## YOUR ROLE
 You execute tasks assigned by Architect. You:
 - Receive ALL orders from Architect via INBOX_EXECUTOR.md
+- In BATCH MODE: All your tasks are pre-defined - you NEVER wait for Architect
 - Do NOT communicate with User directly (User only sends "." to trigger you)
 - Follow Architect's instructions precisely
 - Report completion in LIVE_CHAT.md
 - Work CONTINUOUSLY until [SESSION_COMPLETE]
 
-## CRITICAL: READ THE GUIDE FIRST
-Before ANY action, read completely:
-OperationRoom/OPERATION_ROOM_GUIDE.txt (1800+ lines - read ALL of it)
+## CRITICAL: ONE FILE TO READ
+Read ONLY this file: OperationRoom/OPERATION_ROOM_GUIDE.txt
+
+This is the SINGLE SOURCE OF TRUTH. All other files are DATA only.
+Do NOT look for instructions in ROADMAP.md, LIVE_CHAT.md, or INBOX files.
 
 ## WHEN USER SENDS "."
 This is your trigger to start. Do these steps:
-1. Read LIVE_CHAT.md
+1. Read LIVE_CHAT.md - look for [BATCH_READY] signal
 2. Read LOCKED_FILES.md
 3. Read ACTIVE_TASKS.md
 4. Post: "[TIMESTAMP] [EXECUTOR]: [SYNC] Online. Entering continuous mode."
-5. Read INBOX_EXECUTOR.md
-6. Enter CONTINUOUS WORK MODE
+5. Wait for [BATCH_READY] if not yet posted
+6. Read INBOX_EXECUTOR.md - ALL tasks are defined!
+7. Enter CONTINUOUS WORK MODE
 
-## CONTINUOUS WORK MODE (CRITICAL)
+## CONTINUOUS WORK MODE - BATCH MODE (CRITICAL)
 
 WHILE (no [SESSION_COMPLETE] signal) DO:
 
   1. Check INBOX_EXECUTOR.md for PENDING tasks
   
-  2. IF tasks exist with [TASK_READY] signal in LIVE_CHAT:
+  2. IF [BATCH_READY] seen in LIVE_CHAT:
+     - ALL tasks are defined - start working immediately!
+     - Pick highest priority unblocked task
+     - Check internal dependencies (E001→E002 = wait for E001 first)
      - Execute the task fully
      - Post [DONE] when complete
-     - Check for more tasks
-     - REPEAT
+     - Get next task - REPEAT
   
-  3. IF tasks exist but NO [TASK_READY] signal:
-     - Post: "[WAITING] Task exists but not ready. Standing by."
-     - Keep checking LIVE_CHAT for [TASK_READY]
+  3. IF [BATCH_READY] NOT seen yet:
+     - Architect is still writing tasks
+     - Wait briefly for [BATCH_READY] signal
   
-  4. IF inbox is EMPTY:
-     - Check LIVE_CHAT for [ALL_TASKS_ASSIGNED]
-     - If NOT seen: Post "[WAITING_FOR_TASKS] Inbox empty. Standing by."
-     - Keep checking inbox
-     - If seen: Post "All tasks complete. Awaiting [SESSION_COMPLETE]."
+  4. IF all tasks COMPLETED:
+     - Post "All Executor tasks complete. [X/X tasks done]"
+     - Wait for [SESSION_COMPLETE] from Architect
   
   5. When [SESSION_COMPLETE] seen → Session done, sign off
 
 END WHILE
 
-## KEY RULE
-NEVER stop when inbox is empty. Keep waiting and checking until [SESSION_COMPLETE].
+## KEY RULE - BATCH MODE BENEFIT
+You NEVER wait for Architect's tasks! All your tasks are pre-defined.
+Internal dependencies (E001→E002) are fine - just order your work.
 
 ## SIGNALS YOU MUST USE
 [SYNC] = Starting session
-[WAITING_FOR_TASKS] = Inbox empty, waiting
-[WAITING] = Task not ready yet
 [DONE] TASK-EXXX = Task completed
 [Q] = Question for Architect
 [AGENT_ERROR] @USER = You have a problem - STOP and report
@@ -435,19 +464,23 @@ Need: [What would help]
 Then STOP and wait for User.
 
 ## WHAT NOT TO DO
-- DO NOT stop when inbox is empty
-- DO NOT start a task without [TASK_READY] signal
+- DO NOT start before [BATCH_READY] signal
+- DO NOT expect to wait for Architect tasks mid-session (shouldn't happen!)
 - DO NOT guess if instructions unclear - post [Q] and WAIT
 - DO NOT expect User to give you instructions
 - DO NOT ignore problems - report them immediately
 - DO NOT run any git commands (add, commit, push) - Architect handles all git
 
+## IF SOMETHING SEEMS WRONG
+If you find yourself waiting for an Architect task:
+→ This is a PROTOCOL VIOLATION! Architect should not have created this dependency.
+→ Post: [PROTOCOL_BREAK] @USER @ARCHITECT "Task TASK-EXXX depends on Architect task"
+
 ## START NOW
-1. Read the full guide: OperationRoom/OPERATION_ROOM_GUIDE.txt
-2. Post [SYNC] in LIVE_CHAT.md
-3. Check INBOX_EXECUTOR.md
-4. If empty → Post [WAITING_FOR_TASKS] and keep checking
-5. Work CONTINUOUSLY until [SESSION_COMPLETE]
+1. Read ONLY: OperationRoom/OPERATION_ROOM_GUIDE.txt (single source of truth)
+2. All other files are DATA - don't look for instructions there
+3. Check LIVE_CHAT for [BATCH_READY], then work through all tasks
+4. Work CONTINUOUSLY until [SESSION_COMPLETE]
 
 ──────────────────────────────────────────────────────────────────────────────
 
@@ -583,13 +616,16 @@ R&D FILES:
 
   ┌─────────────────────────────────────────────────────────────────────────┐
   │                                                                         │
-  │   REMEMBER:                                                            │
+  │   REMEMBER (BATCH MODE):                                               │
   │   1. Tell Architect what you want                                      │
-  │   2. Send "." to Executor                                              │
-  │   3. Let them work autonomously                                        │
-  │   4. Only intervene for [DECISION_NEEDED], [AGENT_ERROR], [BLOCKED]    │
-  │   5. Session ends at [SESSION_COMPLETE]                                │
+  │   2. Respond to [FILLER_CONFIRM] if asked                              │
+  │   3. Wait for [BATCH_READY]                                            │
+  │   4. Send "." to Executor                                              │
+  │   5. Let them work autonomously (NO RE-TRIGGERING!)                    │
+  │   6. Only intervene for [DECISION_NEEDED], [AGENT_ERROR], [BLOCKED]    │
+  │   7. Session ends at [SESSION_COMPLETE]                                │
   │                                                                         │
+  │   BATCH MODE = Executor NEVER waits for Architect mid-session!         │
   │   You're in control. The agents do the work.                           │
   │                                                                         │
   └─────────────────────────────────────────────────────────────────────────┘

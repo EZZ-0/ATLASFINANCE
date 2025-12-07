@@ -1,68 +1,13 @@
 # MISSION CONTROL
 
+<!-- 
+DATA FILE: Current project status and quick status view.
+For protocols, see: OPERATION_ROOM_GUIDE.txt
+-->
+
 **Project:** ATLAS Financial Intelligence  
 **Last Updated:** [Auto-update on each edit]  
 **Status:** ACTIVE
-
----
-
-## COMMAND HIERARCHY
-
-```
-                    ╔════════════╗
-                    ║    USER    ║
-                    ║  (Owner)   ║
-                    ╚─────┬──────╝
-                          │
-          ┌───────────────┼───────────────┐
-          │               │               │
-          ▼               ▼               ▼
-    ┌───────────┐   ┌───────────┐   ┌───────────┐
-    │ ARCHITECT │   │  EXECUTOR │   │    R&D    │
-    │ (Agent 1) │   │ (Agent 2) │   │ (Agent 3) │
-    └─────┬─────┘   └───────────┘   └───────────┘
-          │               ▲
-          │ Creates tasks │
-          └───────────────┘
-```
-
-### USER COMMANDS
-
-| To Agent | Command | Purpose |
-|----------|---------|---------|
-| Architect | Talk directly | Planning, decisions, complex requests |
-| Executor | Send "." | Trigger inbox check and work |
-| R&D | Talk directly | Request research or validation |
-
-### WHO REPORTS TO USER
-
-| Agent | Reports | When |
-|-------|---------|------|
-| **Architect** | Progress, decisions needed, blockers | After major milestones or when blocked |
-| **Executor** | Nothing direct | Reports to Architect only |
-| **R&D** | Validation results, research findings | After completing assigned research |
-
-### USER STATUS VIEW
-
-Check these files for quick status:
-- `MISSION_CONTROL.md` → Quick Status table (this file)
-- `ROADMAP.md` → Milestones, objectives, progress (Architect maintains)
-- `ACTIVE_TASKS.md` → What's in progress
-- `COMPLETED_TASKS.md` → What's done
-- `LIVE_CHAT.md` → Recent agent conversation
-- `OperationsValidation/VALIDATION_QUEUE.md` → What's awaiting R&D
-
-### USER WORKFLOW (AUTONOMOUS)
-
-```
-1. Tell Architect what you want built
-2. Send "." to Executor (can do immediately - they will wait)
-3. Both agents work CONTINUOUSLY and AUTONOMOUSLY
-4. Architect signals [SESSION_COMPLETE] when all done
-5. Call R&D for quality validation when needed
-```
-
-**MINIMAL INTERVENTION:** You only need to respond to [DECISION_NEEDED] or [BLOCKED]
 
 ---
 
@@ -71,8 +16,11 @@ Check these files for quick status:
 | Priority | Objective | Owner | Status |
 |----------|-----------|-------|--------|
 | P0 | MILESTONE-002: Earnings Revision Tracking | Both | 🟡 IN PROGRESS |
-| P1 | Research earnings data sources | Executor | Starting |
-| P2 | Build earnings_revisions.py module | Architect | Starting |
+| P1 | A007-A010: Core module + UI | Architect | ✅ DONE |
+| P2 | E011-E016: Research + Validation | Executor | ⬜ PENDING |
+| P3 | A011: Enhance with research findings | Architect | ⬜ WAITING |
+
+**Mode:** BATCH MODE ACTIVE - [BATCH_READY] posted
 
 ---
 

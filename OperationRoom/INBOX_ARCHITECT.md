@@ -1,83 +1,15 @@
 # INBOX: ARCHITECT
 
-**Owner:** Architect Agent  
-**Purpose:** Tasks and requests assigned TO the Architect  
-**Protocol:** Check this file BEFORE and AFTER every action
+<!-- 
+DATA FILE: Tasks assigned to Architect (from Executor or system).
+For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
+-->
 
 ---
 
-## CRITICAL: AUTONOMOUS OPERATION SIGNALS
+## PENDING TASKS
 
-As Architect, you MUST use these signals in LIVE_CHAT.md:
-
-| Signal | When to Use |
-|--------|-------------|
-| `[TASK_READY] TASK-EXXX` | After creating complete task for Executor |
-| `[ALL_TASKS_ASSIGNED]` | When no more Executor tasks will be created |
-| `[SESSION_COMPLETE]` | When ALL work is done (yours + Executor's validated) |
-| `[DECISION_NEEDED]` | When User must provide input |
-
-Work CONTINUOUSLY until session complete. Don't stop after small steps.
-
----
-
-## ⚠️ ERROR REPORTING
-
-If you experience ANY problem:
-
-```
-[TIMESTAMP] [ARCHITECT]: [AGENT_ERROR] @USER
-Problem: [What's wrong]
-Impact: [What this blocks]
-Tried: [What you attempted]
-Need: [What would help]
-```
-
-If Executor is not following protocol:
-
-```
-[TIMESTAMP] [ARCHITECT]: [PROTOCOL_BREAK] @USER @EXECUTOR
-Issue: [What they're doing wrong]
-Expected: [What should happen]
-Actual: [What is happening]
-```
-
-**STOP and wait for User response before continuing.**
-
----
-
-## HOW TO USE THIS INBOX
-
-### For Architect (Owner):
-1. Check this inbox before starting any work
-2. Acknowledge tasks by changing status to `ACKNOWLEDGED`
-3. Update status as you work: `IN_PROGRESS` → `COMPLETED`
-4. Move completed tasks to COMPLETED_TASKS.md
-
-### For Executor (Sender):
-1. Add new tasks at the BOTTOM of the PENDING section
-2. Use the task template below
-3. Set appropriate priority (P0 = urgent, P1 = high, P2 = normal)
-
----
-
-## TASK TEMPLATE
-
-```markdown
-### TASK-A[XXX]: [Task Title]
-- **From:** Executor
-- **Priority:** P0 / P1 / P2
-- **Created:** [YYYY-MM-DD HH:MM]
-- **Deadline:** [Optional]
-- **Est. Time:** [e.g., 2 hours, 30 min]
-- **Status:** PENDING
-
-**Dependencies:**
-- **Depends On:** [Task IDs that must complete first, or "None"]
-- **Blocks:** [Task IDs waiting on this, or "None"]
-
-**Description:**
-[Clear description of what needs to be done]
+<!-- Executor: Add tasks here if needed. Use template from OPERATION_ROOM_GUIDE.txt -->
 
 **Acceptance Criteria:**
 - [ ] Criterion 1

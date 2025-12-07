@@ -1,302 +1,394 @@
 # PROJECT ROADMAP & MILESTONES
 
 **Maintained By:** Architect (Agent 1)  
-**Last Updated:** 2025-12-07 21:30  
-**Version:** 1.0
+**Last Updated:** 2025-12-08 01:15  
+**Version:** 2.0 (Batch Mode Optimized)
 
 ---
 
-## CURRENT SESSION OBJECTIVE
-
-<!-- Architect: Update this at the start of each session -->
-
-**Goal:** Data Accuracy Foundation - Build validation infrastructure and fix critical data gaps  
-**Started:** 2025-12-07 23:00  
-**Target Completion:** Phase 1 complete this session
-
----
-
-## ACTIVE MILESTONE
-
-<!-- The milestone currently being worked on -->
-
-### MILESTONE-001: Validation Infrastructure + WACC + FCF (PARALLEL SPRINT)
-
-| Field | Value |
-|-------|-------|
-| **Status** | 🟡 IN PROGRESS |
-| **Started** | 2025-12-07 23:00 |
-| **Target** | Session 1 |
-| **Owner** | Architect + Executor (PARALLEL) |
-
-**Objective:**  
-Maximize parallel work - Executor handles data/research/validation while Architect builds core logic.
-
----
-
-## PARALLEL EXECUTION STRATEGY
+## BATCH MODE COMPLIANCE
 
 ```
-┌─────────────────────────────────────┬─────────────────────────────────────┐
-│         ARCHITECT (Complex)          │         EXECUTOR (Research/Data)    │
-├─────────────────────────────────────┼─────────────────────────────────────┤
-│ A001: benchmark_validator.py design  │ E001: FRED API research + key       │
-│ A002: test_financial_accuracy.py     │ E002: Damodaran CSV download+parse  │
-│ A003: WACC formula in dcf_modeling   │ E003: Validate AAPL metrics baseline│
-│ A004: FCF calculator module          │ E004: Validate MSFT metrics baseline│
-│ A005: Sector benchmark integration   │ E005: Validate JNJ metrics baseline │
-│                                      │ E006: Create sector mapping dict    │
-│                                      │ E007: FRED API implementation       │
-│                                      │ E008: Cross-validate WACC results   │
-└─────────────────────────────────────┴─────────────────────────────────────┘
+╔════════════════════════════════════════════════════════════════════════════╗
+║  CORE RULE: Executor tasks CANNOT depend on Architect tasks                ║
+║                                                                            ║
+║  ✅ E → E dependencies OK (E001 → E002)                                    ║
+║  ✅ A → E dependencies OK (Architect waits for Executor)                   ║
+║  ❌ E → A dependencies FORBIDDEN (causes blocking)                         ║
+║                                                                            ║
+║  All Executor tasks must be completable without waiting for Architect.     ║
+╚════════════════════════════════════════════════════════════════════════════╝
 ```
 
-**Key: Both agents work SIMULTANEOUSLY. Only sync at checkpoints.**
+---
+
+## CURRENT SESSION
+
+**Goal:** Complete MILESTONE-002 (Earnings Revisions)  
+**Started:** 2025-12-08 00:35  
+**Mode:** Batch Mode
 
 ---
 
-## ARCHITECT TASKS (Session 1)
-
-| Task ID | Description | Depends On | Est. Time | Status |
-|---------|-------------|------------|-----------|--------|
-| TASK-A001 | Design benchmark_validator.py + comparison funcs | None | 1.5h | ✅ DONE |
-| TASK-A002 | Create test_financial_accuracy.py pytest suite | None | 1.5h | ✅ DONE |
-| TASK-A003 | Fix WACC formula in dcf_modeling.py (adjusted beta) | E007 | 1h | ✅ DONE |
-| TASK-A004 | Create calculations/fcf_calculator.py (4 methods) | None | 1.5h | ✅ DONE |
-| TASK-A005 | Build sector_benchmarks.py integration | E002 | 1.5h | ✅ DONE |
-| TASK-A006 | Wire Monte Carlo to DCF UI | A003,A004 | 1h | ✅ DONE |
-
----
-
-## EXECUTOR TASKS (Session 1) - ALL PARALLEL
-
-| Task ID | Description | Depends On | Est. Time | Status |
-|---------|-------------|------------|-----------|--------|
-| TASK-E001 | Research FRED API, register, get free key | None | 30m | ✅ DONE |
-| TASK-E002 | Download Damodaran CSV, parse into Python dict | None | 45m | ✅ DONE |
-| TASK-E003 | Validate AAPL: P/E, ROE, WACC vs Yahoo/Bloomberg | None | 30m | ✅ DONE |
-| TASK-E004 | Validate MSFT: P/E, ROE, WACC vs Yahoo/Bloomberg | None | 30m | ✅ DONE |
-| TASK-E005 | Validate JNJ: P/E, ROE, WACC vs Yahoo/Bloomberg | None | 30m | ✅ DONE |
-| TASK-E006 | Create GICS sector → Damodaran sector mapping | E002 | 30m | ✅ DONE |
-| TASK-E007 | Implement fred_api.py (fetch + cache treasury rate) | E001 | 45m | ✅ DONE |
-| TASK-E008 | Cross-validate WACC output after A003 complete | A003 | 30m | ✅ DONE |
-| TASK-E009 | Validate each FCF method output after A004 | A004 | 45m | ✅ DONE |
-| TASK-E010 | Integration test: full extraction → validation | All | 30m | ✅ DONE |
-
----
-
-**Status Legend:** ⬜ Pending | 🔄 In Progress | ✅ Done | 🔴 Blocked
-
-**SYNC CHECKPOINTS:**
-1. After E002 complete → Architect can start A005
-2. After E007 complete → Architect can start A003
-3. After A003 complete → E008 validates
-4. After A004 complete → E009 validates
-5. Final: E010 integration test
-
-**Deliverables:**
-- [ ] validation/benchmark_validator.py - Comparison functions
-- [ ] data_sources/fred_api.py - Treasury rate integration
-- [ ] data_sources/sector_benchmarks.py - Damodaran data
-- [ ] calculations/fcf_calculator.py - 4 FCF methods
-- [ ] tests/test_financial_accuracy.py - pytest suite
-- [ ] Updated dcf_modeling.py with proper WACC
-- [ ] Baseline accuracy report for 3 tickers
-
-**Success Criteria:**
-- [ ] All 3 tickers validated within 5% of external sources
-- [ ] WACC uses live Treasury rate + adjusted beta
-- [ ] 4 FCF methods working and validated
-- [ ] Sector benchmarks showing percentile rankings
-
----
-
-## ROADMAP OVERVIEW
-
-<!-- High-level view of all planned work -->
+## ROADMAP OVERVIEW (Monetization Priority)
 
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
-║  PHASE 1: DATA ACCURACY FOUNDATION                                           ║
-║  Target: 1 Session (parallel execution = 2x speed)                           ║
+║  PHASE 1: DATA ACCURACY FOUNDATION                    🟢 COMPLETE            ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║                                                                              ║
-║  MILESTONE-001: MEGA SPRINT (Validation + WACC + FCF + Benchmarks)           ║
-║  ├── Architect: 6 complex tasks (parallel)                                   ║
-║  └── Executor: 10 data/validation tasks (parallel)                           ║
-║                                                                              ║
-║  Output: Complete data accuracy layer in ONE session                         ║
-║                                                                              ║
+║  MILESTONE-001: Validation + WACC + FCF + Benchmarks  ✅ DONE                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
-PHASE 2: DATA ENRICHMENT
-├── MILESTONE-002: Earnings Revision Tracking ....... ⬜ Not Started
-├── MILESTONE-003: Insider Transactions ............. ⬜ Not Started
-└── MILESTONE-004: News Sentiment Analysis .......... ⬜ Not Started
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  PHASE 2: ALPHA SIGNALS (What Makes People Pay)       🟡 IN PROGRESS         ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  Why: These features provide actionable investment insights = $$$            ║
+║                                                                              ║
+║  MILESTONE-002: Earnings Revisions ................ 🟡 IN PROGRESS          ║
+║  MILESTONE-003: Insider Transactions .............. ⬜ NOT STARTED           ║
+║  MILESTONE-004: Institutional Ownership ........... ⬜ NOT STARTED           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-PHASE 3: UI/UX POLISH
-├── MILESTONE-005: Flip Cards Everywhere ............ ⬜ Not Started
-├── MILESTONE-006: Draggable Dashboard .............. ⬜ Not Started
-└── MILESTONE-007: Micro-animations ................. ⬜ Not Started
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  PHASE 3: PROFESSIONAL POLISH (Credibility = Trust = Sales)                 ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  Why: Makes the product look worth paying for                                ║
+║                                                                              ║
+║  MILESTONE-005: PDF Export Enhancement ............ ⬜ NOT STARTED           ║
+║  MILESTONE-006: White-label/Custom Branding ....... ⬜ NOT STARTED           ║
+║  MILESTONE-007: Performance Optimization .......... ⬜ NOT STARTED           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 
-PHASE 4: MONETIZATION READY
-├── MILESTONE-008: PDF Export Enhancement ........... ⬜ Not Started
-├── MILESTONE-009: White-label Options .............. ⬜ Not Started
-└── MILESTONE-010: Performance Optimization ......... ⬜ Not Started
+╔══════════════════════════════════════════════════════════════════════════════╗
+║  PHASE 4: USER EXPERIENCE (Retention = Recurring Revenue)                   ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  Why: Keeps users coming back, reduces churn                                 ║
+║                                                                              ║
+║  MILESTONE-008: Interactive Components ............ ⬜ NOT STARTED           ║
+║  MILESTONE-009: Draggable Dashboard ............... ⬜ NOT STARTED           ║
+║  MILESTONE-010: Mobile Responsiveness ............. ⬜ NOT STARTED           ║
+╚══════════════════════════════════════════════════════════════════════════════╝
 ```
-
-**Status Key:** ⬜ Not Started | 🟡 In Progress | 🟢 Complete | 🔴 Blocked
-
-**PARALLEL EXECUTION ADVANTAGE:**
-- Traditional: 16 tasks × 1 agent = 16 sequential hours
-- Operation Room: 16 tasks ÷ 2 agents (parallel) = ~8 hours effective
-- Sync only at checkpoints, not after every task
-
----
-
-## MILESTONE DETAILS
-
-<!-- Detailed breakdown of each milestone -->
-
-### MILESTONE-001: MEGA SPRINT (All Phase 1 Work Combined)
-- **Phase:** 1
-- **Status:** ⬜ Not Started
-- **Dependencies:** None
-- **Blocks:** Phase 2
-- **Est. Time:** ~8 hours (with parallel execution)
-- **Description:** Complete all data accuracy work in ONE session using parallel execution
-- **Key Deliverables:**
-  - validation/benchmark_validator.py
-  - data_sources/fred_api.py
-  - data_sources/sector_benchmarks.py
-  - calculations/fcf_calculator.py
-  - tests/test_financial_accuracy.py
-  - Updated dcf_modeling.py
-  - Monte Carlo UI integration
-
-**Why Combined:**
-- All items are independent enough for parallel work
-- Sync only at defined checkpoints
-- Eliminates "waiting for previous milestone" delays
-- Maximizes Operation Room value
-
----
-
-### MILESTONE-002: Earnings Revision Tracking
-- **Phase:** 2
-- **Status:** 🟡 IN PROGRESS
-- **Dependencies:** MILESTONE-001 ✅
-- **Started:** 2025-12-08
-- **Est. Time:** 6 hours (parallel execution)
-- **Description:** Track analyst earnings revisions - top alpha signal for stock performance
-- **Key Deliverables:**
-  - `earnings_revisions.py` - Revision tracking module
-  - Historical revision display in UI
-  - Revision direction indicator (upgrades/downgrades)
-  - EPS estimate trends visualization
-
-**Why This Matters:**
-- Earnings revisions are one of the strongest predictors of future stock returns
-- Stocks with upward revisions tend to outperform
-- Shows analyst sentiment momentum
-
-**ARCHITECT TASKS:**
-| Task ID | Description | Est. Time | Status |
-|---------|-------------|-----------|--------|
-| TASK-A007 | Design earnings_revisions.py module structure | 1h | ✅ DONE |
-| TASK-A008 | Implement revision tracking logic | 1.5h | ✅ DONE |
-| TASK-A009 | Create revision visualization (charts) | 1h | ✅ DONE |
-| TASK-A010 | Integrate into Analysis tab UI | 1h | ✅ DONE |
-
-**EXECUTOR TASKS:**
-| Task ID | Description | Est. Time | Status |
-|---------|-------------|-----------|--------|
-| TASK-E011 | Research yfinance earnings estimate fields | 30m | ⬜ |
-| TASK-E012 | Research FMP/Alpha Vantage revision APIs | 30m | ⬜ |
-| TASK-E013 | Validate AAPL revision data extraction | 30m | ⬜ |
-| TASK-E014 | Validate MSFT revision data extraction | 30m | ⬜ |
-| TASK-E015 | Create tests for revision module | 45m | ⬜ |
-| TASK-E016 | Integration test with UI | 30m | ⬜ |
-
-### MILESTONE-003: Insider Transactions (Future)
-- **Phase:** 2
-- **Status:** ⬜ Not Started
-- **Dependencies:** MILESTONE-001
-- **Est. Time:** 8 hours
-- **Description:** SEC Form 4 parsing for insider activity
-- **Key Deliverables:**
-  - SEC Form 4 parser
-  - Insider transaction display
-  - Net insider sentiment
-
-### MILESTONE-004: News Sentiment Analysis (Future)
-- **Phase:** 2
-- **Status:** ⬜ Not Started
-- **Dependencies:** MILESTONE-001
-- **Est. Time:** 12 hours
-- **Description:** NLP-based sentiment scoring on news
-- **Key Deliverables:**
-  - Sentiment analysis module
-  - Sentiment trend display
-  - Event detection
 
 ---
 
 ## COMPLETED MILESTONES
 
-<!-- Move completed milestones here for reference -->
+### MILESTONE-001: Data Accuracy Foundation ✅
+| Field | Value |
+|-------|-------|
+| **Status** | 🟢 COMPLETE |
+| **Duration** | 2025-12-07 23:00 → 2025-12-08 00:30 |
+| **Deliverables** | All validated and pushed |
 
-| Milestone | Completed | Duration | Notes |
-|-----------|-----------|----------|-------|
-| [None yet] | - | - | - |
+**What Was Built:**
+- `validation/benchmark_validator.py` - Metric comparison engine
+- `data_sources/fred_api.py` - Live Treasury rates from FRED
+- `data_sources/damodaran_data.py` - Industry benchmarks
+- `data_sources/sector_mapping.py` - GICS to Damodaran mapping
+- `calculations/fcf_calculator.py` - 4 FCF methods
+- `tests/test_financial_accuracy.py` - 35+ pytest cases
+- `monte_carlo_ui.py` - Simulation UI components
+- Updated `dcf_modeling.py` with proper WACC (adjusted beta, CAPM)
+
+---
+
+## ACTIVE MILESTONE
+
+### MILESTONE-002: Earnings Revision Tracking
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 2 - Alpha Signals |
+| **Status** | 🟡 IN PROGRESS |
+| **Started** | 2025-12-08 00:35 |
+| **Est. Time** | 4 hours (Batch Mode) |
+| **Why** | #1 alpha signal - revision momentum predicts returns |
+
+**Objective:** Track analyst EPS estimate revisions with momentum scoring.
+
+**Deliverables:**
+- [x] `earnings_revisions.py` - Core module
+- [x] Revision visualization (gauge, trend charts)
+- [x] UI integration in Earnings tab
+- [ ] Validated against external sources
+- [ ] Enhanced with FMP/Alpha Vantage data
+
+---
+
+#### BATCH MODE TASK SPLIT
+
+**ARCHITECT TASKS (Complex/Design):**
+
+| Task ID | Description | Status | Notes |
+|---------|-------------|--------|-------|
+| A007 | Design earnings_revisions.py | ✅ DONE | Created module structure |
+| A008 | Implement tracking logic | ✅ DONE | RevisionSummary class |
+| A009 | Create visualizations | ✅ DONE | 4 chart functions |
+| A010 | UI integration | ✅ DONE | Earnings tab updated |
+| A011 | Enhance with Executor research | ⬜ PENDING | After E011-E014 |
+
+**EXECUTOR TASKS (Research/Validation - ALL INDEPENDENT):**
+
+| Task ID | Description | Depends On | Status |
+|---------|-------------|------------|--------|
+| E011 | Research yfinance earnings fields | None | ⬜ |
+| E012 | Research FMP earnings API | None | ⬜ |
+| E013 | Research Alpha Vantage earnings API | None | ⬜ |
+| E014 | Extract & validate AAPL/MSFT/GOOGL estimates | None | ⬜ |
+| E015 | Document data quality findings | E011-E014 | ⬜ |
+| E016 | Create API comparison report | E011-E014 | ⬜ |
+
+**SYNC CHECKPOINT:**
+- After E011-E016 complete → Architect (A011) enhances module with findings
+
+**Key Change (Batch Mode):**
+- ❌ OLD: E015/E016 depended on A008/A010 (cross-dependency)
+- ✅ NEW: All E-tasks are research/validation, fully independent
+- Architect enhances AFTER Executor research is complete
+
+---
+
+## FUTURE MILESTONES (Batch Mode Ready)
+
+### MILESTONE-003: Insider Transactions
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 2 - Alpha Signals |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 6 hours |
+| **Why** | Insider buying = bullish signal, insider selling = caution |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E017: Research SEC EDGAR API, E018: Research OpenInsider scraping, E019: Extract sample Form 4 data, E020: Validate insider data accuracy |
+| **Architect** | A012: Design insider_transactions.py, A013: Implement parsing logic (after E017-E20), A014: Create insider UI component |
+
+---
+
+### MILESTONE-004: Institutional Ownership
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 2 - Alpha Signals |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 5 hours |
+| **Why** | Institutional accumulation = smart money signal |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E021: Research 13F data sources, E022: Extract sample ownership data, E023: Validate against SEC filings |
+| **Architect** | A015: Design ownership module, A016: Implement (after E21-E23), A017: Create ownership UI |
+
+---
+
+### MILESTONE-005: PDF Export Enhancement
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 3 - Professional Polish |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 8 hours |
+| **Why** | Export = shareable = viral potential |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E024: Research PDF libraries (reportlab vs weasyprint), E025: Create sample templates, E026: Test export on 5 tickers |
+| **Architect** | A018: Design PDF generation pipeline, A019: Implement chart export, A020: Create IC Memo template |
+
+---
+
+### MILESTONE-006: White-label/Custom Branding
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 3 - Professional Polish |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 6 hours |
+| **Why** | B2B revenue - firms pay for branded tools |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E027: Research Streamlit theming, E028: Create 3 color scheme options, E029: Test logo injection |
+| **Architect** | A021: Design theme system, A022: Implement CSS variable injection, A023: Create config file structure |
+
+---
+
+### MILESTONE-007: Performance Optimization
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 3 - Professional Polish |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 8 hours |
+| **Why** | Slow = churn, fast = professional |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E030: Profile current load times, E031: Identify bottlenecks, E032: Research Streamlit fragments |
+| **Architect** | A024: Implement caching strategy, A025: Optimize API calls, A026: Lazy load components |
+
+---
+
+### MILESTONE-008: Interactive Components (Flip Cards)
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 4 - User Experience |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 10 hours |
+| **Why** | Engagement = time on site = value perception |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E033: List all metrics that need breakdown, E034: Research component libraries, E035: Test animation performance |
+| **Architect** | A027: Design flip card system, A028: Implement for Dashboard, A029: Expand to all tabs |
+
+---
+
+### MILESTONE-009: Draggable Dashboard
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 4 - User Experience |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 12 hours |
+| **Why** | Customization = power user feature = stickiness |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E036: Research Streamlit drag-drop, E037: Test streamlit-sortables, E038: Create widget inventory |
+| **Architect** | A030: Design layout persistence, A031: Implement drag system, A032: Add preset layouts |
+
+---
+
+### MILESTONE-010: Mobile Responsiveness
+
+| Field | Value |
+|-------|-------|
+| **Phase** | 4 - User Experience |
+| **Status** | ⬜ NOT STARTED |
+| **Est. Time** | 10 hours |
+| **Why** | Mobile = accessibility = larger market |
+
+**Batch Mode Split:**
+
+| Agent | Tasks |
+|-------|-------|
+| **Executor** | E039: Audit current mobile breakpoints, E040: Test on 3 device sizes, E041: List CSS fixes needed |
+| **Architect** | A033: Design responsive strategy, A034: Implement media queries, A035: Test and polish |
+
+---
+
+## FILLER TASKS (Independent - No Dependencies)
+
+Use when Executor batch is light. Architect asks: `[FILLER_CONFIRM] Adding X, Y. OK?`
+
+| Task ID | Description | Est. Time | Impact |
+|---------|-------------|-----------|--------|
+| F001 | Add docstrings to usa_backend.py | 1h | Code quality |
+| F002 | Update README with features | 45m | Documentation |
+| F003 | Add type hints to key modules | 1.5h | Code quality |
+| F004 | Clean unused imports | 30m | Code hygiene |
+| F005 | Unit tests for utilities | 1.5h | Test coverage |
+| F006 | API documentation | 45m | Documentation |
+| F007 | Standardize logging | 1h | Debugging |
+| F008 | Improve error messages | 1h | UX |
+| F009 | Data validation fixtures | 1h | Testing |
+| F010 | Comment cleanup | 45m | Code quality |
+| F011 | Create CHANGELOG.md | 30m | Documentation |
+| F012 | Add .env.example | 15m | Setup |
 
 ---
 
 ## SESSION HISTORY
 
-<!-- Track what was accomplished each session -->
-
-### Session 2025-12-07 (Pre-Operation Room)
-- **Objective:** Setup and planning
+### Session 2025-12-08 (Operation Room Active)
+- **Objective:** MILESTONE-002 Earnings Revisions
+- **Status:** In Progress
 - **Accomplished:**
-  - [x] Created Operation Room multi-agent coordination system
-  - [x] Consolidated R&D reports (5 docs → 1 report)
-  - [x] Defined Data Accuracy Foundation roadmap
-  - [x] Decoupled usa_app.py (4182 → 3568 lines)
-  - [x] Added performance caching
-  - [x] Fixed layout border issues
-- **Carried Over:** Phase 1 implementation
-- **Next Session:** Begin MILESTONE-001 (Validation Infrastructure)
+  - [x] Architect: A007-A010 complete (module, logic, viz, UI)
+  - [ ] Executor: E011-E016 pending
+- **Next:** Executor completes research, Architect enhances
+
+### Session 2025-12-07 (Foundation)
+- **Objective:** Setup and MILESTONE-001
+- **Accomplished:**
+  - [x] Created Operation Room system
+  - [x] Completed MILESTONE-001 (16 tasks)
+  - [x] Decoupled usa_app.py
+  - [x] Fixed UI issues
+- **Duration:** ~6 hours
+
+---
+
+## VALIDATION STRATEGY
+
+Each milestone includes:
+
+1. **Research Phase (Executor)**
+   - API documentation
+   - Data source comparison
+   - Sample extraction tests
+
+2. **Implementation Phase (Architect)**
+   - Core logic
+   - UI integration
+   - Error handling
+
+3. **Validation Phase (Both)**
+   - Cross-reference external sources
+   - Edge case testing
+   - Performance check
+
+4. **R&D Review (Separate)**
+   - Major features go to VALIDATION_QUEUE.md
+   - R&D agent validates before production
 
 ---
 
 ## NOTES & DECISIONS
 
-<!-- Important decisions that affect the roadmap -->
-
-- 2025-12-07: Chose Data Accuracy as Phase 1 focus (over UI polish) - foundation first
-- 2025-12-07: Validation strategy = Manual spot checks + Automated regression tests
-- 2025-12-07: 2-agent structure (Architect + Executor) instead of 3 agents
-- 2025-12-07: Quality over speed - no hard deadline
+- **2025-12-08:** Restructured roadmap for Batch Mode compliance
+- **2025-12-08:** Prioritized by monetization impact (Alpha Signals → Polish → UX)
+- **2025-12-07:** 2-agent structure (Architect + Executor)
+- **2025-12-07:** Quality over speed - no hard deadlines
 
 ---
 
-## HOW TO USE THIS FILE
+## QUICK REFERENCE
 
-### For Architect:
-1. **Session Start:** Update "Current Session Objective"
-2. **During Work:** Update task statuses in real-time
-3. **Creating Tasks:** Add to Active Milestone table, then create in INBOX files
-4. **Milestone Complete:** Move to "Completed Milestones", start next
-5. **Session End:** Add entry to "Session History"
+**Phase Priority:**
+1. Alpha Signals = Revenue (what people pay for)
+2. Professional Polish = Credibility (why they trust it)
+3. User Experience = Retention (why they stay)
 
-### For Executor:
-1. **Reference Only** - Check this to understand the bigger picture
-2. **Don't Edit** - Architect maintains this file
-3. **Ask Questions** - If unclear how your task fits, ask in LIVE_CHAT
+**Batch Mode Rule:**
+- Executor tasks: 100% independent research/validation
+- Architect tasks: Design + implementation (can wait for Executor)
+- Never: Executor waiting for Architect
 
-### For User:
-1. **Quick Status** - Check "Active Milestone" section
-2. **Overall Progress** - Check "Roadmap Overview"
-3. **History** - Check "Session History" for what's been done
+**Filler Usage:**
+- Ask User before adding: `[FILLER_CONFIRM] Adding F001, F002. OK?`
 
+---
+
+<!-- 
+DATA FILE: Milestones, tasks, and session history.
+For protocols: see OPERATION_ROOM_GUIDE.txt
+-->
