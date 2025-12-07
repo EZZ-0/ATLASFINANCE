@@ -502,7 +502,71 @@ ALL 6 Executor tasks are now in INBOX_EXECUTOR.md:
 - E016: Data quality summary (after E014-E015)
 
 Executor: Start E011, E012, E013 in parallel.
-Architect: Awaiting E016 completion for A011 (module enhancement).
+Architect: Working on MILESTONE-003 design in parallel.
+
+[2025-12-08 01:35] [ARCHITECT]: Starting parallel work on MILESTONE-003 (Insider Transactions).
+Will do A011 (earnings enhancement) when E016 complete.
+
+Current parallel execution:
+- Architect: A012-A014 (Insider Transactions design)
+- Executor: E011-E016 (Earnings research)
+
+[2025-12-08 01:45] [ARCHITECT]: [DONE] TASK-A012 Complete.
+- Created insider_transactions.py (600+ lines):
+  - InsiderTransactionTracker class
+  - InsiderSummary dataclass
+  - InsiderTransaction dataclass
+  - TransactionType, InsiderRole enums
+  - Sentiment calculation (-100 to +100)
+  - Cluster buying detection (3+ insiders)
+  - yfinance integration
+  - Visualization functions (gauge, activity chart)
+  - Streamlit render_insider_card() component
+- Starting TASK-A013 (UI integration) now
+
+[2025-12-08 01:55] [ARCHITECT]: [DONE] TASK-A013 Complete.
+- Added "Insider" tab to Valuation sub-tabs
+- Full UI implementation:
+  - Sentiment score + Net value + Sentiment label + Cluster status
+  - Buy/Sell activity breakdown
+  - Expandable charts (gauge + activity)
+  - Recent transactions table
+- Starting TASK-A014 (SEC EDGAR research) now
+
+[2025-12-08 02:05] [ARCHITECT]: [DONE] TASK-A014 Complete.
+- Created research/SEC_EDGAR_INSIDER_RESEARCH.md (research doc)
+- Created data_sources/sec_edgar.py (SEC API client):
+  - SECEdgarClient class with rate limiting
+  - Ticker → CIK mapping (24h cache)
+  - Company info endpoint
+  - Form 4 filing retrieval
+  - Respects SEC 10 req/sec limit
+- Updated data_sources/__init__.py with exports
+
+MILESTONE-003 Architect Tasks Status:
+| Task | Status |
+|------|--------|
+| A012 | ✅ insider_transactions.py |
+| A013 | ✅ UI integration |
+| A014 | ✅ SEC EDGAR research + module |
+
+[2025-12-08 02:10] [ARCHITECT]: [DONE] TASK-A015 Complete.
+- Created institutional_ownership.py (550+ lines):
+  - InstitutionalOwnershipTracker class
+  - OwnershipSummary dataclass
+  - InstitutionalHolder dataclass
+  - HolderType enum (Mutual Fund, Hedge Fund, ETF, etc.)
+  - Accumulation score calculation (-100 to +100)
+  - Concentration metrics (top 10 %)
+  - Visualization functions (pie, bar, gauge)
+  - Streamlit render_ownership_card() component
+
+MILESTONE-004 Architect Tasks:
+| Task | Status |
+|------|--------|
+| A015 | ✅ institutional_ownership.py |
+| A016 | ⬜ UI integration (next) |
+| A017 | ⬜ SEC 13F enhancement |
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -557,4 +621,64 @@ Architect: Awaiting E016 completion for A011 (module enhancement).
 
 4/6 unblocked tasks complete. [WAITING_FOR_TASKS] for A007-A010.
 @ARCHITECT: E011-E014 done. Ready for E015 when A007/A008 complete.
+
+═══════════════════════════════════════════════════════════════════
+
+[2025-12-08 01:30] [EXECUTOR]: [SYNC] Online. Entering CONTINUOUS WORK MODE.
+- User triggered with "." command
+- Saw [BATCH_READY] signal at 01:25
+- Acknowledged: Tasks RESTRUCTURED for BATCH MODE compliance
+- Inbox shows NEW task definitions (E011-E016)
+- ALL tasks independent of Architect work ✅
+- Files Locked: None
+- Starting E011, E012, E013 in parallel (no dependencies)
+
+[2025-12-08 01:30] [EXECUTOR]: Starting TASK-E011, E012, E013 in parallel.
+- E011: Research yfinance Earnings Fields
+- E012: Research FMP Earnings API
+- E013: Research Alpha Vantage Earnings API
+
+[2025-12-08 01:40] [EXECUTOR]: [DONE] TASK-E011, E012, E013 Complete (Parallel Batch).
+- Created: research/YFINANCE_EARNINGS_RESEARCH.md (200+ lines)
+- Created: research/FMP_EARNINGS_API.md (250+ lines)
+- Created: research/ALPHAVANTAGE_EARNINGS_API.md (180+ lines)
+- Key Finding: yfinance + FMP is optimal; skip Alpha Vantage
+
+[2025-12-08 01:45] [EXECUTOR]: [DONE] TASK-E014 Complete.
+- Created: validation/earnings_extraction_validation.md
+- AAPL, MSFT, GOOGL: 99%+ accuracy vs Yahoo Finance
+- All tickers beat last 4 quarters (100% beat rate)
+
+[2025-12-08 01:48] [EXECUTOR]: [DONE] TASK-E015 Complete.
+- Created: research/EARNINGS_API_COMPARISON.md
+- Winner: yfinance (primary) + FMP (revision tracking)
+
+[2025-12-08 01:50] [EXECUTOR]: [DONE] TASK-E016 Complete.
+- Created: research/EARNINGS_DATA_SUMMARY.md
+- Final recommendations for Architect A011
+
+═══════════════════════════════════════════════════════════════════
+
+[2025-12-08 01:50] [EXECUTOR]: [STATUS] 🎉 ALL MILESTONE-002 EXECUTOR TASKS COMPLETE! 🎉
+
+| Task | Description | Status |
+|------|-------------|--------|
+| E011 | yfinance research | ✅ DONE |
+| E012 | FMP research | ✅ DONE |
+| E013 | Alpha Vantage research | ✅ DONE |
+| E014 | Live extraction validation | ✅ DONE |
+| E015 | API comparison report | ✅ DONE |
+| E016 | Data quality summary | ✅ DONE |
+
+**6/6 Tasks Complete ✓**
+
+**Files Created:**
+- research/YFINANCE_EARNINGS_RESEARCH.md
+- research/FMP_EARNINGS_API.md
+- research/ALPHAVANTAGE_EARNINGS_API.md
+- research/EARNINGS_API_COMPARISON.md
+- research/EARNINGS_DATA_SUMMARY.md
+- validation/earnings_extraction_validation.md
+
+@ARCHITECT: All Executor research complete. Ready for A011 or [SESSION_COMPLETE].
 

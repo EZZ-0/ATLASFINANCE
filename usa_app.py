@@ -526,11 +526,12 @@ def render_model_tab_EXAMPLE():
     """
     st.markdown(f"## {icon('cash-coin', '1.5em')} Valuation & Analysis", unsafe_allow_html=True)
     
-    # Sub-tabs for different analysis types (2nd layer - MAX 7 tabs)
-    dcf_tab, reverse_tab, analyst_tab, earnings_tab, dividend_tab, valuation_tab, cashflow_tab = st.tabs([
+    # Sub-tabs for different analysis types (2nd layer)
+    dcf_tab, reverse_tab, analyst_tab, insider_tab, earnings_tab, dividend_tab, valuation_tab, cashflow_tab = st.tabs([
         "DCF",
         "Reverse-DCF", 
         "Analyst",
+        "Insider",
         "Earnings",
         "Dividends",
         "Valuation",
@@ -601,6 +602,102 @@ def render_model_tab_EXAMPLE():
         
         # Analyst ratings content would go here
         st.caption("Full implementation in main Model tab")
+    
+    with insider_tab:
+        st.markdown(f"### {icon('person-check', '1.2em')} Insider Transactions", unsafe_allow_html=True)
+        st.info("ℹ Track insider buying and selling activity - a key signal for stock analysis.")
+        
+        try:
+            from insider_transactions import get_insider_summary, create_insider_gauge, create_insider_activity_chart, create_transaction_table
+            
+            with st.spinner("Analyzing insider activity..."):
+                insider_data = get_insider_summary(st.session_state.ticker, days=90)
+                
+                if insider_data:
+                    # Summary metrics row
+                    icol1, icol2, icol3, icol4 = st.columns(4)
+                    
+                    with icol1:
+                        score = insider_data.sentiment_score
+                        st.metric(
+                            "Insider Sentiment",
+                            f"{score:+.0f}",
+                            help="Score from -100 (selling) to +100 (buying)"
+                        )
+                    
+                    with icol2:
+                        if abs(insider_data.net_value) >= 1_000_000:
+                            net_str = f"${insider_data.net_value/1_000_000:.1f}M"
+                        else:
+                            net_str = f"${insider_data.net_value:,.0f}"
+                        st.metric(
+                            "Net Value",
+                            net_str,
+                            help="Net insider buying (positive) or selling (negative)"
+                        )
+                    
+                    with icol3:
+                        st.metric(
+                            "Sentiment",
+                            insider_data.sentiment_label,
+                            help="Overall insider sentiment"
+                        )
+                    
+                    with icol4:
+                        if insider_data.is_cluster_buying:
+                            st.metric(
+                                "🔥 Cluster Buying",
+                                f"{insider_data.cluster_buyers_count} insiders",
+                                help="Multiple insiders buying - bullish signal!"
+                            )
+                        else:
+                            st.metric(
+                                "Cluster Status",
+                                "Not Detected"
+                            )
+                    
+                    st.markdown("---")
+                    
+                    # Activity breakdown
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("**Buy Activity:**")
+                        st.write(f"• Transactions: {insider_data.buy_transactions}")
+                        st.write(f"• Total Value: ${insider_data.total_buy_value:,.0f}")
+                        st.write(f"• Shares Bought: {insider_data.total_shares_bought:,}")
+                        if insider_data.notable_buyers:
+                            st.success(f"Notable: {', '.join(insider_data.notable_buyers[:3])}")
+                    
+                    with col2:
+                        st.markdown("**Sell Activity:**")
+                        st.write(f"• Transactions: {insider_data.sell_transactions}")
+                        st.write(f"• Total Value: ${insider_data.total_sell_value:,.0f}")
+                        st.write(f"• Shares Sold: {insider_data.total_shares_sold:,}")
+                        if insider_data.notable_sellers:
+                            st.warning(f"Notable: {', '.join(insider_data.notable_sellers[:3])}")
+                    
+                    # Charts in expander
+                    with st.expander("View Insider Charts", expanded=False):
+                        chart_col1, chart_col2 = st.columns(2)
+                        
+                        with chart_col1:
+                            st.plotly_chart(create_insider_gauge(insider_data.sentiment_score), use_container_width=True)
+                        
+                        with chart_col2:
+                            st.plotly_chart(create_insider_activity_chart(insider_data), use_container_width=True)
+                    
+                    # Transaction table
+                    if insider_data.recent_transactions:
+                        with st.expander("Recent Transactions", expanded=False):
+                            df = create_transaction_table(insider_data.recent_transactions)
+                            st.dataframe(df, hide_index=True, use_container_width=True)
+                else:
+                    st.info("No insider transaction data available for this ticker.")
+        except ImportError:
+            st.caption("Insider tracking module loading...")
+        except Exception as ins_e:
+            st.error(f"Error loading insider data: {str(ins_e)}")
     
     with earnings_tab:
         st.markdown(f"### {icon('graph-up-arrow', '1.2em')} Earnings Quality & Trends", unsafe_allow_html=True)

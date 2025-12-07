@@ -15,7 +15,11 @@ For protocols, see: OPERATION_ROOM_GUIDE.txt
 | TASK-A008 | Revision tracking logic | 2025-12-08 00:36 | ✅ DONE | In A007 |
 | TASK-A009 | Revision visualization | 2025-12-08 00:50 | ✅ DONE | 4 chart functions |
 | TASK-A010 | UI integration | 2025-12-08 00:55 | ✅ DONE | Earnings tab updated |
-| TASK-A011 | Enhance with research | - | ⬜ WAITING | For E016 completion |
+| TASK-A011 | Enhance earnings_revisions.py | - | ⬜ WAITING | For E016 completion |
+| TASK-A012 | Design insider_transactions.py | 2025-12-08 01:35 | ✅ DONE | 600+ lines |
+| TASK-A013 | UI integration | 2025-12-08 01:50 | ✅ DONE | Insider tab added |
+| TASK-A014 | SEC EDGAR research + module | 2025-12-08 01:55 | ✅ DONE | data_sources/sec_edgar.py |
+| TASK-A015 | Design institutional_ownership.py | 2025-12-08 02:10 | 🔄 IN_PROGRESS | MILESTONE-004 |
 
 ## EXECUTOR: PENDING (BATCH READY)
 
