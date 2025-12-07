@@ -25,7 +25,53 @@ For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
 
 ---
 
-## YOUR MILESTONE: MILESTONE-007 - Performance Optimization ✅ COMPLETE
+## READY TEST BATCHES - JUST RUN THE COMMAND
+
+### BATCH B1: Consumer (Current)
+```powershell
+python validation/test_batches.py --batch B1
+```
+Tickers: XOM, CVX, PFE, KO, PEP, MCD, DIS, NFLX, INTC, AMD, CRM, ORCL, IBM, WMT, COST
+
+### BATCH B2: Healthcare
+```powershell
+python validation/test_batches.py --batch B2
+```
+Tickers: LLY, MRK, TMO, ABT, DHR, AMGN, GILD, VRTX, REGN, ISRG, ZTS, SYK, BDX, EW, IQV
+
+### BATCH B3: Industrials
+```powershell
+python validation/test_batches.py --batch B3
+```
+Tickers: CAT, DE, HON, UPS, UNP, RTX, BA, LMT, GE, MMM, EMR, ETN, ITW, PH, ROK
+
+### BATCH B4: REITs & Utilities
+```powershell
+python validation/test_batches.py --batch B4
+```
+Tickers: AMT, PLD, CCI, EQIX, PSA, SPG, O, DLR, AVB, EQR, NEE, DUK, SO, D, AEP
+
+---
+
+### HOW TO RUN
+
+1. Pick a batch (B1, B2, B3, or B4)
+2. Run the command
+3. Report saves automatically to `validation/batch_BX_results.md`
+4. Post summary in LIVE_CHAT when done
+
+### CURRENT ASSIGNMENT: B2 (Healthcare)
+
+B1 DONE ✅ - Now run B2:
+```powershell
+python validation/test_batches.py --batch B2
+```
+
+Architect running A3 in parallel.
+
+---
+
+## COMPLETED: MILESTONE-007 - Performance Optimization ✅
 
 | Field | Value |
 |-------|-------|
