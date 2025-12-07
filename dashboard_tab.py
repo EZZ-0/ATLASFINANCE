@@ -18,15 +18,18 @@ import streamlit as st
 import pandas as pd
 from typing import Dict, Any
 
-# Import flip card V2 (Quizlet-style smooth animation)
+# Import unified flip cards (MILESTONE-008)
 try:
-    from flip_card_v2 import render_dashboard_flip_cards, METRIC_INSIGHTS
-    FLIP_CARDS_V2 = True
-    print("[DEBUG] flip_card_v2 imported successfully")
-except ImportError as e:
-    FLIP_CARDS_V2 = False
-    METRIC_INSIGHTS = {}
-    print(f"[DEBUG] flip_card_v2 import failed: {e}")
+    from flip_cards import render_dashboard_metrics, METRICS
+    FLIP_CARDS_AVAILABLE = True
+except ImportError:
+    try:
+        from flip_card_v2 import render_dashboard_flip_cards as render_dashboard_metrics, METRIC_CONFIG as METRICS
+        FLIP_CARDS_AVAILABLE = True
+    except ImportError:
+        FLIP_CARDS_AVAILABLE = False
+        METRICS = {}
+        def render_dashboard_metrics(f): pass
 
 # NO LEGACY FLIP CARDS - removed the old button-based implementation
 
@@ -48,8 +51,8 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
         return
     
     # V2 Quizlet-style flip cards (pure CSS animation, no server round-trip)
-    if FLIP_CARDS_V2:
-        render_dashboard_flip_cards(financials)
+    if FLIP_CARDS_AVAILABLE:
+        render_dashboard_metrics(financials)
     else:
         # Simple metrics fallback (NO old button-based flip - too slow)
         st.markdown("### Key Metrics")

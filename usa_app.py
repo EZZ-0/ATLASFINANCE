@@ -32,6 +32,13 @@ from app_css import inject_all_css, get_search_button_css
 from app_landing import render_landing_page, render_ticker_display, render_no_ticker_placeholder
 from app_themes import inject_theme_css, render_theme_selector, get_current_theme
 
+# Import flip cards (MILESTONE-008)
+try:
+    from flip_cards import render_flip_card, render_valuation_metrics, render_alpha_metrics
+    FLIP_CARDS_ENABLED = True
+except ImportError:
+    FLIP_CARDS_ENABLED = False
+
 # Initialize validator (singleton pattern)
 _validator = DataValidator()
 
@@ -620,47 +627,34 @@ def render_model_tab_EXAMPLE():
                 insider_data = get_insider_summary(st.session_state.ticker, days=90)
                 
                 if insider_data:
-                    # Summary metrics row
+                    # Summary metrics row - use flip cards if available
+                    st.caption("Click any metric for insight")
                     icol1, icol2, icol3, icol4 = st.columns(4)
                     
-                    with icol1:
-                        score = insider_data.sentiment_score
-                        st.metric(
-                            "Insider Sentiment",
-                            f"{score:+.0f}",
-                            help="Score from -100 (selling) to +100 (buying)"
-                        )
-                    
-                    with icol2:
-                        if abs(insider_data.net_value) >= 1_000_000:
-                            net_str = f"${insider_data.net_value/1_000_000:.1f}M"
-                        else:
-                            net_str = f"${insider_data.net_value:,.0f}"
-                        st.metric(
-                            "Net Value",
-                            net_str,
-                            help="Net insider buying (positive) or selling (negative)"
-                        )
-                    
-                    with icol3:
-                        st.metric(
-                            "Sentiment",
-                            insider_data.sentiment_label,
-                            help="Overall insider sentiment"
-                        )
-                    
-                    with icol4:
-                        if insider_data.is_cluster_buying:
-                            st.metric(
-                                "🔥 Cluster Buying",
-                                f"{insider_data.cluster_buyers_count} insiders",
-                                help="Multiple insiders buying - bullish signal!"
-                            )
-                        else:
-                            st.metric(
-                                "Cluster Status",
-                                "Not Detected"
-                            )
+                    if FLIP_CARDS_ENABLED:
+                        with icol1:
+                            render_flip_card("Insider_Sentiment", insider_data.sentiment_score, "Sentiment Score")
+                        with icol2:
+                            net_val = insider_data.net_value / 1_000_000 if abs(insider_data.net_value) >= 1_000_000 else insider_data.net_value
+                            render_flip_card("market_cap", net_val, "Net Value ($M)" if abs(insider_data.net_value) >= 1_000_000 else "Net Value")
+                        with icol3:
+                            render_flip_card("Insider_Sentiment", 50 if insider_data.sentiment_label == "Bullish" else -50 if insider_data.sentiment_label == "Bearish" else 0, insider_data.sentiment_label)
+                        with icol4:
+                            cluster_val = insider_data.cluster_buyers_count if insider_data.is_cluster_buying else 0
+                            render_flip_card("Insider_Sentiment", cluster_val * 20, "Cluster Buying" if insider_data.is_cluster_buying else "No Cluster")
+                    else:
+                        with icol1:
+                            st.metric("Insider Sentiment", f"{insider_data.sentiment_score:+.0f}")
+                        with icol2:
+                            net_str = f"${insider_data.net_value/1_000_000:.1f}M" if abs(insider_data.net_value) >= 1_000_000 else f"${insider_data.net_value:,.0f}"
+                            st.metric("Net Value", net_str)
+                        with icol3:
+                            st.metric("Sentiment", insider_data.sentiment_label)
+                        with icol4:
+                            if insider_data.is_cluster_buying:
+                                st.metric("Cluster Buying", f"{insider_data.cluster_buyers_count} insiders")
+                            else:
+                                st.metric("Cluster Status", "Not Detected")
                     
                     st.markdown("---")
                     
@@ -719,33 +713,24 @@ def render_model_tab_EXAMPLE():
                     # Summary metrics row
                     ocol1, ocol2, ocol3, ocol4 = st.columns(4)
                     
-                    with ocol1:
-                        st.metric(
-                            "Institutional",
-                            f"{ownership_data.institutional_pct:.1f}%",
-                            help="Percentage owned by institutions"
-                        )
-                    
-                    with ocol2:
-                        st.metric(
-                            "Insider",
-                            f"{ownership_data.insider_pct:.1f}%",
-                            help="Percentage owned by insiders"
-                        )
-                    
-                    with ocol3:
-                        st.metric(
-                            "Top 10 Concentration",
-                            f"{ownership_data.top10_concentration:.1f}%",
-                            help="% held by top 10 institutions"
-                        )
-                    
-                    with ocol4:
-                        st.metric(
-                            "Signal",
-                            ownership_data.sentiment_label,
-                            help=f"Accumulation score: {ownership_data.accumulation_score}"
-                        )
+                    if FLIP_CARDS_ENABLED:
+                        with ocol1:
+                            render_flip_card("ROE", ownership_data.institutional_pct, "Institutional %")
+                        with ocol2:
+                            render_flip_card("ROE", ownership_data.insider_pct, "Insider %")
+                        with ocol3:
+                            render_flip_card("ROE", ownership_data.top10_concentration, "Top 10 Conc.")
+                        with ocol4:
+                            render_flip_card("Institutional_Flow", ownership_data.accumulation_score, ownership_data.sentiment_label)
+                    else:
+                        with ocol1:
+                            st.metric("Institutional", f"{ownership_data.institutional_pct:.1f}%")
+                        with ocol2:
+                            st.metric("Insider", f"{ownership_data.insider_pct:.1f}%")
+                        with ocol3:
+                            st.metric("Top 10 Concentration", f"{ownership_data.top10_concentration:.1f}%")
+                        with ocol4:
+                            st.metric("Signal", ownership_data.sentiment_label)
                     
                     st.markdown("---")
                     
@@ -985,24 +970,26 @@ def render_model_tab_EXAMPLE():
                 if val_data['status'] == 'success':
                     metrics = val_data['metrics']
                     
-                    # P/E Ratios
+                    st.caption("Click any metric to see formula & insight")
+                    
+                    # P/E Ratios - Use flip cards if available
                     st.markdown("**P/E Ratios:**")
                     col1, col2, col3 = st.columns(3)
                     
-                    with col1:
-                        st.metric("Trailing P/E", f"{metrics.get('pe_trailing', 'N/A')}")
-                        st.caption("Stock Price ÷ Earnings Per Share (TTM)")
-                    
-                    with col2:
-                        st.metric("Forward P/E", f"{metrics.get('pe_forward', 'N/A')}")
-                        st.caption("Stock Price ÷ Estimated Future EPS")
-                    
-                    with col3:
-                        peg = metrics.get('peg_ratio', 'N/A')
-                        st.metric("PEG Ratio", f"{peg}")
-                        st.caption("P/E Ratio ÷ Earnings Growth Rate")
-                        if 'peg_interpretation' in metrics:
-                            st.caption(f"{metrics['peg_interpretation']}")
+                    if FLIP_CARDS_ENABLED:
+                        with col1:
+                            render_flip_card("PE_Ratio", metrics.get('pe_trailing'), "Trailing P/E")
+                        with col2:
+                            render_flip_card("PE_Ratio", metrics.get('pe_forward'), "Forward P/E")
+                        with col3:
+                            render_flip_card("PE_Ratio", metrics.get('peg_ratio'), "PEG Ratio")
+                    else:
+                        with col1:
+                            st.metric("Trailing P/E", f"{metrics.get('pe_trailing', 'N/A')}")
+                        with col2:
+                            st.metric("Forward P/E", f"{metrics.get('pe_forward', 'N/A')}")
+                        with col3:
+                            st.metric("PEG Ratio", f"{metrics.get('peg_ratio', 'N/A')}")
                     
                     st.markdown("---")
                     
@@ -1010,17 +997,20 @@ def render_model_tab_EXAMPLE():
                     st.markdown("**Enterprise Value Ratios:**")
                     col1, col2, col3 = st.columns(3)
                     
-                    with col1:
-                        st.metric("EV/EBITDA", f"{metrics.get('ev_to_ebitda', 'N/A')}")
-                        st.caption("Enterprise Value ÷ EBITDA")
-                    
-                    with col2:
-                        st.metric("EV/Revenue", f"{metrics.get('ev_to_revenue', 'N/A'):.2f}" if metrics.get('ev_to_revenue') else 'N/A')
-                        st.caption("Enterprise Value ÷ Total Revenue")
-                    
-                    with col3:
-                        st.metric("EV/EBIT", f"{metrics.get('ev_to_ebit', 'N/A'):.2f}" if metrics.get('ev_to_ebit') else 'N/A')
-                        st.caption("Enterprise Value ÷ EBIT")
+                    if FLIP_CARDS_ENABLED:
+                        with col1:
+                            render_flip_card("EV_EBITDA", metrics.get('ev_to_ebitda'), "EV/EBITDA")
+                        with col2:
+                            render_flip_card("PS_Ratio", metrics.get('ev_to_revenue'), "EV/Revenue")
+                        with col3:
+                            render_flip_card("EV_EBITDA", metrics.get('ev_to_ebit'), "EV/EBIT")
+                    else:
+                        with col1:
+                            st.metric("EV/EBITDA", f"{metrics.get('ev_to_ebitda', 'N/A')}")
+                        with col2:
+                            st.metric("EV/Revenue", f"{metrics.get('ev_to_revenue', 'N/A'):.2f}" if metrics.get('ev_to_revenue') else 'N/A')
+                        with col3:
+                            st.metric("EV/EBIT", f"{metrics.get('ev_to_ebit', 'N/A'):.2f}" if metrics.get('ev_to_ebit') else 'N/A')
                     
                     st.markdown("---")
                     
@@ -1028,17 +1018,20 @@ def render_model_tab_EXAMPLE():
                     st.markdown("**Price Ratios:**")
                     col1, col2, col3 = st.columns(3)
                     
-                    with col1:
-                        st.metric("Price/Book", f"{metrics.get('price_to_book', 'N/A')}")
-                        st.caption("Market Cap ÷ Book Value")
-                    
-                    with col2:
-                        st.metric("Price/Sales", f"{metrics.get('price_to_sales', 'N/A'):.2f}" if metrics.get('price_to_sales') else 'N/A')
-                        st.caption("Market Cap ÷ Total Revenue")
-                    
-                    with col3:
-                        st.metric("Price/FCF", f"{metrics.get('price_to_fcf', 'N/A'):.2f}" if metrics.get('price_to_fcf') else 'N/A')
-                        st.caption("Market Cap ÷ Free Cash Flow")
+                    if FLIP_CARDS_ENABLED:
+                        with col1:
+                            render_flip_card("PB_Ratio", metrics.get('price_to_book'), "Price/Book")
+                        with col2:
+                            render_flip_card("PS_Ratio", metrics.get('price_to_sales'), "Price/Sales")
+                        with col3:
+                            render_flip_card("FCF_Yield", metrics.get('price_to_fcf'), "Price/FCF")
+                    else:
+                        with col1:
+                            st.metric("Price/Book", f"{metrics.get('price_to_book', 'N/A')}")
+                        with col2:
+                            st.metric("Price/Sales", f"{metrics.get('price_to_sales', 'N/A'):.2f}" if metrics.get('price_to_sales') else 'N/A')
+                        with col3:
+                            st.metric("Price/FCF", f"{metrics.get('price_to_fcf', 'N/A'):.2f}" if metrics.get('price_to_fcf') else 'N/A')
                     
                     st.markdown("---")
                     
@@ -1066,24 +1059,30 @@ def render_model_tab_EXAMPLE():
                 if cf_data['status'] == 'success':
                     metrics = cf_data['metrics']
                     
-                    # Key Metrics
+                    # Key Metrics - Use flip cards if available
+                    st.caption("Click any metric for insight")
                     col1, col2, col3, col4 = st.columns(4)
                     
-                    with col1:
+                    if FLIP_CARDS_ENABLED:
                         fcf = metrics.get('free_cash_flow', 0)
-                        st.metric("Free Cash Flow", f"${fcf/1e9:.2f}B" if abs(fcf) > 1e9 else f"${fcf/1e6:.2f}M")
-                    
-                    with col2:
-                        st.metric("FCF Conversion", f"{metrics.get('fcf_conversion_rate', 0):.1f}%",
-                                 help=metrics.get('conversion_quality', 'N/A'))
-                    
-                    with col3:
-                        st.metric("FCF Margin", f"{metrics.get('fcf_margin', 0):.2f}%")
-                    
-                    with col4:
-                        score = metrics.get('cashflow_score', 0)
-                        rating = metrics.get('cashflow_rating', 'N/A')
-                        st.metric("Score", f"{score:.0f}/100", help=f"Rating: {rating}")
+                        with col1:
+                            render_flip_card("FCF_Yield", fcf / 1e9 if abs(fcf) > 1e9 else fcf / 1e6, "FCF ($B)" if abs(fcf) > 1e9 else "FCF ($M)")
+                        with col2:
+                            render_flip_card("Gross_Margin", metrics.get('fcf_conversion_rate'), "FCF Conversion")
+                        with col3:
+                            render_flip_card("Net_Margin", metrics.get('fcf_margin'), "FCF Margin")
+                        with col4:
+                            render_flip_card("ROE", metrics.get('cashflow_score'), "CF Score")
+                    else:
+                        with col1:
+                            fcf = metrics.get('free_cash_flow', 0)
+                            st.metric("Free Cash Flow", f"${fcf/1e9:.2f}B" if abs(fcf) > 1e9 else f"${fcf/1e6:.2f}M")
+                        with col2:
+                            st.metric("FCF Conversion", f"{metrics.get('fcf_conversion_rate', 0):.1f}%")
+                        with col3:
+                            st.metric("FCF Margin", f"{metrics.get('fcf_margin', 0):.2f}%")
+                        with col4:
+                            st.metric("Score", f"{metrics.get('cashflow_score', 0):.0f}/100")
                     
                     st.markdown("---")
                     
