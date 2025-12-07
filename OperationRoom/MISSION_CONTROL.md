@@ -19,13 +19,14 @@ For protocols, see: OPERATION_ROOM_GUIDE.txt
 | ✅ | MILESTONE-002: Earnings Revisions | - | COMPLETE |
 | ✅ | MILESTONE-003: Insider Transactions | - | COMPLETE |
 | ✅ | MILESTONE-004: Institutional Ownership | - | COMPLETE |
-| P0 | **MILESTONE-005: PDF Export** | ARCHITECT | ✅ COMPLETE |
-| P0 | **MILESTONE-006: White-Label Theming** | EXECUTOR | ✅ COMPLETE |
-| P1 | **Heavy Testing Phase** | BOTH | 🟡 READY TO START |
+| ✅ | MILESTONE-005: PDF Export | ARCHITECT | COMPLETE |
+| ✅ | MILESTONE-006: White-Label Theming | EXECUTOR | COMPLETE |
+| P0 | **MILESTONE-007: Performance** | **EXECUTOR** | 🟡 IN PROGRESS |
+| P0 | **MILESTONE-008: Flip Cards** | **ARCHITECT** | 🟡 IN PROGRESS |
 
-**Mode:** TRANSITION TO HEAVY TESTING
+**Mode:** PARALLEL MILESTONES (Round 2)
 
-**Next:** Both agents test all features comprehensively
+**Next:** Heavy Testing Phase after M007 + M008 complete
 
 ---
 

@@ -7,239 +7,206 @@ For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
 
 ---
 
-## ⚠️ NEW MODE: PARALLEL MILESTONES
+## ⚠️ PARALLEL MILESTONES MODE
 
 ```
 ╔════════════════════════════════════════════════════════════════════════════╗
-║  YOU OWN MILESTONE-006 COMPLETELY                                          ║
+║  YOU OWN MILESTONE-007 COMPLETELY                                          ║
 ║                                                                            ║
 ║  - You design, implement, and test the entire feature                      ║
 ║  - No waiting for Architect                                                ║
-║  - No research tasks - you do the FULL implementation                      ║
+║  - Full ownership of Performance Optimization                              ║
 ║  - Report completion when done                                             ║
 ║                                                                            ║
-║  Architect is working on MILESTONE-005 in parallel.                        ║
-║  We sync when both are done.                                               ║
+║  Architect is working on MILESTONE-008 (Flip Cards) in parallel.           ║
+║  We sync when both are done → Heavy Testing Phase.                         ║
 ╚════════════════════════════════════════════════════════════════════════════╝
 ```
 
 ---
 
-## YOUR MILESTONE: MILESTONE-006 - White-Label/Custom Branding ✅ COMPLETE
+## YOUR MILESTONE: MILESTONE-007 - Performance Optimization
 
 | Field | Value |
 |-------|-------|
 | **Phase** | 3 - Professional Polish |
 | **Owner** | EXECUTOR (Full Ownership) |
 | **Est. Time** | 4-6 hours |
-| **Priority** | P0 - ✅ COMPLETED |
-| **Why** | B2B revenue - firms pay for branded tools |
-| **Completed** | 2025-12-08 03:25 |
+| **Priority** | P0 - START NOW |
+| **Why** | Slow = churn, fast = professional |
 
 ---
 
 ### OBJECTIVE
 
-Create a theming system that allows users (or future B2B clients) to customize the look and feel of the ATLAS engine.
+Make the ATLAS engine load faster and feel snappier. Profile bottlenecks and implement optimizations.
 
 ---
 
 ### DELIVERABLES
 
-1. **Theme Configuration System**
-   - Create `config/themes.py` with theme definitions
-   - Support light/dark mode toggle
-   - Define color variables (primary, secondary, accent, background, text)
-   - Font family options
+1. **Performance Profiling Report**
+   - Create `validation/performance_profile.md`
+   - Time each major operation (data extraction, chart rendering, tab switching)
+   - Identify top 5 bottlenecks
 
-2. **CSS Variable Injection**
-   - Create `app_themes.py` module
-   - Inject CSS variables based on selected theme
-   - Apply to existing UI components
+2. **Caching Strategy Implementation**
+   - Add `@st.cache_data` to expensive API calls
+   - Add `@st.cache_resource` for singleton objects
+   - Ensure cache keys are correct (avoid stale data)
 
-3. **3 Built-in Themes**
-   - `atlas_dark` (current default)
-   - `atlas_light` (professional light mode)
-   - `corporate_blue` (B2B-friendly corporate theme)
+3. **API Call Optimization**
+   - Reduce redundant yfinance calls
+   - Batch requests where possible
+   - Add request deduplication
 
-4. **Theme Selector UI**
-   - Add theme dropdown to sidebar (below ticker search)
-   - Persist selection in session state
-   - Smooth transition on change
+4. **Lazy Loading**
+   - Defer loading of non-visible tabs
+   - Load charts only when expanded
+   - Implement progressive loading for large datasets
 
-5. **Logo Injection Support** (Optional/Stretch)
-   - Placeholder for custom logo upload
-   - Config option for logo URL
+5. **Streamlit Fragments (if applicable)**
+   - Research `st.fragment` for partial reruns
+   - Implement for independent UI sections
 
 ---
 
 ### IMPLEMENTATION GUIDE
 
-#### Step 1: Create Theme Definitions
+#### Step 1: Profile Current Performance
 
 ```python
-# config/themes.py (CREATE THIS)
+# Create profiling script: validation/profile_app.py
 
-THEMES = {
-    'atlas_dark': {
-        'name': 'ATLAS Dark',
-        'primary': '#1a1a2e',
-        'secondary': '#16213e',
-        'accent': '#0f3460',
-        'highlight': '#e94560',
-        'text': '#eaeaea',
-        'text_secondary': '#a0a0a0',
-        'background': '#0f0f1a',
-        'card_bg': 'rgba(26, 26, 46, 0.8)',
-        'border': 'rgba(255, 255, 255, 0.1)',
-        'success': '#00c853',
-        'warning': '#ffc107',
-        'danger': '#ff5252',
-        'font_family': "'Segoe UI', sans-serif",
-    },
-    'atlas_light': {
-        'name': 'ATLAS Light',
-        'primary': '#ffffff',
-        'secondary': '#f5f5f5',
-        'accent': '#1976d2',
-        'highlight': '#d32f2f',
-        'text': '#212121',
-        'text_secondary': '#757575',
-        'background': '#fafafa',
-        'card_bg': 'rgba(255, 255, 255, 0.9)',
-        'border': 'rgba(0, 0, 0, 0.12)',
-        'success': '#4caf50',
-        'warning': '#ff9800',
-        'danger': '#f44336',
-        'font_family': "'Segoe UI', sans-serif",
-    },
-    'corporate_blue': {
-        'name': 'Corporate',
-        'primary': '#0d47a1',
-        'secondary': '#1565c0',
-        'accent': '#42a5f5',
-        'highlight': '#ff6f00',
-        'text': '#ffffff',
-        'text_secondary': '#bbdefb',
-        'background': '#0a1929',
-        'card_bg': 'rgba(13, 71, 161, 0.7)',
-        'border': 'rgba(66, 165, 245, 0.3)',
-        'success': '#66bb6a',
-        'warning': '#ffa726',
-        'danger': '#ef5350',
-        'font_family': "'Arial', sans-serif",
-    }
-}
+import time
+import yfinance as yf
 
-def get_theme(theme_name: str) -> dict:
-    return THEMES.get(theme_name, THEMES['atlas_dark'])
+def profile_ticker_extraction(ticker: str):
+    """Profile time taken for each data extraction step."""
+    results = {}
+    
+    start = time.time()
+    stock = yf.Ticker(ticker)
+    results['yf_init'] = time.time() - start
+    
+    start = time.time()
+    info = stock.info
+    results['info_fetch'] = time.time() - start
+    
+    start = time.time()
+    financials = stock.financials
+    results['financials_fetch'] = time.time() - start
+    
+    start = time.time()
+    balance_sheet = stock.balance_sheet
+    results['balance_sheet_fetch'] = time.time() - start
+    
+    start = time.time()
+    cash_flow = stock.cashflow
+    results['cashflow_fetch'] = time.time() - start
+    
+    return results
+
+# Run for test tickers
+for ticker in ['AAPL', 'MSFT', 'GOOGL']:
+    print(f"\n{ticker}:")
+    results = profile_ticker_extraction(ticker)
+    for op, duration in results.items():
+        print(f"  {op}: {duration:.2f}s")
 ```
 
-#### Step 2: Create Theme Injection Module
+#### Step 2: Add Caching to usa_backend.py
 
 ```python
-# app_themes.py (CREATE THIS)
+# Find expensive operations and add caching
 
-import streamlit as st
-from config.themes import THEMES, get_theme
+@st.cache_data(ttl=3600)  # Cache for 1 hour
+def get_stock_info(ticker: str) -> dict:
+    """Cached stock info fetch."""
+    stock = yf.Ticker(ticker)
+    return stock.info
 
-def inject_theme_css(theme_name: str = 'atlas_dark'):
-    """Inject CSS variables for selected theme."""
-    theme = get_theme(theme_name)
-    
-    css = f"""
-    <style>
-    :root {{
-        --primary: {theme['primary']};
-        --secondary: {theme['secondary']};
-        --accent: {theme['accent']};
-        --highlight: {theme['highlight']};
-        --text: {theme['text']};
-        --text-secondary: {theme['text_secondary']};
-        --background: {theme['background']};
-        --card-bg: {theme['card_bg']};
-        --border: {theme['border']};
-        --success: {theme['success']};
-        --warning: {theme['warning']};
-        --danger: {theme['danger']};
-        --font-family: {theme['font_family']};
-    }}
-    
-    .stApp {{
-        background-color: var(--background);
-        font-family: var(--font-family);
-    }}
-    
-    /* Override Streamlit defaults */
-    .stMetric label {{
-        color: var(--text-secondary) !important;
-    }}
-    
-    .stMetric [data-testid="stMetricValue"] {{
-        color: var(--text) !important;
-    }}
-    </style>
-    """
-    
-    st.markdown(css, unsafe_allow_html=True)
-
-def render_theme_selector():
-    """Render theme selector in sidebar."""
-    theme_options = {v['name']: k for k, v in THEMES.items()}
-    
-    selected_name = st.sidebar.selectbox(
-        "Theme",
-        options=list(theme_options.keys()),
-        index=0,
-        key='theme_selector'
-    )
-    
-    selected_key = theme_options[selected_name]
-    st.session_state.current_theme = selected_key
-    
-    return selected_key
+@st.cache_data(ttl=3600)
+def get_stock_financials(ticker: str) -> pd.DataFrame:
+    """Cached financials fetch."""
+    stock = yf.Ticker(ticker)
+    return stock.financials
 ```
 
-#### Step 3: Integrate into usa_app.py
+#### Step 3: Optimize Redundant Calls
 
-Find where CSS is injected (early in the file) and add:
+Look for patterns like:
+```python
+# BAD: Multiple yf.Ticker() calls for same ticker
+stock1 = yf.Ticker(ticker)
+info = stock1.info
+# ... later ...
+stock2 = yf.Ticker(ticker)  # REDUNDANT!
+financials = stock2.financials
+```
+
+Fix by:
+```python
+# GOOD: Single Ticker object, cached
+@st.cache_resource
+def get_ticker_object(ticker: str):
+    return yf.Ticker(ticker)
+
+stock = get_ticker_object(ticker)
+info = stock.info
+financials = stock.financials
+```
+
+#### Step 4: Lazy Load Charts
 
 ```python
-# Near top of app, after page config
-from app_themes import inject_theme_css, render_theme_selector
-
-# In sidebar section
-theme = render_theme_selector()
-inject_theme_css(theme)
+# Instead of rendering all charts on page load:
+with st.expander("View Detailed Chart", expanded=False):
+    # Chart only renders when user expands
+    if st.session_state.get(f'{ticker}_chart_expanded'):
+        render_expensive_chart(data)
 ```
 
 ---
-
-### TESTING CHECKLIST
-
-- [ ] Dark theme displays correctly (current default)
-- [ ] Light theme displays correctly (readable, professional)
-- [ ] Corporate theme displays correctly
-- [ ] Theme persists during session
-- [ ] All metric cards readable in all themes
-- [ ] Charts/graphs visible in all themes
-- [ ] No CSS conflicts with existing styles
-- [ ] Flip cards work in all themes
-
----
-
-### FILES TO CREATE
-
-| File | Purpose |
-|------|---------|
-| `config/themes.py` | Theme definitions |
-| `app_themes.py` | CSS injection + selector |
 
 ### FILES TO MODIFY
 
 | File | Change |
 |------|--------|
-| `usa_app.py` | Import and call theme functions |
+| `usa_backend.py` | Add @st.cache_data decorators |
+| `usa_app.py` | Optimize Ticker object creation |
+| `dcf_modeling.py` | Cache DCF calculations |
+| `earnings_revisions.py` | Already has caching, verify |
+| `insider_transactions.py` | Add caching if missing |
+| `institutional_ownership.py` | Add caching if missing |
+
+### FILES TO CREATE
+
+| File | Purpose |
+|------|---------|
+| `validation/performance_profile.md` | Profiling results |
+| `validation/profile_app.py` | Profiling script |
+
+---
+
+### TESTING CHECKLIST
+
+- [ ] Profile AAPL extraction time (before/after)
+- [ ] Profile MSFT extraction time (before/after)
+- [ ] Profile tab switching speed
+- [ ] Verify cached data is fresh (not stale)
+- [ ] Test cache invalidation works
+- [ ] No new errors introduced
+
+---
+
+### SUCCESS METRICS
+
+| Metric | Current (est.) | Target |
+|--------|---------------|--------|
+| Initial load time | ~8-10s | < 5s |
+| Tab switch time | ~2-3s | < 1s |
+| Repeat ticker load | ~8-10s | < 2s (cached) |
 
 ---
 
@@ -248,34 +215,30 @@ inject_theme_css(theme)
 When complete, post in `LIVE_CHAT.md`:
 
 ```
-[EXECUTOR]: [DONE] MILESTONE-006 Complete.
-- Created config/themes.py with 3 themes
-- Created app_themes.py with CSS injection
-- Integrated theme selector in sidebar
-- Tested all 3 themes
-- Ready for integration
+[EXECUTOR]: [DONE] MILESTONE-007 Complete.
+- Profiled app: [list bottlenecks found]
+- Added caching to: [list files]
+- Performance improvement: X% faster initial load
+- Repeat loads: X% faster (cached)
+- Created validation/performance_profile.md
 ```
 
 ---
 
 ### NOTES
 
-- **DON'T** wait for Architect - work independently
-- **DON'T** modify core financial logic - only styling
-- **DO** test thoroughly before reporting done
-- **DO** keep existing dark theme as default
+- **DON'T** break existing functionality for speed
+- **DON'T** cache data that should be fresh (real-time prices)
+- **DO** use appropriate TTL values (1 hour for fundamentals, shorter for prices)
+- **DO** test thoroughly - caching bugs are hard to debug
 
 ---
 
-## COMPLETED TASKS (BATCH 2)
+## COMPLETED MILESTONES
 
-| Task | Status | Notes |
-|------|--------|-------|
-| E017 | ✅ DONE | Insider module validated |
-| E018 | ✅ DONE | Ownership bug found → Architect fixed |
-| E019 | ✅ DONE | SEC EDGAR validated |
-| E020 | ✅ DONE | 13F research complete |
-| E021 | ✅ DONE | pctChange extraction confirmed |
+| Milestone | Status | Notes |
+|-----------|--------|-------|
+| MILESTONE-006 (White-Label) | ✅ DONE | 5 themes, CSS injection |
 
 ---
 
