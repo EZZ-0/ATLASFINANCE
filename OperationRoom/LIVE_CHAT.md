@@ -871,6 +871,29 @@ Start E017-E020 in parallel. E021 after dependencies.
 
 @EXECUTOR: Batch 2 tasks ready in INBOX_EXECUTOR.md. Start when ready.
 
+[2025-12-08 02:55] [ARCHITECT]: [VALIDATED] Executor Batch 2 tasks reviewed.
+
+| Task | Status | Notes |
+|------|--------|-------|
+| E017 | ✅ PASSED | Insider module works correctly |
+| E018 | ⚠️ BUG FOUND | major_holders parsing issue → FIXING NOW |
+| E019 | ✅ PASSED | SEC EDGAR API works |
+| E020 | ✅ PASSED | 13F research complete, yfinance has pctChange |
+| E021 | ✅ PASSED | pctChange extraction recommended → ADDING NOW |
+
+[2025-12-08 02:58] [ARCHITECT]: [DONE] TASK-A018 (Bug fix from E018)
+- Fixed `_parse_major_holders()` to handle new yfinance DataFrame format
+- Now uses index-based access: `major_holders.loc['institutionsPercentHeld', 'Value']`
+- Added fallback for old format
+- TESTED: AAPL shows 64.4% institutional (was 0.0%)
+
+[2025-12-08 02:58] [ARCHITECT]: [DONE] TASK-A019 (Enhancement from E021)
+- Updated `_parse_institutional_holders()` to extract `pctChange` column
+- Added `change_percent` to each holder
+- Calculated average holder change for accumulation score
+
+@EXECUTOR: Excellent validation work! Bugs fixed. Ready for next batch.
+
 ═══════════════════════════════════════════════════════════════════
 
 [2025-12-08 02:35] [EXECUTOR]: [SYNC] Online. Entering CONTINUOUS WORK MODE.
@@ -880,4 +903,73 @@ Start E017-E020 in parallel. E021 after dependencies.
 - E021 after E018 + E020 complete
 
 [2025-12-08 02:35] [EXECUTOR]: Starting parallel tasks: E017, E018, E019, E020.
+
+[2025-12-08 02:50] [EXECUTOR]: [DONE] TASK-E017 Complete.
+- Validated: insider_transactions.py ✅
+- AAPL: Sentiment=-50.0, Buys=0, Sells=5
+- MSFT: Sentiment=-50.0, Buys=0, Sells=2
+- NVDA: Sentiment=-50.0, Buys=0, Sells=24
+- All data consistent with Yahoo Finance Insider page
+- File: validation/insider_module_test.md
+
+[2025-12-08 02:50] [EXECUTOR]: [DONE] TASK-E018 Complete. ⚠️ BUG FOUND
+- Validated: institutional_ownership.py
+- **ISSUE:** Module returns 0% for all ownership metrics
+- **Root Cause:** `_parse_major_holders()` expects wrong DataFrame format
+- yfinance major_holders is indexed by name (insidersPercentHeld, institutionsPercentHeld)
+- Module iterates rows looking for 'institution' in description
+- **Raw Data Works:** yfinance shows AAPL at 64.4% institutional
+- File: validation/ownership_module_test.md
+
+**FIX NEEDED in institutional_ownership.py line ~250:**
+```python
+# Change from iterating rows to index-based access:
+if 'institutionsPercentHeld' in major_holders.index:
+    summary.institutional_pct = float(major_holders.loc['institutionsPercentHeld', 'Value']) * 100
+```
+
+[2025-12-08 02:52] [EXECUTOR]: [DONE] TASK-E019 Complete.
+- Validated: data_sources/sec_edgar.py ✅
+- CIK Lookups: AAPL=0000320193, MSFT=0000789019, TSLA=0001318605
+- Form 4 Counts: AAPL=2, MSFT=18, TSLA=2 (30 days)
+- All CIKs verified against SEC EDGAR website
+- No rate limit issues
+- File: validation/sec_edgar_test.md
+
+[2025-12-08 02:55] [EXECUTOR]: [DONE] TASK-E020 Complete.
+- Researched: 13F institutional holdings data sources ✅
+- **Key Finding:** yfinance already has `pctChange` column in institutional_holders!
+- No additional API needed for basic 13F tracking
+- SEC EDGAR: Good for specific institution tracking (requires XML parsing)
+- WhaleWisdom: Best analysis but no public API (paid)
+- FMP: Good supplement (250 calls/day free)
+- File: research/13F_HOLDINGS_RESEARCH.md
+
+[2025-12-08 02:58] [EXECUTOR]: [DONE] TASK-E021 Complete.
+- Validated: Ownership change detection capability ✅
+- yfinance pctChange shows QoQ changes: Vanguard -1.17%, JPMorgan +120.55%
+- **Note:** institutional_ownership.py doesn't parse pctChange yet
+- Recommended fix: Extract pctChange in _parse_institutional_holders()
+- File: validation/ownership_change_test.md
+
+═══════════════════════════════════════════════════════════════════
+
+[2025-12-08 03:00] [EXECUTOR]: [STATUS] BATCH 2 COMPLETE
+
+| Task | Status | Deliverable |
+|------|--------|-------------|
+| E017 | ✅ DONE | validation/insider_module_test.md |
+| E018 | ⚠️ BUG | validation/ownership_module_test.md |
+| E019 | ✅ DONE | validation/sec_edgar_test.md |
+| E020 | ✅ DONE | research/13F_HOLDINGS_RESEARCH.md |
+| E021 | ✅ DONE | validation/ownership_change_test.md |
+
+**5/5 Tasks Complete ✓**
+
+**Bug Found in A015 (institutional_ownership.py):**
+- `_parse_major_holders()` doesn't parse yfinance DataFrame correctly
+- Returns 0% instead of actual values (AAPL should be 64.4%)
+- Fix: Use index-based access instead of row iteration
+
+@ARCHITECT: Batch 2 complete. Bug report above for A015. Awaiting next tasks or [SESSION_COMPLETE].
 

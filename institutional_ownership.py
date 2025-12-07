@@ -243,23 +243,55 @@ class InstitutionalOwnershipTracker:
         summary: OwnershipSummary, 
         major_holders: pd.DataFrame
     ) -> OwnershipSummary:
-        """Parse major holders DataFrame."""
+        """
+        Parse major holders DataFrame.
+        
+        yfinance returns DataFrame with index like:
+        - 'insidersPercentHeld'
+        - 'institutionsPercentHeld'
+        - 'institutionsFloatPercentHeld'
+        - 'institutionsCount'
+        
+        Fixed: 2025-12-08 (TASK-A018 - Bug fix from E018 validation)
+        """
         try:
-            # major_holders has format: [value, description]
-            for _, row in major_holders.iterrows():
-                value = row.iloc[0]
-                desc = str(row.iloc[1]).lower()
+            # New format: yfinance returns DataFrame with metric names as index
+            if hasattr(major_holders, 'index'):
+                # Check for new yfinance format (index-based)
+                if 'institutionsPercentHeld' in major_holders.index:
+                    # Index-based access (new yfinance format)
+                    if 'Value' in major_holders.columns:
+                        inst_val = major_holders.loc['institutionsPercentHeld', 'Value']
+                        if inst_val is not None:
+                            summary.institutional_pct = float(inst_val) * 100
+                    
+                    if 'insidersPercentHeld' in major_holders.index:
+                        ins_val = major_holders.loc['insidersPercentHeld', 'Value']
+                        if ins_val is not None:
+                            summary.insider_pct = float(ins_val) * 100
+                    
+                    if 'institutionsCount' in major_holders.index:
+                        count_val = major_holders.loc['institutionsCount', 'Value']
+                        if count_val is not None:
+                            summary.total_institutions = int(count_val)
                 
-                # Parse percentage (could be string like "5.50%")
-                if isinstance(value, str):
-                    value = float(value.replace('%', ''))
                 else:
-                    value = float(value) * 100 if value < 1 else float(value)
-                
-                if 'institution' in desc:
-                    summary.institutional_pct = value
-                elif 'insider' in desc:
-                    summary.insider_pct = value
+                    # Fallback: Old format with [value, description] rows
+                    for _, row in major_holders.iterrows():
+                        if len(row) >= 2:
+                            value = row.iloc[0]
+                            desc = str(row.iloc[1]).lower()
+                            
+                            # Parse percentage (could be string like "5.50%")
+                            if isinstance(value, str):
+                                value = float(value.replace('%', ''))
+                            else:
+                                value = float(value) * 100 if value < 1 else float(value)
+                            
+                            if 'institution' in desc:
+                                summary.institutional_pct = value
+                            elif 'insider' in desc:
+                                summary.insider_pct = value
                     
         except Exception as e:
             logger.debug(f"Error parsing major holders: {e}")
@@ -271,23 +303,44 @@ class InstitutionalOwnershipTracker:
         summary: OwnershipSummary, 
         inst_holders: pd.DataFrame
     ) -> OwnershipSummary:
-        """Parse institutional holders DataFrame."""
+        """
+        Parse institutional holders DataFrame.
+        
+        Updated: 2025-12-08 (TASK-A018 - Added pctChange extraction per E021)
+        """
         try:
             holders = []
+            total_pct_change = 0
+            change_count = 0
             
             for _, row in inst_holders.iterrows():
+                # Extract pctChange if available (key insight from E020/E021)
+                pct_change = None
+                if 'pctChange' in row and row['pctChange'] is not None:
+                    try:
+                        pct_change = float(row['pctChange']) * 100  # Convert to percentage
+                        total_pct_change += pct_change
+                        change_count += 1
+                    except:
+                        pass
+                
                 holder = InstitutionalHolder(
                     name=str(row.get('Holder', 'Unknown')),
                     shares=int(row.get('Shares', 0)),
                     value=float(row.get('Value', 0)),
                     percent_held=float(row.get('% Out', 0)) * 100 if row.get('% Out', 0) < 1 else float(row.get('% Out', 0)),
                     date_reported=pd.to_datetime(row.get('Date Reported')) if 'Date Reported' in row else None,
-                    holder_type=self._classify_holder(str(row.get('Holder', '')))
+                    holder_type=self._classify_holder(str(row.get('Holder', ''))),
+                    change_percent=pct_change
                 )
                 holders.append(holder)
             
             summary.top_holders = holders
-            summary.total_institutions = len(holders)
+            summary.total_institutions = len(holders) if not summary.total_institutions else summary.total_institutions
+            
+            # Store average pct change for accumulation calculation
+            if change_count > 0:
+                summary._avg_holder_change = total_pct_change / change_count
             
         except Exception as e:
             logger.debug(f"Error parsing institutional holders: {e}")
