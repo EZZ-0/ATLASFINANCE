@@ -18,12 +18,10 @@
 
 | Task ID | Description | Started | Status | Notes |
 |---------|-------------|---------|--------|-------|
-| TASK-A001 | benchmark_validator.py design | 2025-12-07 23:02 | ✅ DONE | Validation infrastructure |
-| TASK-A002 | test_financial_accuracy.py | 2025-12-07 23:15 | ✅ DONE | Pytest test suite |
-| TASK-A003 | WACC formula fix | 2025-12-07 23:40 | ✅ DONE | Adjusted beta, CAPM, FRED API |
-| TASK-A004 | FCF calculator module | 2025-12-07 23:25 | ✅ DONE | 4 FCF methods |
-| TASK-A005 | Sector benchmarks integration | 2025-12-07 23:50 | ✅ DONE | Damodaran data |
-| TASK-A006 | Monte Carlo UI integration | 2025-12-08 00:05 | ✅ DONE | monte_carlo_ui.py |
+| TASK-A007 | earnings_revisions.py design | 2025-12-08 00:36 | ✅ DONE | Combined with A008 |
+| TASK-A008 | Revision tracking logic | 2025-12-08 00:36 | ✅ DONE | In A007 |
+| TASK-A009 | Revision visualization | 2025-12-08 00:50 | ✅ DONE | 4 chart functions |
+| TASK-A010 | UI integration | 2025-12-08 00:55 | ✅ DONE | Earnings tab updated |
 
 ---
 

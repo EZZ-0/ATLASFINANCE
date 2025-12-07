@@ -105,6 +105,188 @@ Actual: [What is happening]
 
 <!-- New tasks go here. Executor processes from top to bottom. -->
 
+<!-- MILESTONE-001 TASKS (E001-E010) MOVED TO COMPLETED_TASKS.md -->
+
+═══════════════════════════════════════════════════════════════════
+                    MILESTONE-002: EARNINGS REVISIONS
+═══════════════════════════════════════════════════════════════════
+
+### TASK-E011: Research yfinance Earnings Estimate Fields
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** TASK-E015
+
+**Description:**
+Research what earnings revision data is available in yfinance. Document the fields and structure.
+
+**Step-by-Step Instructions:**
+1. Use `yf.Ticker("AAPL")` to explore available attributes
+2. Check `.earnings_dates`, `.earnings_history`, `.analyst_price_targets`
+3. Look for EPS estimates: current quarter, next quarter, current year, next year
+4. Document the data structure and update frequency
+5. Note any limitations
+
+**Acceptance Criteria:**
+- [ ] All yfinance earnings-related fields documented
+- [ ] Sample data structure captured
+- [ ] Limitations noted (if any)
+
+**Expected Output:**
+Create file `research/YFINANCE_EARNINGS_RESEARCH.md`
+
+**Rollback Plan:** N/A - research task
+
+---
+
+### TASK-E012: Research FMP/Alpha Vantage Revision APIs
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None
+- **Blocks:** TASK-E015
+
+**Description:**
+Research earnings revision data from FMP and Alpha Vantage as backup sources.
+
+**Step-by-Step Instructions:**
+1. Check FMP API docs for earnings estimates endpoints
+2. Check Alpha Vantage EARNINGS endpoint
+3. Document: endpoint, parameters, response format, rate limits
+4. Compare data quality vs yfinance
+
+**Acceptance Criteria:**
+- [ ] FMP earnings endpoints documented
+- [ ] Alpha Vantage earnings endpoints documented
+- [ ] Comparison table created
+
+**Expected Output:**
+Create file `research/EARNINGS_API_COMPARISON.md`
+
+**Rollback Plan:** N/A - research task
+
+---
+
+### TASK-E013: Validate AAPL Revision Data Extraction
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-E011 (need to know fields)
+- **Blocks:** None
+
+**Description:**
+Extract and validate earnings revision data for AAPL.
+
+**Step-by-Step Instructions:**
+1. Run extraction using yfinance
+2. Capture: Current EPS estimate, 30-day change, 90-day change
+3. Compare against Yahoo Finance website
+4. Document any discrepancies
+
+**Acceptance Criteria:**
+- [ ] AAPL EPS estimates extracted
+- [ ] Revision history captured (if available)
+- [ ] Data validated against external source
+
+**Expected Output:**
+Create file `validation/earnings_AAPL.md`
+
+**Rollback Plan:** N/A - validation only
+
+---
+
+### TASK-E014: Validate MSFT Revision Data Extraction
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-E011 (need to know fields)
+- **Blocks:** None
+
+**Description:**
+Same as E013 but for MSFT.
+
+**Acceptance Criteria:**
+- [ ] MSFT EPS estimates extracted
+- [ ] Revision history captured
+- [ ] Data validated
+
+**Expected Output:**
+Create file `validation/earnings_MSFT.md`
+
+**Rollback Plan:** N/A - validation only
+
+---
+
+### TASK-E015: Create Tests for Revision Module
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-E011, TASK-E012, TASK-A008
+- **Blocks:** None
+
+**Description:**
+Create pytest tests for the earnings revision module.
+
+**Acceptance Criteria:**
+- [ ] Test extraction functions
+- [ ] Test revision calculation
+- [ ] Test edge cases (no estimates, missing data)
+
+**Expected Output:**
+Create file `tests/test_earnings_revisions.py`
+
+**Rollback Plan:** N/A - test file
+
+---
+
+### TASK-E016: Integration Test with UI
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-08 00:35
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** TASK-A010 (UI integration must be complete)
+- **Blocks:** None
+
+**Description:**
+Test the complete earnings revision feature end-to-end.
+
+**Acceptance Criteria:**
+- [ ] Revision data displays in Analysis tab
+- [ ] Charts render correctly
+- [ ] No errors on 5+ different tickers
+
+**Expected Output:**
+Create file `validation/earnings_integration_test.md`
+
+**Rollback Plan:** N/A - validation only
+
+---
+
+<!-- OLD MILESTONE-001 TASK (keeping for reference structure) -->
 ### TASK-E001: Research FRED API and Get Free API Key
 - **From:** Architect
 - **Priority:** P1

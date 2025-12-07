@@ -656,6 +656,71 @@ def render_model_tab_EXAMPLE():
                         st.write(f"• EPS Growth Forecast: {metrics.get('eps_growth_forecast', 0):.1f}%")
                         st.write(f"• EPS Trend: {metrics.get('eps_trend', 'N/A')}")
                         st.write(f"• Quality: {metrics.get('earnings_quality', 'N/A')}")
+                    
+                    # EARNINGS REVISIONS SECTION (MILESTONE-002)
+                    st.markdown("---")
+                    st.markdown(f"### {icon('arrow-repeat', '1.1em')} Analyst Estimate Revisions", unsafe_allow_html=True)
+                    st.caption("Tracks changes in analyst EPS estimates - a key predictor of stock performance")
+                    
+                    try:
+                        from earnings_revisions import get_earnings_revisions, create_revision_gauge, create_revision_trend_chart
+                        
+                        revision_data = get_earnings_revisions(st.session_state.ticker)
+                        
+                        if revision_data:
+                            rev_dict = revision_data.to_dict()
+                            
+                            # Revision metrics row
+                            rcol1, rcol2, rcol3, rcol4 = st.columns(4)
+                            
+                            with rcol1:
+                                score = rev_dict['momentum_score']
+                                st.metric(
+                                    "Revision Momentum",
+                                    f"{score:+.0f}",
+                                    help="Score from -100 (negative revisions) to +100 (positive revisions)"
+                                )
+                            
+                            with rcol2:
+                                st.metric(
+                                    "Trend",
+                                    rev_dict['trend'],
+                                    help="Overall direction of estimate changes"
+                                )
+                            
+                            with rcol3:
+                                st.metric(
+                                    "Analyst Agreement",
+                                    rev_dict['analyst_agreement'],
+                                    help="How closely analysts agree on estimates"
+                                )
+                            
+                            with rcol4:
+                                if rev_dict['current_year']['growth']:
+                                    growth = rev_dict['current_year']['growth'] * 100
+                                    st.metric("EPS Growth Est", f"{growth:+.1f}%")
+                                else:
+                                    st.metric("EPS Growth Est", "N/A")
+                            
+                            # Revision gauge chart
+                            with st.expander("View Revision Charts", expanded=False):
+                                chart_col1, chart_col2 = st.columns(2)
+                                
+                                with chart_col1:
+                                    st.plotly_chart(create_revision_gauge(score), use_container_width=True)
+                                
+                                with chart_col2:
+                                    st.plotly_chart(
+                                        create_revision_trend_chart(rev_dict['revisions']),
+                                        use_container_width=True
+                                    )
+                        else:
+                            st.info("Revision data not available for this ticker")
+                    except ImportError:
+                        st.caption("Revision tracking module loading...")
+                    except Exception as rev_e:
+                        st.caption(f"Revisions: {str(rev_e)}")
+                    
                 else:
                     st.warning(earnings_data.get('message', 'No earnings data available'))
         except Exception as e:

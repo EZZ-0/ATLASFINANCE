@@ -70,9 +70,9 @@ Check these files for quick status:
 
 | Priority | Objective | Owner | Status |
 |----------|-----------|-------|--------|
-| P0 | MILESTONE-001: Data Accuracy Foundation | Both | ✅ COMPLETE |
-| P1 | Git Push + User Review | Architect | PENDING |
-| P2 | MILESTONE-002: Data Enrichment | TBD | NOT STARTED |
+| P0 | MILESTONE-002: Earnings Revision Tracking | Both | 🟡 IN PROGRESS |
+| P1 | Research earnings data sources | Executor | Starting |
+| P2 | Build earnings_revisions.py module | Architect | Starting |
 
 ---
 

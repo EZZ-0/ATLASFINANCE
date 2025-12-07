@@ -182,16 +182,41 @@ PHASE 4: MONETIZATION READY
 
 ---
 
-### MILESTONE-002: Earnings Revision Tracking (Future)
+### MILESTONE-002: Earnings Revision Tracking
 - **Phase:** 2
-- **Status:** ⬜ Not Started
-- **Dependencies:** MILESTONE-001
-- **Est. Time:** 8 hours
-- **Description:** Track analyst earnings revisions - top alpha signal
+- **Status:** 🟡 IN PROGRESS
+- **Dependencies:** MILESTONE-001 ✅
+- **Started:** 2025-12-08
+- **Est. Time:** 6 hours (parallel execution)
+- **Description:** Track analyst earnings revisions - top alpha signal for stock performance
 - **Key Deliverables:**
-  - Revision tracking module
-  - Historical revision display
-  - Revision direction indicator
+  - `earnings_revisions.py` - Revision tracking module
+  - Historical revision display in UI
+  - Revision direction indicator (upgrades/downgrades)
+  - EPS estimate trends visualization
+
+**Why This Matters:**
+- Earnings revisions are one of the strongest predictors of future stock returns
+- Stocks with upward revisions tend to outperform
+- Shows analyst sentiment momentum
+
+**ARCHITECT TASKS:**
+| Task ID | Description | Est. Time | Status |
+|---------|-------------|-----------|--------|
+| TASK-A007 | Design earnings_revisions.py module structure | 1h | ✅ DONE |
+| TASK-A008 | Implement revision tracking logic | 1.5h | ✅ DONE |
+| TASK-A009 | Create revision visualization (charts) | 1h | ✅ DONE |
+| TASK-A010 | Integrate into Analysis tab UI | 1h | ✅ DONE |
+
+**EXECUTOR TASKS:**
+| Task ID | Description | Est. Time | Status |
+|---------|-------------|-----------|--------|
+| TASK-E011 | Research yfinance earnings estimate fields | 30m | ⬜ |
+| TASK-E012 | Research FMP/Alpha Vantage revision APIs | 30m | ⬜ |
+| TASK-E013 | Validate AAPL revision data extraction | 30m | ⬜ |
+| TASK-E014 | Validate MSFT revision data extraction | 30m | ⬜ |
+| TASK-E015 | Create tests for revision module | 45m | ⬜ |
+| TASK-E016 | Integration test with UI | 30m | ⬜ |
 
 ### MILESTONE-003: Insider Transactions (Future)
 - **Phase:** 2
