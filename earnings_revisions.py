@@ -17,11 +17,12 @@ Research shows:
 - High revision velocity signals catalysts
 
 Data Sources:
-- Primary: yfinance (analyst estimates)
-- Backup: FMP API, Alpha Vantage
+- Primary: yfinance (analyst estimates, current data)
+- Secondary: FMP API (revision tracking, historical data)
 
 Author: ATLAS Financial Intelligence
 Created: 2025-12-08 (MILESTONE-002, TASK-A007)
+Updated: 2025-12-08 (TASK-A011 - Added FMP integration)
 """
 
 import yfinance as yf
@@ -33,8 +34,22 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass
 from enum import Enum
 import logging
+import os
 
 logger = logging.getLogger(__name__)
+
+# Check for FMP availability
+try:
+    from data_sources.fmp_earnings import (
+        get_fmp_client, 
+        is_fmp_available,
+        get_all_revision_data,
+        get_grade_summary
+    )
+    FMP_AVAILABLE = True
+except ImportError:
+    FMP_AVAILABLE = False
+    logger.debug("FMP earnings module not available")
 
 
 class RevisionDirection(Enum):
@@ -178,11 +193,11 @@ class EarningsRevisionTracker:
             current_y = _self._extract_eps_estimate(info, 'current_year')
             next_y = _self._extract_eps_estimate(info, 'next_year')
             
-            # Extract revisions
-            rev_7d = _self._extract_revision(info, '7d')
-            rev_30d = _self._extract_revision(info, '30d')
-            rev_60d = _self._extract_revision(info, '60d')
-            rev_90d = _self._extract_revision(info, '90d')
+            # Extract revisions (with FMP integration for actual tracking)
+            rev_7d = _self._extract_revision(info, '7d', ticker)
+            rev_30d = _self._extract_revision(info, '30d', ticker)
+            rev_60d = _self._extract_revision(info, '60d', ticker)
+            rev_90d = _self._extract_revision(info, '90d', ticker)
             
             # Calculate momentum score
             momentum = _self._calculate_momentum_score(rev_7d, rev_30d, rev_60d, rev_90d)
@@ -253,40 +268,51 @@ class EarningsRevisionTracker:
             growth_pct=info.get(mapping.get('growth'))
         )
     
-    def _extract_revision(self, info: Dict, timeframe: str) -> Optional[RevisionData]:
+    def _extract_revision(self, info: Dict, timeframe: str, ticker: str = None) -> Optional[RevisionData]:
         """
         Extract revision data for a timeframe.
         
-        Note: yfinance doesn't directly provide revision history.
-        We use available estimate fields and calculate based on
-        what's accessible.
+        Uses FMP API for actual revision tracking when available,
+        falls back to yfinance for current data only.
+        
+        Args:
+            info: yfinance info dict
+            timeframe: '7d', '30d', '60d', or '90d'
+            ticker: Stock ticker (for FMP lookup)
         """
-        # yfinance fields for estimate changes
-        # These are not always available in the standard info dict
-        change_fields = {
-            '7d': 'epsRevisions7Day',
-            '30d': 'epsRevisions30Day', 
-            '60d': 'epsRevisions60Day',
-            '90d': 'epsRevisions90Day',
-        }
+        # Try FMP first for real revision data
+        if FMP_AVAILABLE and is_fmp_available() and ticker:
+            try:
+                days = int(timeframe.replace('d', ''))
+                client = get_fmp_client()
+                fmp_data = client.calculate_revision_pct(ticker, days)
+                
+                if fmp_data and fmp_data.get('revision_pct') is not None:
+                    change_pct = fmp_data['revision_pct'] / 100  # Convert to decimal
+                    direction = (
+                        RevisionDirection.UP if change_pct > 0.001 else
+                        RevisionDirection.DOWN if change_pct < -0.001 else
+                        RevisionDirection.UNCHANGED
+                    )
+                    
+                    return RevisionData(
+                        timeframe=timeframe,
+                        current_estimate=fmp_data.get('current_estimate'),
+                        previous_estimate=fmp_data.get('prior_estimate'),
+                        change_pct=change_pct,
+                        direction=direction,
+                        strength=self._classify_revision_strength(change_pct)
+                    )
+            except Exception as e:
+                logger.debug(f"FMP revision lookup failed: {e}")
         
-        field = change_fields.get(timeframe)
-        
-        # Try to get revision data
-        # Note: yfinance may not have these fields, so we'll need
-        # to use FMP or Alpha Vantage as backup
-        
-        # For now, try available fields
-        current = info.get('targetMeanPrice') or info.get('forwardEps')
-        
-        # Since yfinance doesn't provide historical estimates,
-        # we need to use supplementary data sources
-        # This will be enhanced when E012 research is complete
+        # Fallback: yfinance current data only (no revision history)
+        current = info.get('forwardEps') or info.get('trailingEps')
         
         if current is None:
             return None
         
-        # Placeholder - will be enhanced with actual revision data
+        # Return current data without revision history
         return RevisionData(
             timeframe=timeframe,
             current_estimate=current,

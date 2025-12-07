@@ -22,8 +22,201 @@ For protocols and task templates, see: OPERATION_ROOM_GUIDE.txt
 ## PENDING TASKS
 
 ═══════════════════════════════════════════════════════════════════════════════
-                    MILESTONE-002: EARNINGS REVISIONS
+                         BATCH 2: VALIDATION TASKS
                          (BATCH MODE COMPLIANT)
+═══════════════════════════════════════════════════════════════════════════════
+
+### TASK-E017: Validate insider_transactions.py Output
+- **From:** Architect
+- **Priority:** P1 (START HERE)
+- **Created:** 2025-12-08 02:31
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None ✅
+- **Blocks:** None
+
+**Description:**
+Test the insider_transactions.py module with 3 tickers to validate data extraction.
+
+**Step-by-Step Instructions:**
+1. Run Python to test the module:
+   ```python
+   from insider_transactions import get_insider_summary
+   
+   for ticker in ['AAPL', 'MSFT', 'NVDA']:
+       summary = get_insider_summary(ticker)
+       if summary:
+           print(f"{ticker}: Sentiment={summary.sentiment_score}, Buys={summary.buy_transactions}")
+   ```
+2. Verify data makes sense (compare to Yahoo Finance Insider page)
+3. Check for errors or missing data
+4. Document any issues found
+
+**Acceptance Criteria:**
+- [ ] 3 tickers tested successfully
+- [ ] Data matches external sources (reasonably)
+- [ ] No Python errors
+- [ ] File created: `validation/insider_module_test.md`
+
+**Rollback:** N/A - validation only
+
+---
+
+### TASK-E018: Validate institutional_ownership.py Output
+- **From:** Architect
+- **Priority:** P1
+- **Created:** 2025-12-08 02:31
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None ✅
+- **Blocks:** None
+
+**Description:**
+Test the institutional_ownership.py module with 3 tickers.
+
+**Step-by-Step Instructions:**
+1. Run Python to test:
+   ```python
+   from institutional_ownership import get_ownership_summary
+   
+   for ticker in ['AAPL', 'MSFT', 'GOOGL']:
+       summary = get_ownership_summary(ticker)
+       if summary:
+           print(f"{ticker}: Inst={summary.institutional_pct}%, Top10={summary.top10_concentration}%")
+   ```
+2. Compare to Yahoo Finance Holders page
+3. Verify percentages are reasonable
+4. Document findings
+
+**Acceptance Criteria:**
+- [ ] 3 tickers tested successfully
+- [ ] Institutional % matches Yahoo Finance (±5%)
+- [ ] No Python errors
+- [ ] File created: `validation/ownership_module_test.md`
+
+**Rollback:** N/A - validation only
+
+---
+
+### TASK-E019: Test SEC EDGAR API Integration
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-08 02:31
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None ✅
+- **Blocks:** None
+
+**Description:**
+Test the data_sources/sec_edgar.py module for CIK lookup and Form 4 retrieval.
+
+**Step-by-Step Instructions:**
+1. Run Python to test:
+   ```python
+   from data_sources.sec_edgar import get_cik, get_form4_count
+   
+   for ticker in ['AAPL', 'MSFT', 'TSLA']:
+       cik = get_cik(ticker)
+       print(f"{ticker}: CIK={cik}")
+       if cik:
+           count = get_form4_count(ticker, days=30)
+           print(f"  Form 4s (30 days): {count}")
+   ```
+2. Verify CIK numbers are correct
+3. Check Form 4 counts are reasonable
+4. Document any rate limit issues
+
+**Acceptance Criteria:**
+- [ ] CIK lookup works for 3 tickers
+- [ ] Form 4 counts retrieved
+- [ ] No rate limit errors
+- [ ] File created: `validation/sec_edgar_test.md`
+
+**Rollback:** N/A - validation only
+
+---
+
+### TASK-E020: Research 13F Filing Data Sources
+- **From:** Architect
+- **Priority:** P2
+- **Created:** 2025-12-08 02:31
+- **Est. Time:** 45 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** None ✅
+- **Blocks:** E021
+
+**Description:**
+Research how to get 13F institutional holdings data (quarterly filings).
+
+**Step-by-Step Instructions:**
+1. Research SEC EDGAR 13F endpoints
+2. Check if yfinance has 13F data (institutional_holders)
+3. Research WhaleWisdom API (if available)
+4. Document best approach for quarterly ownership changes
+
+**Acceptance Criteria:**
+- [ ] 13F data sources documented
+- [ ] Best approach identified
+- [ ] API limitations noted
+- [ ] File created: `research/13F_HOLDINGS_RESEARCH.md`
+
+**Rollback:** N/A - research only
+
+---
+
+### TASK-E021: Validate Ownership Change Detection
+- **From:** Architect  
+- **Priority:** P2
+- **Created:** 2025-12-08 02:31
+- **Est. Time:** 30 min
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** E018, E020
+- **Blocks:** None
+
+**Description:**
+Test if we can detect ownership changes (accumulation/distribution).
+
+**Step-by-Step Instructions:**
+1. Using yfinance institutional_holders data
+2. Check if changes are available (some tickers have "Date Reported")
+3. Test on 3 tickers with known institutional activity
+4. Document capability limitations
+
+**Acceptance Criteria:**
+- [ ] Ownership change detection tested
+- [ ] Limitations documented
+- [ ] Recommendations for improvement
+- [ ] File created: `validation/ownership_change_test.md`
+
+**Rollback:** N/A - validation only
+
+---
+
+## TASK PROCESSING ORDER
+
+```
+PARALLEL (Start immediately):
+├── E017: Validate insider_transactions.py
+├── E018: Validate institutional_ownership.py
+├── E019: Test SEC EDGAR API
+└── E020: Research 13F data
+
+AFTER E018 + E020:
+└── E021: Validate ownership change detection
+```
+
+═══════════════════════════════════════════════════════════════════════════════
+           MILESTONE-002: EARNINGS REVISIONS (COMPLETED)
 ═══════════════════════════════════════════════════════════════════════════════
 
 ### TASK-E011: Research yfinance Earnings Fields

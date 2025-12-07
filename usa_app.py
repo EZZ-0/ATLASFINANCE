@@ -527,11 +527,12 @@ def render_model_tab_EXAMPLE():
     st.markdown(f"## {icon('cash-coin', '1.5em')} Valuation & Analysis", unsafe_allow_html=True)
     
     # Sub-tabs for different analysis types (2nd layer)
-    dcf_tab, reverse_tab, analyst_tab, insider_tab, earnings_tab, dividend_tab, valuation_tab, cashflow_tab = st.tabs([
+    dcf_tab, reverse_tab, analyst_tab, insider_tab, ownership_tab, earnings_tab, dividend_tab, valuation_tab, cashflow_tab = st.tabs([
         "DCF",
         "Reverse-DCF", 
         "Analyst",
         "Insider",
+        "Ownership",
         "Earnings",
         "Dividends",
         "Valuation",
@@ -698,6 +699,96 @@ def render_model_tab_EXAMPLE():
             st.caption("Insider tracking module loading...")
         except Exception as ins_e:
             st.error(f"Error loading insider data: {str(ins_e)}")
+    
+    with ownership_tab:
+        st.markdown(f"### {icon('building', '1.2em')} Institutional Ownership", unsafe_allow_html=True)
+        st.info("ℹ Track institutional and insider ownership - smart money signals.")
+        
+        try:
+            from institutional_ownership import get_ownership_summary, create_ownership_pie, create_accumulation_gauge
+            
+            with st.spinner("Analyzing institutional ownership..."):
+                ownership_data = get_ownership_summary(st.session_state.ticker)
+                
+                if ownership_data:
+                    # Summary metrics row
+                    ocol1, ocol2, ocol3, ocol4 = st.columns(4)
+                    
+                    with ocol1:
+                        st.metric(
+                            "Institutional",
+                            f"{ownership_data.institutional_pct:.1f}%",
+                            help="Percentage owned by institutions"
+                        )
+                    
+                    with ocol2:
+                        st.metric(
+                            "Insider",
+                            f"{ownership_data.insider_pct:.1f}%",
+                            help="Percentage owned by insiders"
+                        )
+                    
+                    with ocol3:
+                        st.metric(
+                            "Top 10 Concentration",
+                            f"{ownership_data.top10_concentration:.1f}%",
+                            help="% held by top 10 institutions"
+                        )
+                    
+                    with ocol4:
+                        st.metric(
+                            "Signal",
+                            ownership_data.sentiment_label,
+                            help=f"Accumulation score: {ownership_data.accumulation_score}"
+                        )
+                    
+                    st.markdown("---")
+                    
+                    # Ownership breakdown
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("**Ownership Breakdown:**")
+                        st.write(f"• Institutional: {ownership_data.institutional_pct:.1f}%")
+                        st.write(f"• Insider: {ownership_data.insider_pct:.1f}%")
+                        st.write(f"• Retail/Other: {ownership_data.retail_pct:.1f}%")
+                        st.write(f"• Total Institutions: {ownership_data.total_institutions}")
+                    
+                    with col2:
+                        st.markdown("**Concentration Analysis:**")
+                        st.write(f"• Top 10 Hold: {ownership_data.top10_concentration:.1f}%")
+                        concentrated = "Yes - Concentrated" if ownership_data.is_concentrated else "No - Distributed"
+                        st.write(f"• Highly Concentrated: {concentrated}")
+                        st.write(f"• Accumulation Score: {ownership_data.accumulation_score:+.0f}")
+                    
+                    # Charts in expander
+                    with st.expander("View Ownership Charts", expanded=False):
+                        chart_col1, chart_col2 = st.columns(2)
+                        
+                        with chart_col1:
+                            st.plotly_chart(create_ownership_pie(ownership_data), use_container_width=True)
+                        
+                        with chart_col2:
+                            st.plotly_chart(create_accumulation_gauge(ownership_data.accumulation_score), use_container_width=True)
+                    
+                    # Top holders table
+                    if ownership_data.top_holders:
+                        with st.expander("Top Institutional Holders", expanded=False):
+                            import pandas as pd
+                            holders_data = [{
+                                'Holder': h.name[:40] + '...' if len(h.name) > 40 else h.name,
+                                'Shares': f"{h.shares:,}",
+                                'Value': f"${h.value/1_000_000:.1f}M" if h.value >= 1_000_000 else f"${h.value:,.0f}",
+                                '% Owned': f"{h.percent_held:.2f}%",
+                                'Type': h.holder_type.value
+                            } for h in ownership_data.top_holders[:10]]
+                            st.dataframe(pd.DataFrame(holders_data), hide_index=True, use_container_width=True)
+                else:
+                    st.info("No institutional ownership data available for this ticker.")
+        except ImportError:
+            st.caption("Ownership tracking module loading...")
+        except Exception as own_e:
+            st.error(f"Error loading ownership data: {str(own_e)}")
     
     with earnings_tab:
         st.markdown(f"### {icon('graph-up-arrow', '1.2em')} Earnings Quality & Trends", unsafe_allow_html=True)

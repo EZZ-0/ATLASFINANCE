@@ -43,6 +43,15 @@ from .sec_edgar import (
     get_insider_filing_dates
 )
 
+from .fmp_earnings import (
+    FMPEarningsClient,
+    get_fmp_client,
+    is_fmp_available,
+    get_revision_data,
+    get_all_revision_data,
+    get_grade_summary
+)
+
 __all__ = [
     # Damodaran
     'DamodaranData',
@@ -75,5 +84,12 @@ __all__ = [
     'get_cik',
     'get_company_info',
     'get_form4_count',
-    'get_insider_filing_dates'
+    'get_insider_filing_dates',
+    # FMP Earnings
+    'FMPEarningsClient',
+    'get_fmp_client',
+    'is_fmp_available',
+    'get_revision_data',
+    'get_all_revision_data',
+    'get_grade_summary'
 ]
