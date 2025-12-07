@@ -26,6 +26,9 @@ __all__ = [
     'get_ticker_holders', 'get_ticker_earnings', 'prefetch_ticker_data',
     'clear_ticker_cache', 'get_cache_stats',
     # Bank Metrics (M012)
-    'is_bank', 'get_bank_metrics', 'get_bank_display_metrics', 'BANK_TICKERS'
+    'is_bank', 'get_bank_metrics', 'get_bank_display_metrics', 'BANK_TICKERS',
+    # Ticker Mapper (M011)
+    'normalize_ticker', 'validate_ticker', 'quick_normalize',
+    'TICKER_ALIASES', 'PROBLEMATIC_TICKERS', 'TickerValidation'
 ]
 

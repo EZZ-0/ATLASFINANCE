@@ -45,7 +45,7 @@ PROBLEMATIC_TICKERS: Dict[str, str] = {
 
 # Known delisted or invalid tickers
 DELISTED_TICKERS: Dict[str, str] = {
-    # Add tickers confirmed delisted with explanation
+    "WBA": "Walgreens Boots Alliance - Returns 404 from yfinance (as of Dec 2025). May be delisted or data unavailable.",
 }
 
 

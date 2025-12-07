@@ -24,6 +24,8 @@ import usa_dictionary as usa_dict
 
 # Import centralized logging
 from utils.logging_config import EngineLogger, log_error, log_warning, log_info
+# Import ticker mapper for alias handling (M011)
+from utils.ticker_mapper import normalize_ticker, PROBLEMATIC_TICKERS
 
 # Initialize logger for this module
 _logger = EngineLogger.get_logger("USABackend")
@@ -964,7 +966,15 @@ class USAFinancialExtractor:
         Returns:
             Comprehensive financial data dictionary
         """
-        ticker = ticker.upper().strip()
+        # Normalize ticker (handles aliases like ZOOM->ZM, FACEBOOK->META)
+        original_ticker = ticker
+        ticker = normalize_ticker(ticker)
+        if original_ticker.upper() != ticker:
+            _logger.info(f"Ticker mapped: {original_ticker} → {ticker}")
+        
+        # Warn about problematic tickers
+        if ticker in PROBLEMATIC_TICKERS:
+            _logger.warning(f"Ticker {ticker}: {PROBLEMATIC_TICKERS[ticker]}")
         
         # Generate cache key based on parameters
         cache_key = f"{ticker}_{source}_{','.join(filing_types)}_{include_quant}_{fiscal_year_offset}"

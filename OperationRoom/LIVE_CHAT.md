@@ -1635,3 +1635,88 @@ Then proceed to [SESSION_COMPLETE].
 - 13/13 flip card bug tests
 
 **Status:** Ready for [SESSION_COMPLETE]
+
+═══════════════════════════════════════════════════════════════════
+[2025-12-08 06:15] [EXECUTOR]: [DONE] M011 Complete ✅
+═══════════════════════════════════════════════════════════════════
+
+**Ticker Mapping Implementation:**
+
+| Deliverable | Status |
+|-------------|--------|
+| utils/ticker_mapper.py | ✅ Created (220 lines) |
+| utils/__init__.py | ✅ Exports added |
+| usa_backend.py | ✅ Integration complete |
+
+**Features:**
+- `normalize_ticker()`: Maps ZOOM→ZM, FACEBOOK→META, etc.
+- `validate_ticker()`: Full validation with yfinance check
+- `TICKER_ALIASES`: 10+ common mappings
+- `PROBLEMATIC_TICKERS`: SQ, WBA flagged with warnings
+
+**WBA Status:** Confirmed 404 Not Found from yfinance API. Added to DELISTED_TICKERS.
+
+**Integration:**
+- usa_backend.py now calls `normalize_ticker()` before extraction
+- Logs mapping changes: "Ticker mapped: ZOOM → ZM"
+- Warns about problematic tickers
+
+@ARCHITECT: M011 complete. Starting M013 research now (read-only planning).
+
+═══════════════════════════════════════════════════════════════════
+[2025-12-08 06:20] [EXECUTOR]: [RESEARCH] M013 Sector-Aware Field Handling
+═══════════════════════════════════════════════════════════════════
+
+**READ-ONLY PLANNING FOR ARCHITECT:**
+
+### Problem Statement
+Different sectors have different expected fields:
+- Banks: No freeCashflow, no D/E → use Tier 1 Capital, CET1
+- Tech/Growth: No dividendYield, high P/E acceptable
+- REITs: No standard metrics → use FFO, NAV, Cap Rate
+- Utilities: Regulated earnings → use Rate Base, Allowed ROE
+
+### Proposed Solution
+
+**1. Create `config/sector_expectations.py`:**
+```python
+SECTOR_FIELD_EXPECTATIONS = {
+    'Financials': {
+        'skip_fields': ['freeCashflow', 'debtToEquity'],
+        'alternative_fields': ['tier1CapitalRatio', 'netInterestMargin'],
+        'is_bank_subsector': ['Banks', 'Insurance']
+    },
+    'Real Estate': {
+        'skip_fields': ['peRatio', 'returnOnEquity'],
+        'alternative_fields': ['ffo', 'nav', 'dividendYield']
+    },
+    'Technology': {
+        'expected_missing': ['dividendYield'],
+        'acceptable_high': ['peRatio', 'priceToSales']
+    }
+}
+```
+
+**2. Integration Points:**
+- `usa_backend.py`: Skip validation for expected-missing fields
+- `flip_cards.py`: Don't show red for sector-expected N/A
+- `benchmark_validator.py`: Use sector-appropriate benchmarks
+
+**3. Data Flow:**
+```
+Ticker → get_sector() → lookup_expectations() → filter_fields()
+```
+
+### Files to Create/Modify
+| File | Change |
+|------|--------|
+| config/sector_expectations.py | NEW - Sector field mapping |
+| data_sources/sector_mapping.py | UPDATE - Add expectation lookup |
+| usa_backend.py | UPDATE - Filter validation by sector |
+| flip_cards.py | UPDATE - Sector-aware coloring |
+
+### Recommendation
+This can be Phase 4 work. Current system handles edge cases with graceful N/A.
+Priority: MEDIUM - Nice-to-have for professional polish.
+
+═══════════════════════════════════════════════════════════════════
