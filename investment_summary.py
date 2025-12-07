@@ -667,6 +667,44 @@ class InvestmentSummaryGenerator:
 
 
 # ==========================================
+# HELPER FUNCTIONS FOR PDF EXPORT
+# ==========================================
+
+def _calculate_health_score(financials: Dict) -> float:
+    """Calculate overall financial health score 0-100 for PDF export."""
+    import pandas as pd
+    
+    ratios = financials.get('ratios', pd.DataFrame())
+    score = 50  # Base score
+    
+    def get_ratio_val(key):
+        if not ratios.empty and key in ratios.index:
+            val = ratios.loc[key].iloc[0]
+            return val if pd.notnull(val) else None
+        return None
+    
+    roe_val = get_ratio_val('ROE')
+    if roe_val:
+        if roe_val > 0.15: score += 20
+        elif roe_val > 0.10: score += 10
+        elif roe_val < 0: score -= 15
+    
+    debt_eq = get_ratio_val('Debt_to_Equity')
+    if debt_eq:
+        if debt_eq < 0.5: score += 15
+        elif debt_eq < 1.0: score += 5
+        elif debt_eq > 2.0: score -= 15
+    
+    curr_ratio = get_ratio_val('Current_Ratio')
+    if curr_ratio:
+        if curr_ratio > 2.0: score += 15
+        elif curr_ratio > 1.5: score += 10
+        elif curr_ratio < 1.0: score -= 15
+    
+    return max(0, min(100, score))
+
+
+# ==========================================
 # STREAMLIT RENDERING FUNCTION
 # ==========================================
 
@@ -1659,18 +1697,75 @@ def render_investment_summary_tab(financials: Dict):
     export_col1, export_col2, export_col3 = st.columns([1, 2, 1])
     
     with export_col2:
+        # PDF type selector
+        pdf_type = st.radio(
+            "Report Type",
+            ["Standard IC Memo", "Enhanced (with Alpha Signals)"],
+            horizontal=True,
+            label_visibility="collapsed"
+        )
+        
         if st.button("📄 Download PDF Report", use_container_width=True, type="primary"):
             try:
-                from pdf_export import generate_investment_summary_pdf
-                
-                # Generate PDF
-                pdf_buffer = generate_investment_summary_pdf(financials, generator, recommendation_data)
+                if pdf_type == "Enhanced (with Alpha Signals)":
+                    # Use enhanced PDF export with alpha signals
+                    from pdf_export_enhanced import generate_enhanced_ic_memo, get_alpha_data_for_pdf
+                    
+                    # Get alpha signals data
+                    alpha_data = get_alpha_data_for_pdf(generator.ticker)
+                    
+                    # Calculate scores
+                    conviction_map = {'LOW': 33, 'MEDIUM': 66, 'HIGH': 100}
+                    scores = {
+                        'conviction': conviction_map.get(recommendation_data.get('conviction', 'MEDIUM'), 50),
+                        'health': _calculate_health_score(financials),
+                        'risk_reward': min(100, max(0, recommendation_data.get('risk_reward', 1.0) * 40)),
+                        'earnings_momentum': alpha_data.get('earnings', {}).get('momentum_score'),
+                        'insider_sentiment': alpha_data.get('insider', {}).get('sentiment_score'),
+                        'institutional_accumulation': alpha_data.get('ownership', {}).get('accumulation_score'),
+                    }
+                    
+                    # Get additional data
+                    investment_thesis = generator.generate_investment_thesis()
+                    catalysts = generator.generate_catalyst_timeline()
+                    risks = generator.triage_red_flags()
+                    comparables = generator.generate_peer_comparison()
+                    
+                    # Build key metrics
+                    info = financials.get('info', {})
+                    key_metrics = {
+                        'Current Price': f"${info.get('currentPrice', info.get('regularMarketPrice', 0)):.2f}",
+                        'P/E Ratio': f"{info.get('trailingPE', 'N/A')}x" if info.get('trailingPE') else 'N/A',
+                        'Market Cap': f"${info.get('marketCap', 0)/1e9:.1f}B" if info.get('marketCap') else 'N/A',
+                        'ROE': f"{info.get('returnOnEquity', 0)*100:.1f}%" if info.get('returnOnEquity') else 'N/A',
+                        'Revenue (TTM)': f"${info.get('totalRevenue', 0)/1e9:.1f}B" if info.get('totalRevenue') else 'N/A',
+                    }
+                    
+                    pdf_buffer = generate_enhanced_ic_memo(
+                        ticker=generator.ticker,
+                        company_name=generator.company_name,
+                        recommendation_data=recommendation_data,
+                        scores=scores,
+                        alpha_data=alpha_data if alpha_data else None,
+                        investment_thesis=investment_thesis,
+                        catalysts=catalysts,
+                        risks=risks,
+                        comparables=comparables,
+                        key_metrics=key_metrics
+                    )
+                    
+                    filename = f"IC_Memo_Enhanced_{generator.ticker}_{pd.Timestamp.now().strftime('%Y%m%d')}.pdf"
+                else:
+                    # Use standard PDF export
+                    from pdf_export import generate_investment_summary_pdf
+                    pdf_buffer = generate_investment_summary_pdf(financials, generator, recommendation_data)
+                    filename = f"Investment_Summary_{generator.ticker}_{pd.Timestamp.now().strftime('%Y%m%d')}.pdf"
                 
                 # Download button
                 st.download_button(
-                    label="💾 Save Investment Summary PDF",
+                    label="💾 Save PDF Report",
                     data=pdf_buffer,
-                    file_name=f"Investment_Summary_{generator.ticker}_{pd.Timestamp.now().strftime('%Y%m%d')}.pdf",
+                    file_name=filename,
                     mime="application/pdf",
                     use_container_width=True
                 )

@@ -30,6 +30,7 @@ from usa_backend import USAFinancialExtractor
 from validation_engine import DataValidator
 from app_css import inject_all_css, get_search_button_css
 from app_landing import render_landing_page, render_ticker_display, render_no_ticker_placeholder
+from app_themes import inject_theme_css, render_theme_selector, get_current_theme
 
 # Initialize validator (singleton pattern)
 _validator = DataValidator()
@@ -212,6 +213,15 @@ inject_all_css(enable_background=ENABLE_BACKGROUND_IMAGE, bg_image_path=bg_image
 # To modify styling, edit app_css.py
 
 # ==========================================
+# INJECT THEME CSS (from app_themes.py)
+# ==========================================
+# Theme selection handled in sidebar, CSS applied here
+# This overrides default colors with selected theme
+if 'current_theme' not in st.session_state:
+    st.session_state.current_theme = 'atlas_dark'
+inject_theme_css(st.session_state.current_theme)
+
+# ==========================================
 # [REMOVED] Legacy CSS block was here (lines 213-770)
 # All CSS now loaded from app_css.py via inject_all_css()
 # ==========================================
@@ -269,6 +279,14 @@ with st.sidebar:
         <p style='color: #94a3b8; font-size: 0.85rem; margin: 0.3rem 0 0 0;'>Configure & Extract Financial Data</p>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Theme Selector (MILESTONE-006)
+    selected_theme = render_theme_selector(position='sidebar', key='main_theme_selector')
+    if selected_theme != st.session_state.get('current_theme'):
+        st.session_state.current_theme = selected_theme
+        st.rerun()  # Apply theme immediately
+    
+    st.write("")  # Spacing
     
     # Ticker input (FULL WIDTH - NO COLUMNS)
     # Sync with landing page if user entered ticker there
@@ -331,7 +349,7 @@ with st.sidebar:
     }
     filing_types = filing_map[filing_option]
     
-    # Advanced Options (includes theme selector)
+    # Advanced Options
     st.write("")  # Just spacing
     with st.expander("⚙️ Advanced Options", expanded=False):
         # Quant analysis toggle
@@ -347,26 +365,13 @@ with st.sidebar:
             value=False,
             help="Clear cached data and fetch fresh from source. Use sparingly to avoid rate limits."
         )
-        
-        # Theme Switcher (moved here from top)
-        st.write("")  # Just spacing
-        from config.theme_presets import get_theme_names
-        
-        theme_options = get_theme_names()
-        selected_theme = st.selectbox(
-            "Color Theme",
-            options=list(theme_options.keys()),
-            format_func=lambda x: theme_options[x],
-            index=0,  # Default to blue_corporate
-            help="Switch color scheme - changes apply instantly"
-        )
     
     # Extract button with theme-aware gradient
     st.write("")  # Just spacing
     
-    # Dynamic button styling based on selected theme
-    from config.theme_presets import get_theme
-    theme = get_theme(selected_theme)
+    # Dynamic button styling based on selected theme (using new theme system)
+    from config.themes import get_theme
+    theme = get_theme(st.session_state.get('current_theme', 'atlas_dark'))
     
     st.markdown(f"""
     <style>
