@@ -230,14 +230,39 @@ def get_main_theme_css() -> str:
         background-color: #252d3a !important;
     }
     
-    /* Sidebar - Clean Solid Design */
+    /* Sidebar - Clean Solid Design with Overflow Fix */
     [data-testid="stSidebar"] {
         background: linear-gradient(180deg, #1a1f26 0%, #0f1419 100%) !important;
         border-right: 1px solid rgba(59, 130, 246, 0.12);
+        overflow-x: hidden !important;
     }
     
     [data-testid="stSidebar"] * {
         color: var(--text-primary) !important;
+    }
+    
+    /* CRITICAL: Fix sidebar text overflow when collapsed */
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        overflow: hidden !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="false"] * {
+        visibility: hidden !important;
+    }
+    
+    [data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebar"][aria-expanded="false"] [data-testid="stSidebarCollapseButton"] * {
+        visibility: visible !important;
+    }
+    
+    /* Prevent text wrapping issues in sidebar */
+    [data-testid="stSidebar"] .stMarkdown,
+    [data-testid="stSidebar"] .stSelectbox label,
+    [data-testid="stSidebar"] p {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
     }
     
     /* Sidebar Collapse Button - Clean Arrow Indicators */

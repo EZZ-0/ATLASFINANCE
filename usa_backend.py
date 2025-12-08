@@ -798,11 +798,48 @@ class USAFinancialExtractor:
         """Extract cash flow statement from XBRL data"""
         metrics = {}
         
+        # Expanded search map with multiple XBRL variations
         search_map = {
-            "Operating_Cash_Flow": ["NetCashProvidedByUsedInOperatingActivities"],
-            "Investing_Cash_Flow": ["NetCashProvidedByUsedInInvestingActivities"],
-            "Financing_Cash_Flow": ["NetCashProvidedByUsedInFinancingActivities"],
-            "Capex": ["PaymentsToAcquirePropertyPlantAndEquipment"]
+            "Operating_Cash_Flow": [
+                "NetCashProvidedByUsedInOperatingActivities",
+                "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+                "CashProvidedByUsedInOperatingActivities",
+            ],
+            "Investing_Cash_Flow": [
+                "NetCashProvidedByUsedInInvestingActivities",
+                "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations",
+                "CashProvidedByUsedInInvestingActivities",
+            ],
+            "Financing_Cash_Flow": [
+                "NetCashProvidedByUsedInFinancingActivities",
+                "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations",
+                "CashProvidedByUsedInFinancingActivities",
+            ],
+            "Capex": [
+                "PaymentsToAcquirePropertyPlantAndEquipment",
+                "PaymentsForCapitalExpenditures",
+                "PaymentsToAcquireProductiveAssets",
+            ],
+            "Depreciation": [
+                "DepreciationDepletionAndAmortization",
+                "DepreciationAndAmortization",
+                "Depreciation",
+            ],
+            "Net_Change_Cash": [
+                "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
+                "CashAndCashEquivalentsPeriodIncreaseDecrease",
+                "IncreaseDecreaseInCashAndCashEquivalents",
+            ],
+            "Dividends_Paid": [
+                "PaymentsOfDividendsCommonStock",
+                "PaymentsOfDividends",
+                "DividendsPaid",
+            ],
+            "Stock_Repurchases": [
+                "PaymentsForRepurchaseOfCommonStock",
+                "PaymentsForRepurchaseOfEquity",
+                "StockRepurchasedAndRetiredDuringPeriodValue",
+            ],
         }
         
         for metric_name, xbrl_tags in search_map.items():
@@ -818,7 +855,15 @@ class USAFinancialExtractor:
                             metrics[metric_name] = filtered_data
                             break
         
-        return self._format_time_series(metrics)
+        # Add calculated Free Cash Flow if we have operating and capex
+        df = self._format_time_series(metrics)
+        if not df.empty and "Operating_Cash_Flow" in df.columns and "Capex" in df.columns:
+            try:
+                df["Free_Cash_Flow"] = df["Operating_Cash_Flow"] - abs(df["Capex"])
+            except Exception:
+                pass  # Skip if calculation fails
+        
+        return df
     
     def _extract_per_share_data(self, us_gaap: Dict, filing_types: List[str] = ["10-K"]) -> pd.DataFrame:
         """Extract EPS and other per-share metrics"""

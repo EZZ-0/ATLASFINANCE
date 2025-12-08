@@ -307,11 +307,15 @@ class InstitutionalOwnershipTracker:
         Parse institutional holders DataFrame.
         
         Updated: 2025-12-08 (TASK-A018 - Added pctChange extraction per E021)
+        Fixed: 2025-12-08 - Fixed percent_held extraction to handle multiple column names
         """
         try:
             holders = []
             total_pct_change = 0
             change_count = 0
+            
+            # Debug: Log available columns
+            logger.debug(f"Institutional holders columns: {inst_holders.columns.tolist()}")
             
             for _, row in inst_holders.iterrows():
                 # Extract pctChange if available (key insight from E020/E021)
@@ -324,11 +328,32 @@ class InstitutionalOwnershipTracker:
                     except:
                         pass
                 
+                # Try multiple column names for percentage held
+                pct_held = 0.0
+                for col_name in ['% Out', 'pctHeld', 'Percent Out', 'percentOut', 'pct_out']:
+                    if col_name in row and row[col_name] is not None:
+                        try:
+                            pct_val = float(row[col_name])
+                            # Convert decimal to percentage if needed
+                            if pct_val > 0 and pct_val < 1:
+                                pct_held = pct_val * 100
+                            else:
+                                pct_held = pct_val
+                            break
+                        except (ValueError, TypeError):
+                            continue
+                
+                # If still 0 and we have shares and outstanding, calculate manually
+                if pct_held == 0 and summary.shares_outstanding > 0:
+                    shares = int(row.get('Shares', 0) or 0)
+                    if shares > 0:
+                        pct_held = (shares / summary.shares_outstanding) * 100
+                
                 holder = InstitutionalHolder(
                     name=str(row.get('Holder', 'Unknown')),
-                    shares=int(row.get('Shares', 0)),
-                    value=float(row.get('Value', 0)),
-                    percent_held=float(row.get('% Out', 0)) * 100 if row.get('% Out', 0) < 1 else float(row.get('% Out', 0)),
+                    shares=int(row.get('Shares', 0) or 0),
+                    value=float(row.get('Value', 0) or 0),
+                    percent_held=pct_held,
                     date_reported=pd.to_datetime(row.get('Date Reported')) if 'Date Reported' in row else None,
                     holder_type=self._classify_holder(str(row.get('Holder', ''))),
                     change_percent=pct_change

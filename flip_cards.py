@@ -408,26 +408,36 @@ def render_flip_card(
     
     bench_text = f"Benchmark: {benchmark[0]}-{benchmark[1]}{unit}" if benchmark else ""
     
+    # Generate unique ID for this card instance
+    card_id = hashlib.md5(f"{metric_key}_{value}_{label}".encode()).hexdigest()[:8]
+    
     html = f"""
     <style>
-        .fc-wrap {{
+        .fc-wrap-{card_id} {{
             perspective: 1000px;
             width: 100%;
             height: {height}px;
             cursor: pointer;
+            position: relative;
+            overflow: visible;
         }}
-        .fc-inner {{
+        .fc-inner-{card_id} {{
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.5s ease;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }}
-        .fc-wrap.flipped .fc-inner {{
+        .fc-wrap-{card_id}:hover .fc-inner-{card_id} {{
             transform: rotateY(180deg);
         }}
-        .fc-front, .fc-back {{
+        .fc-wrap-{card_id}.flipped .fc-inner-{card_id} {{
+            transform: rotateY(180deg);
+        }}
+        .fc-front-{card_id}, .fc-back-{card_id} {{
             position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
@@ -436,53 +446,79 @@ def render_flip_card(
             display: flex;
             flex-direction: column;
             justify-content: center;
+            align-items: flex-start;
             padding: 12px;
             background: linear-gradient(180deg, #1e2530 0%, #161b22 100%);
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid rgba(59, 130, 246, 0.15);
+            box-sizing: border-box;
+            overflow: hidden;
         }}
-        .fc-back {{
+        .fc-front-{card_id}:hover, .fc-back-{card_id}:hover {{
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+        }}
+        .fc-back-{card_id} {{
             transform: rotateY(180deg);
+            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
         }}
-        .fc-label {{
+        .fc-label-{card_id} {{
             color: #8b949e;
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 6px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }}
-        .fc-value {{
+        .fc-value-{card_id} {{
             color: {color};
-            font-size: 1.4rem;
+            font-size: 1.35rem;
             font-weight: 700;
+            white-space: nowrap;
         }}
-        .fc-formula {{
+        .fc-formula-{card_id} {{
             color: #58a6ff;
-            font-size: 0.7rem;
-            font-family: 'SF Mono', monospace;
+            font-size: 0.68rem;
+            font-family: 'SF Mono', Consolas, monospace;
             margin-bottom: 4px;
         }}
-        .fc-insight {{
+        .fc-insight-{card_id} {{
             color: #e6edf3;
-            font-size: 0.7rem;
-            line-height: 1.3;
+            font-size: 0.68rem;
+            line-height: 1.35;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
         }}
-        .fc-bench {{
+        .fc-bench-{card_id} {{
             color: #6e7681;
-            font-size: 0.6rem;
+            font-size: 0.58rem;
             margin-top: 4px;
         }}
+        .fc-hint-{card_id} {{
+            position: absolute;
+            bottom: 4px;
+            right: 8px;
+            color: #6e7681;
+            font-size: 0.55rem;
+            opacity: 0.7;
+        }}
     </style>
-    <div class="fc-wrap" onclick="this.classList.toggle('flipped')">
-        <div class="fc-inner">
-            <div class="fc-front">
-                <div class="fc-label">{display_label}</div>
-                <div class="fc-value">{formatted}</div>
+    <div class="fc-wrap-{card_id}" onclick="this.classList.toggle('flipped')">
+        <div class="fc-inner-{card_id}">
+            <div class="fc-front-{card_id}">
+                <div class="fc-label-{card_id}">{display_label}</div>
+                <div class="fc-value-{card_id}">{formatted}</div>
+                <div class="fc-hint-{card_id}">Hover for details</div>
             </div>
-            <div class="fc-back">
-                <div class="fc-formula">{formula}</div>
-                <div class="fc-insight">{insight}</div>
-                <div class="fc-bench">{bench_text}</div>
+            <div class="fc-back-{card_id}">
+                <div class="fc-formula-{card_id}">{formula}</div>
+                <div class="fc-insight-{card_id}">{insight}</div>
+                <div class="fc-bench-{card_id}">{bench_text}</div>
             </div>
         </div>
     </div>

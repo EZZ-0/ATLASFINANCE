@@ -410,6 +410,9 @@ def render_theme_selector(
     if 'current_theme' not in st.session_state:
         st.session_state.current_theme = 'atlas_dark'
     
+    # Store the PREVIOUS theme to detect changes
+    previous_theme = st.session_state.current_theme
+    
     # Determine current index
     theme_keys = list(theme_options.keys())
     try:
@@ -437,8 +440,12 @@ def render_theme_selector(
             help="Switch color theme"
         )
     
-    # Store in session state
+    # Update session state BEFORE potential rerun
     st.session_state.current_theme = selected_name
+    
+    # CRITICAL FIX: Trigger rerun if theme changed to apply immediately
+    if selected_name != previous_theme:
+        st.rerun()
     
     return selected_name
 

@@ -99,22 +99,51 @@ SP500_SECTOR_MAP = {
 }
 
 
+def normalize_sector(sector: str) -> str:
+    """Normalize sector names to handle yfinance vs our mapping differences."""
+    if not sector:
+        return "Unknown"
+    
+    sector_lower = sector.lower()
+    
+    # Map common variations to our standard names
+    sector_map = {
+        'consumer discretionary': 'Consumer Cyclical',
+        'consumer cyclical': 'Consumer Cyclical',
+        'information technology': 'Technology',
+        'financials': 'Financial Services',
+        'financial services': 'Financial Services',
+        'health care': 'Healthcare',
+        'healthcare': 'Healthcare',
+        'consumer staples': 'Consumer Defensive',
+        'consumer defensive': 'Consumer Defensive',
+        'materials': 'Basic Materials',
+        'basic materials': 'Basic Materials',
+    }
+    
+    return sector_map.get(sector_lower, sector)
+
+
 def get_sector_peers(ticker: str, sector: str, max_peers: int = 20) -> List[str]:
     """
     Quickly get peer tickers from the same sector
     
     Args:
         ticker: Primary company ticker
-        sector: Sector name
+        sector: Sector name (will be normalized)
         max_peers: Max number of peers to return
         
     Returns:
         List of peer tickers
     """
+    # Normalize the sector name
+    normalized_sector = normalize_sector(sector)
+    
     peers = []
     
     for peer_ticker, peer_sector in SP500_SECTOR_MAP.items():
-        if peer_ticker != ticker and peer_sector == sector:
+        # Also normalize the mapped sector for comparison
+        if peer_ticker != ticker and normalize_sector(peer_sector) == normalized_sector:
             peers.append(peer_ticker)
             
             if len(peers) >= max_peers:

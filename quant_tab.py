@@ -60,7 +60,21 @@ def render_quant_tab(ticker: str, financials: Dict) -> None:
     
     st.markdown(f"## {icon('calculator', '1.5em')} Quantitative Analysis (Fama-French 3-Factor Model)", unsafe_allow_html=True)
     
-    quant_data = financials.get("quant_analysis", {})
+    quant_data = financials.get("quant_analysis", {}) if financials else {}
+    
+    if not quant_data:
+        st.info("ℹ️ Quant analysis data not available. Enable 'Include Quant Analysis' in sidebar options and re-extract data.")
+        st.markdown("""
+        **What is Fama-French 3-Factor Analysis?**
+        
+        The Fama-French 3-Factor model extends CAPM by adding:
+        - **Market Risk Premium (Mkt-RF)**: Excess return of market over risk-free rate
+        - **Size Factor (SMB)**: Small vs Big - premium for smaller companies
+        - **Value Factor (HML)**: High vs Low book-to-market - premium for value stocks
+        
+        This helps explain stock returns beyond just market beta.
+        """)
+        return
     
     if "status" in quant_data and quant_data["status"] == "error":
         st.error(f"❌ Quant analysis failed: {quant_data.get('message')}")

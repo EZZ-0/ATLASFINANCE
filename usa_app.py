@@ -1803,7 +1803,8 @@ else:
                             results = model.run_all_scenarios()
                             st.session_state.dcf_results = results
                             st.success("DCF Analysis Complete!")
-                            st.rerun()
+                            # NOTE: Removed st.rerun() - was causing redirect to Dashboard tab
+                            # Results will display naturally in the same render cycle
                         except Exception as e:
                             st.error(f"DCF failed: {e}")
             
@@ -2217,17 +2218,26 @@ else:
                         
                         with col1:
                             st.markdown("**EPS Estimates:**")
-                            curr = rev_dict['current_year']
-                            st.write(f"• Current Estimate: ${curr['current_estimate']:.2f}" if curr['current_estimate'] else "• Current Estimate: N/A")
-                            st.write(f"• 30 Days Ago: ${curr['estimate_30d_ago']:.2f}" if curr['estimate_30d_ago'] else "• 30 Days Ago: N/A")
-                            st.write(f"• 90 Days Ago: ${curr['estimate_90d_ago']:.2f}" if curr['estimate_90d_ago'] else "• 90 Days Ago: N/A")
+                            curr = rev_dict.get('current_year', {})
+                            # Use 'eps' key (actual) not 'current_estimate' (was incorrect)
+                            eps_value = curr.get('eps')
+                            st.write(f"• Current Estimate: ${eps_value:.2f}" if eps_value else "• Current Estimate: N/A")
+                            # Use revisions dict for historical changes
+                            revisions = rev_dict.get('revisions', {})
+                            rev_30d = revisions.get('30d')
+                            rev_90d = revisions.get('90d')
+                            st.write(f"• 30-Day Change: {rev_30d:+.1f}%" if rev_30d else "• 30-Day Change: N/A")
+                            st.write(f"• 90-Day Change: {rev_90d:+.1f}%" if rev_90d else "• 90-Day Change: N/A")
                         
                         with col2:
-                            st.markdown("**Revision Activity:**")
-                            st.write(f"• Up Revisions (7d): {curr['up_7d']}")
-                            st.write(f"• Down Revisions (7d): {curr['down_7d']}")
-                            st.write(f"• Up Revisions (30d): {curr['up_30d']}")
-                            st.write(f"• Down Revisions (30d): {curr['down_30d']}")
+                            st.markdown("**Revision Summary:**")
+                            next_qtr = rev_dict.get('next_quarter', {})
+                            next_yr = rev_dict.get('next_year', {})
+                            nq_eps = next_qtr.get('eps')
+                            ny_eps = next_yr.get('eps')
+                            st.write(f"• Next Quarter EPS: ${nq_eps:.2f}" if nq_eps else "• Next Quarter EPS: N/A")
+                            st.write(f"• Next Year EPS: ${ny_eps:.2f}" if ny_eps else "• Next Year EPS: N/A")
+                            st.write(f"• Analyst Count: {next_qtr.get('analysts', 'N/A')}")
                         
                         # Revision gauge chart
                         with st.expander("View Revision Charts", expanded=False):
@@ -3226,10 +3236,8 @@ else:
     # ==========================================
     
     with tab6:
-        if has_quant:
-            mkt_sub1, mkt_sub2, mkt_sub3, mkt_sub4 = st.tabs(["Technical", "Quant", "Options", "Peer Compare"])
-        else:
-            mkt_sub1, mkt_sub3, mkt_sub4 = st.tabs(["Technical", "Options", "Peer Compare"])
+        # Always show all tabs - handle missing data gracefully inside each tab
+        mkt_sub1, mkt_sub2, mkt_sub3, mkt_sub4 = st.tabs(["Technical", "Quant", "Options", "Peer Compare"])
         
         # Sub-tab 1: Technical Analysis
         with mkt_sub1:
@@ -3383,10 +3391,9 @@ else:
             except Exception as e:
                 st.error(f"Error running technical analysis: {str(e)}")
         
-        # Sub-tab 2: Quant (if available)
-        if has_quant:
-            with mkt_sub2:
-                render_quant_tab(st.session_state.ticker, st.session_state.financials)
+        # Sub-tab 2: Quant Analysis (always show, handle missing data inside)
+        with mkt_sub2:
+            render_quant_tab(st.session_state.ticker, st.session_state.financials)
         
         # Sub-tab 3: Options
         with mkt_sub3:
