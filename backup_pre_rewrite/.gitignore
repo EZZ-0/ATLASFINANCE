@@ -1,0 +1,64 @@
+# 🔒 SECURITY: Never commit these files to git!
+
+# Environment variables (API keys, secrets)
+.env
+.env.*
+!.env.template
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Test outputs
+.pytest_cache/
+.coverage
+htmlcov/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Saved scenarios (user data)
+saved_scenarios/*.json
+
+# Logs
+*.log
+logs/
+
+# PDF exports (may contain sensitive data)
+*.pdf
+
+# Backup files
+backup_*.py
+*_backup.py
+
+# Build artifacts
+build/
+dist/
+build_backup/
+dist_backup/
+*.exe
+*.pkg
+*.pyz
+*.spec

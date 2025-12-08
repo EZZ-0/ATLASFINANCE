@@ -34,6 +34,10 @@ def render_landing_page(
         bool: True if extraction was successful, False otherwise
     """
     
+    # App Header
+    st.markdown('<h1 style="text-align: center; color: #f0f4f8; font-size: 2.2rem; margin-bottom: 0.5rem; font-weight: 700;">ATLAS FINANCIAL INTELLIGENCE</h1>', unsafe_allow_html=True)
+    st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: 0; margin-bottom: 2rem;">Professional Financial Analysis Engine</p>', unsafe_allow_html=True)
+    
     # Centered container for search
     col1, col2, col3 = st.columns([1, 2, 1])
     

@@ -113,23 +113,28 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                     # Discover peers
                     peer_result = discover_peers(current_ticker, max_peers=max_peers)
                     
-                    if peer_result['status'] == 'success':
+                    if peer_result and peer_result.get('status') == 'success':
                         st.session_state['peer_discovery_result'] = peer_result
-                        st.success(f"✅ Found {len(peer_result['peers'])} peers!")
-                    else:
+                        st.success(f"Found {len(peer_result.get('peers', []))} peers!")
+                    elif peer_result:
                         st.error(peer_result.get('message', 'Peer discovery failed'))
+                    else:
+                        st.error("Peer discovery returned no data")
             
             # Display peer discovery results
             if 'peer_discovery_result' in st.session_state:
                 peer_result = st.session_state['peer_discovery_result']
                 
-                # Check if this result is for the current ticker
-                if peer_result.get('ticker') != current_ticker:
-                    # Clear stale data
+                # Guard: peer_result must exist and be valid
+                if not peer_result:
+                    del st.session_state['peer_discovery_result']
+                    st.info("No peer data available. Click 'Discover Peers' to find comparable companies.")
+                elif peer_result.get('ticker') != current_ticker:
+                    # Clear stale data from different ticker
                     del st.session_state['peer_discovery_result']
                     if 'peer_comparison_data' in st.session_state:
                         del st.session_state['peer_comparison_data']
-                    st.warning("⚠️ Previous peer data was for a different company. Please click 'Discover Peers' again.")
+                    st.warning("Previous peer data was for a different company. Click 'Discover Peers' again.")
                 else:
                     # Valid peer data - display it
                     st.markdown("---")
@@ -138,15 +143,16 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                     col1, col2, col3 = st.columns(3)
                     
                     with col1:
-                        st.metric("Sector", peer_result['sector'])
+                        st.metric("Sector", peer_result.get('sector', 'N/A'))
                     
                     with col2:
-                        st.metric("Industry", peer_result['industry'])
+                        st.metric("Industry", peer_result.get('industry', 'N/A'))
                     
                     with col3:
                         from format_helpers import format_large_number
-                        if peer_result['market_cap']:
-                            st.markdown(format_large_number(peer_result['market_cap'], 'currency', 2), unsafe_allow_html=True)
+                        market_cap = peer_result.get('market_cap')
+                        if market_cap:
+                            st.markdown(format_large_number(market_cap, 'currency', 2), unsafe_allow_html=True)
                             st.caption("Market Cap")
                         else:
                             st.metric("Market Cap", "N/A")
@@ -154,7 +160,8 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                     st.markdown("---")
                     
                     # Display discovered peers
-                    st.markdown(f"### 📊 Discovered Peers ({len(peer_result['peers'])} companies)")
+                    peers_list = peer_result.get('peers', [])
+                    st.markdown(f"### Discovered Peers ({len(peers_list)} companies)")
                     
                     # Create peer DataFrame for display
                     peer_df = pd.DataFrame(peer_result['peers'])
@@ -198,12 +205,19 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
             # Display comparison analysis
             if 'peer_comparison_data' in st.session_state:
                 comp_data = st.session_state['peer_comparison_data']
+                
+                # Guard: ensure comp_data is valid
+                if not comp_data or not isinstance(comp_data, dict) or 'data' not in comp_data:
+                    del st.session_state['peer_comparison_data']
+                    st.warning("Peer comparison data invalid. Please run comparison again.")
+                    st.stop()  # Stop rendering this section
+                
                 df = comp_data['data']
                 
                 from peer_comparison import calculate_percentile_ranks, calculate_statistics, generate_heatmap_data, export_comparison_to_excel
                 
                 st.markdown("---")
-                st.markdown("## 📊 Peer Comparison Analysis")
+                st.markdown("## Peer Comparison Analysis")
                 
                 # Calculate percentiles and stats
                 df_with_percentiles = calculate_percentile_ranks(df, current_ticker)
@@ -211,7 +225,7 @@ def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> 
                 
                 # Analysis sub-tabs
                 analysis_tab1, analysis_tab2, analysis_tab3, analysis_tab4 = st.tabs([
-                    "📋 Comparison Table", "🎯 Percentile Rankings", "🌡️ Heatmap", "📊 Statistics"
+                    "Comparison Table", "Percentile Rankings", "Heatmap", "Statistics"
                 ])
                 
                 # TAB 1: Comparison Table

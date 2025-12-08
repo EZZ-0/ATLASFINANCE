@@ -19,11 +19,19 @@ from typing import Dict, Any
 
 # Import flip card components with fallback
 try:
-    from flip_card_component import RATIO_DEFINITIONS
+    from flip_cards import RATIO_DEFINITIONS
     FLIP_CARDS_AVAILABLE = True
 except ImportError:
     FLIP_CARDS_AVAILABLE = False
     RATIO_DEFINITIONS = {}
+
+# Import universal field mapper for intelligent field lookups
+try:
+    from utils.field_mapper import get_field
+except ImportError:
+    # Fallback if field_mapper not available
+    def get_field(data, key, default=None):
+        return data.get(key, default) if data else default
 
 
 def render_earnings_flip_metrics(earnings_data: Dict, depth: str = "beginner"):
@@ -81,11 +89,11 @@ def render_valuation_flip_metrics(valuation_data: Dict, depth: str = "beginner")
     cols = st.columns(5)
     
     metric_list = [
-        {"label": "P/E Ratio", "value": metrics.get('pe_ratio'), "format": "ratio", "benchmark": (15, 25), "higher_better": False},
-        {"label": "PEG Ratio", "value": metrics.get('peg_ratio'), "format": "ratio", "benchmark": (1, 2), "higher_better": False},
-        {"label": "P/B Ratio", "value": metrics.get('pb_ratio'), "format": "ratio", "benchmark": (1, 3), "higher_better": False},
-        {"label": "EV/EBITDA", "value": metrics.get('ev_ebitda'), "format": "ratio", "benchmark": (8, 15), "higher_better": False},
-        {"label": "Premium/Discount", "value": metrics.get('vs_sector_pct'), "format": "pct"},
+        {"label": "P/E Ratio", "value": get_field(metrics, 'pe_ratio'), "format": "ratio", "benchmark": (15, 25), "higher_better": False},
+        {"label": "PEG Ratio", "value": get_field(metrics, 'peg_ratio'), "format": "ratio", "benchmark": (1, 2), "higher_better": False},
+        {"label": "P/B Ratio", "value": get_field(metrics, 'price_to_book'), "format": "ratio", "benchmark": (1, 3), "higher_better": False},
+        {"label": "EV/EBITDA", "value": get_field(metrics, 'ev_to_ebitda'), "format": "ratio", "benchmark": (8, 15), "higher_better": False},
+        {"label": "Premium/Discount", "value": get_field(metrics, 'valuation_score'), "format": "pct"},
     ]
     
     for i, m in enumerate(metric_list):
@@ -171,10 +179,10 @@ def render_growth_flip_metrics(growth_data: Dict, depth: str = "beginner"):
     cols = st.columns(4)
     
     metric_list = [
-        {"label": "Growth Score", "value": metrics.get('growth_score'), "format": "score", "benchmark": (60, 80)},
-        {"label": "Revenue CAGR", "value": metrics.get('revenue_cagr_3y'), "format": "pct", "benchmark": (5, 15)},
-        {"label": "EPS CAGR", "value": metrics.get('eps_cagr_3y'), "format": "pct", "benchmark": (5, 20)},
-        {"label": "Consistency", "value": metrics.get('consistency_score'), "format": "score", "benchmark": (60, 80)},
+        {"label": "Growth Score", "value": metrics.get('growth_quality_score'), "format": "score", "benchmark": (60, 80)},
+        {"label": "Revenue CAGR", "value": metrics.get('revenue_growth_rate'), "format": "pct", "benchmark": (5, 15)},
+        {"label": "EPS CAGR", "value": metrics.get('earnings_growth_rate'), "format": "pct", "benchmark": (5, 20)},
+        {"label": "Consistency", "value": metrics.get('revenue_growth_volatility'), "format": "pct", "benchmark": (60, 80), "higher_better": False},
     ]
     
     for i, m in enumerate(metric_list):

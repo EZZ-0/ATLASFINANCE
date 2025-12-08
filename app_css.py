@@ -22,11 +22,59 @@ def get_main_theme_css() -> str:
     return """
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" media="print" onload="this.media='all'">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <noscript>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 </noscript>
 <style>
+    /* Material Symbols for ALL Streamlit icon elements */
+    .material-symbols-rounded,
+    [data-testid="stIconMaterial"],
+    [data-testid="stSidebarCollapseButton"] span,
+    [data-testid="collapsedControl"] span,
+    button[kind="header"] span {
+        font-family: 'Material Symbols Rounded' !important;
+        font-weight: normal;
+        font-style: normal;
+        font-size: 24px;
+        line-height: 1;
+        letter-spacing: normal;
+        text-transform: none;
+        display: inline-block;
+        white-space: nowrap;
+        word-wrap: normal;
+        direction: ltr;
+        -webkit-font-feature-settings: 'liga';
+        font-feature-settings: 'liga';
+        -webkit-font-smoothing: antialiased;
+    }
+    
+    /* Force Material Symbols on icon spans showing text */
+    span[data-testid="stIconMaterial"] {
+        font-family: 'Material Symbols Rounded' !important;
+        font-size: 24px !important;
+        -webkit-font-feature-settings: 'liga' 1 !important;
+        font-feature-settings: 'liga' 1 !important;
+        text-rendering: optimizeLegibility !important;
+    }
+    
+    /* Hide sidebar toggle entirely if icons don't render - use CSS alternative */
+    [data-testid="stSidebarCollapseButton"] span[data-testid="stIconMaterial"],
+    [data-testid="collapsedControl"] span[data-testid="stIconMaterial"] {
+        font-size: 0 !important;
+    }
+    [data-testid="stSidebarCollapseButton"] span[data-testid="stIconMaterial"]::after,
+    [data-testid="collapsedControl"] span[data-testid="stIconMaterial"]::after {
+        content: '◀' !important;
+        font-size: 18px !important;
+        font-family: system-ui, sans-serif !important;
+    }
+    [data-testid="collapsedControl"] span[data-testid="stIconMaterial"]::after {
+        content: '▶' !important;
+    }
+    
     /* Professional Financial Dark Theme - Clean & Readable */
     :root {
         --bg-primary: #0f1419;
@@ -190,6 +238,53 @@ def get_main_theme_css() -> str:
     
     [data-testid="stSidebar"] * {
         color: var(--text-primary) !important;
+    }
+    
+    /* Sidebar Collapse Button - Clean Arrow Indicators */
+    [data-testid="stSidebarCollapseButton"] {
+        background: var(--bg-secondary) !important;
+        border: 1px solid var(--border-accent) !important;
+        border-radius: 6px !important;
+        width: 32px !important;
+        height: 32px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        cursor: pointer !important;
+        transition: all 0.2s ease !important;
+        position: relative !important;
+    }
+    
+    [data-testid="stSidebarCollapseButton"]:hover {
+        background: var(--accent-primary) !important;
+        border-color: var(--accent-primary) !important;
+    }
+    
+    /* Use native SVG icon - style it properly */
+    [data-testid="stSidebarCollapseButton"] svg {
+        width: 18px !important;
+        height: 18px !important;
+        stroke: var(--text-primary) !important;
+        stroke-width: 2.5 !important;
+        fill: none !important;
+    }
+    
+    [data-testid="stSidebarCollapseButton"]:hover svg {
+        stroke: white !important;
+    }
+    
+    /* Ensure sidebar collapse works on all platforms */
+    [data-testid="stSidebar"][aria-expanded="false"] {
+        transform: translateX(-100%) !important;
+    }
+    
+    /* Hide any text content in collapse button (fallback for broken icons) */
+    [data-testid="stSidebarCollapseButton"] span {
+        font-size: 0 !important;
+    }
+    [data-testid="stSidebarCollapseButton"] span::before {
+        font-size: 18px !important;
+        content: '' !important;
     }
     
     /* Button Enhancements */
@@ -587,10 +682,7 @@ def get_tab_scroll_css() -> str:
     """
     return """
 <style>
-/* Hide default >> button */
-button[data-testid="stBaseButton-headerNoPadding"] {
-    display: none !important;
-}
+/* NOTE: Do NOT hide Streamlit's default buttons - they control sidebar */
 
 /* Custom scroll buttons */
 .scroll-btn {

@@ -101,8 +101,9 @@ def validate_and_enrich(ticker: str, financials: dict) -> tuple:
 # ==========================================
 # CACHING - Prevent Rate Limiting
 # ==========================================
-# Cache financial data for 1 hour to avoid hitting Yahoo Finance repeatedly
-@st.cache_data(ttl=3600, show_spinner=False)
+# Cache financial data for 5 minutes during testing (was 1 hour)
+# TODO: Increase back to 3600 after testing complete
+@st.cache_data(ttl=300, show_spinner=False)
 def cached_extract_financials(
     ticker: str, 
     source: str = "auto",
@@ -164,6 +165,16 @@ from analysis_tab import render_analysis_tab
 from governance_tab import render_governance_tab
 from compare_tab import render_compare_tab
 from quant_tab import render_quant_tab
+
+# NEW Modular Tab Modules (NASA Rewrite)
+# NOTE: Tab modules exist in tabs/ folder but not currently used
+# The inline tab code in usa_app.py is the active implementation
+# TODO: Migrate to modular tabs after stability is confirmed
+# from tabs.tab_data import render_data_tab
+# from tabs.tab_valuation import render_valuation_tab
+# from tabs.tab_risk import render_risk_tab
+# from tabs.tab_market import render_market_tab
+# from tabs.tab_news import render_news_tab
 
 # Enhanced UI Components (Phase 2B)
 from enhanced_tables import enhanced_dataframe, create_sortable_table
@@ -236,7 +247,7 @@ st.set_page_config(
     page_title="Atlas Financial Intelligence",
     page_icon="⚡",
     layout="wide",
-    initial_sidebar_state="expanded"  # Auto-expand on load (better UX)
+    initial_sidebar_state="collapsed"  # Start collapsed for cleaner landing
 )
 
 # Performance optimization: Disable initial query params check
@@ -580,588 +591,13 @@ with st.sidebar:
 # This allows for 2-layer structure: Main Tabs → Sub-Tabs
 # Without breaking existing code structure
 
-def render_model_tab_EXAMPLE():
-    """
-    Model tab with 7 sub-tabs for comprehensive valuation analysis
-    2-Layer Structure: Model → [DCF | Reverse-DCF | Analyst | Earnings | Dividends | Valuation | Cash Flow]
-    """
-    st.markdown(f"## {icon('cash-coin', '1.5em')} Valuation & Analysis", unsafe_allow_html=True)
-    
-    # Sub-tabs for different analysis types (2nd layer)
-    dcf_tab, reverse_tab, analyst_tab, insider_tab, ownership_tab, earnings_tab, dividend_tab, valuation_tab, cashflow_tab = st.tabs([
-        "DCF",
-        "Reverse-DCF", 
-        "Analyst",
-        "Insider",
-        "Ownership",
-        "Earnings",
-        "Dividends",
-        "Valuation",
-        "Cash Flow"
-    ])
-    
-    with dcf_tab:
-        st.markdown("### 💰 3-Scenario DCF", unsafe_allow_html=True)
-        
-        if st.button("▶️ Run 3-Scenario DCF Analysis", type="primary", use_container_width=True, key="dcf_button_new"):
-            with st.spinner("Running DCF valuation..."):
-                try:
-                    model = DCFModel(st.session_state.financials)
-                    results = model.run_all_scenarios()
-                    st.session_state.dcf_results = results
-                    st.success("DCF analysis complete!")
-                except Exception as e:
-                    st.error(f"DCF Error: {e}")
-        
-        # Display results if available
-        if st.session_state.dcf_results:
-            results = st.session_state.dcf_results
+# NOTE: render_model_tab_EXAMPLE() function DELETED (600+ lines)
+# All its functionality has been wired into the active tabs:
+# - Insider Activity: Now in Tab 5 (Risk & Ownership) sub-tab 3
+# - Institutional Ownership: Now in Tab 5 (Risk & Ownership) sub-tab 4
+# - Earnings Revisions: Now in Tab 4 (Valuation) sub-tab 3
+# - DCF, Analyst, Dividends, Valuation, Cash Flow: Already existed in main tabs
             
-            col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                conservative = results["conservative"]["value_per_share"]
-                st.metric(
-                    "Conservative",
-                    f"${conservative:.2f}",
-                    help="Bear case scenario with lower growth and higher discount rate"
-                )
-            
-            with col2:
-                base = results["base"]["value_per_share"]
-                st.metric(
-                    "Base Case",
-                    f"${base:.2f}",
-                    help="Most likely scenario using historical averages"
-                )
-            
-            with col3:
-                aggressive = results["aggressive"]["value_per_share"]
-                st.metric(
-                    "Aggressive",
-                    f"${aggressive:.2f}",
-                    help="Bull case with higher growth and lower discount rate"
-                )
-            
-            with col4:
-                weighted = results["weighted_average"]
-                st.metric(
-                    "Weighted Avg",
-                    f"${weighted:.2f}",
-                    help="40% Base + 30% Conservative + 30% Aggressive"
-                )
-    
-    with reverse_tab:
-        st.markdown(f"### {icon('arrow-repeat', '1.2em')} Market-Implied Expectations", unsafe_allow_html=True)
-        st.info("ℹ This analysis reverse-engineers the DCF model to determine what growth rate and margins the current market price implies.")
-        
-        # Reverse-DCF content would go here
-        st.caption("Full implementation in main Model tab")
-    
-    with analyst_tab:
-        st.markdown(f"### {icon('person-badge', '1.2em')} Wall Street Consensus", unsafe_allow_html=True)
-        st.info("ℹ Consensus recommendations and price targets from Wall Street analysts.")
-        
-        # Analyst ratings content would go here
-        st.caption("Full implementation in main Model tab")
-    
-    with insider_tab:
-        st.markdown(f"### {icon('person-check', '1.2em')} Insider Transactions", unsafe_allow_html=True)
-        st.info("ℹ Track insider buying and selling activity - a key signal for stock analysis.")
-        
-        try:
-            from insider_transactions import get_insider_summary, create_insider_gauge, create_insider_activity_chart, create_transaction_table
-            
-            with st.spinner("Analyzing insider activity..."):
-                insider_data = get_insider_summary(st.session_state.ticker, days=90)
-                
-                if insider_data:
-                    # Summary metrics row - use flip cards if available
-                    st.caption("Click any metric for insight")
-                    icol1, icol2, icol3, icol4 = st.columns(4)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        with icol1:
-                            render_flip_card("Insider_Sentiment", insider_data.sentiment_score, "Sentiment Score")
-                        with icol2:
-                            net_val = insider_data.net_value / 1_000_000 if abs(insider_data.net_value) >= 1_000_000 else insider_data.net_value
-                            render_flip_card("market_cap", net_val, "Net Value ($M)" if abs(insider_data.net_value) >= 1_000_000 else "Net Value")
-                        with icol3:
-                            render_flip_card("Insider_Sentiment", 50 if insider_data.sentiment_label == "Bullish" else -50 if insider_data.sentiment_label == "Bearish" else 0, insider_data.sentiment_label)
-                        with icol4:
-                            cluster_val = insider_data.cluster_buyers_count if insider_data.is_cluster_buying else 0
-                            render_flip_card("Insider_Sentiment", cluster_val * 20, "Cluster Buying" if insider_data.is_cluster_buying else "No Cluster")
-                    else:
-                        with icol1:
-                            st.metric("Insider Sentiment", f"{insider_data.sentiment_score:+.0f}")
-                        with icol2:
-                            net_str = f"${insider_data.net_value/1_000_000:.1f}M" if abs(insider_data.net_value) >= 1_000_000 else f"${insider_data.net_value:,.0f}"
-                            st.metric("Net Value", net_str)
-                        with icol3:
-                            st.metric("Sentiment", insider_data.sentiment_label)
-                        with icol4:
-                            if insider_data.is_cluster_buying:
-                                st.metric("Cluster Buying", f"{insider_data.cluster_buyers_count} insiders")
-                            else:
-                                st.metric("Cluster Status", "Not Detected")
-                    
-                    st.markdown("---")
-                    
-                    # Activity breakdown
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**Buy Activity:**")
-                        st.write(f"• Transactions: {insider_data.buy_transactions}")
-                        st.write(f"• Total Value: ${insider_data.total_buy_value:,.0f}")
-                        st.write(f"• Shares Bought: {insider_data.total_shares_bought:,}")
-                        if insider_data.notable_buyers:
-                            st.success(f"Notable: {', '.join(insider_data.notable_buyers[:3])}")
-                    
-                    with col2:
-                        st.markdown("**Sell Activity:**")
-                        st.write(f"• Transactions: {insider_data.sell_transactions}")
-                        st.write(f"• Total Value: ${insider_data.total_sell_value:,.0f}")
-                        st.write(f"• Shares Sold: {insider_data.total_shares_sold:,}")
-                        if insider_data.notable_sellers:
-                            st.warning(f"Notable: {', '.join(insider_data.notable_sellers[:3])}")
-                    
-                    # Charts in expander
-                    with st.expander("View Insider Charts", expanded=False):
-                        chart_col1, chart_col2 = st.columns(2)
-                        
-                        with chart_col1:
-                            st.plotly_chart(create_insider_gauge(insider_data.sentiment_score), use_container_width=True)
-                        
-                        with chart_col2:
-                            st.plotly_chart(create_insider_activity_chart(insider_data), use_container_width=True)
-                    
-                    # Transaction table
-                    if insider_data.recent_transactions:
-                        with st.expander("Recent Transactions", expanded=False):
-                            df = create_transaction_table(insider_data.recent_transactions)
-                            st.dataframe(df, hide_index=True, use_container_width=True)
-                else:
-                    st.info("No insider transaction data available for this ticker.")
-        except ImportError:
-            st.caption("Insider tracking module loading...")
-        except Exception as ins_e:
-            st.error(f"Error loading insider data: {str(ins_e)}")
-    
-    with ownership_tab:
-        st.markdown(f"### {icon('building', '1.2em')} Institutional Ownership", unsafe_allow_html=True)
-        st.info("ℹ Track institutional and insider ownership - smart money signals.")
-        
-        try:
-            from institutional_ownership import get_ownership_summary, create_ownership_pie, create_accumulation_gauge
-            
-            with st.spinner("Analyzing institutional ownership..."):
-                ownership_data = get_ownership_summary(st.session_state.ticker)
-                
-                if ownership_data:
-                    # Summary metrics row
-                    ocol1, ocol2, ocol3, ocol4 = st.columns(4)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        with ocol1:
-                            render_flip_card("ROE", ownership_data.institutional_pct, "Institutional %")
-                        with ocol2:
-                            render_flip_card("ROE", ownership_data.insider_pct, "Insider %")
-                        with ocol3:
-                            render_flip_card("ROE", ownership_data.top10_concentration, "Top 10 Conc.")
-                        with ocol4:
-                            render_flip_card("Institutional_Flow", ownership_data.accumulation_score, ownership_data.sentiment_label)
-                    else:
-                        with ocol1:
-                            st.metric("Institutional", f"{ownership_data.institutional_pct:.1f}%")
-                        with ocol2:
-                            st.metric("Insider", f"{ownership_data.insider_pct:.1f}%")
-                        with ocol3:
-                            st.metric("Top 10 Concentration", f"{ownership_data.top10_concentration:.1f}%")
-                        with ocol4:
-                            st.metric("Signal", ownership_data.sentiment_label)
-                    
-                    st.markdown("---")
-                    
-                    # Ownership breakdown
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**Ownership Breakdown:**")
-                        st.write(f"• Institutional: {ownership_data.institutional_pct:.1f}%")
-                        st.write(f"• Insider: {ownership_data.insider_pct:.1f}%")
-                        st.write(f"• Retail/Other: {ownership_data.retail_pct:.1f}%")
-                        st.write(f"• Total Institutions: {ownership_data.total_institutions}")
-                    
-                    with col2:
-                        st.markdown("**Concentration Analysis:**")
-                        st.write(f"• Top 10 Hold: {ownership_data.top10_concentration:.1f}%")
-                        concentrated = "Yes - Concentrated" if ownership_data.is_concentrated else "No - Distributed"
-                        st.write(f"• Highly Concentrated: {concentrated}")
-                        st.write(f"• Accumulation Score: {ownership_data.accumulation_score:+.0f}")
-                    
-                    # Charts in expander
-                    with st.expander("View Ownership Charts", expanded=False):
-                        chart_col1, chart_col2 = st.columns(2)
-                        
-                        with chart_col1:
-                            st.plotly_chart(create_ownership_pie(ownership_data), use_container_width=True)
-                        
-                        with chart_col2:
-                            st.plotly_chart(create_accumulation_gauge(ownership_data.accumulation_score), use_container_width=True)
-                    
-                    # Top holders table
-                    if ownership_data.top_holders:
-                        with st.expander("Top Institutional Holders", expanded=False):
-                            import pandas as pd
-                            holders_data = [{
-                                'Holder': h.name[:40] + '...' if len(h.name) > 40 else h.name,
-                                'Shares': f"{h.shares:,}",
-                                'Value': f"${h.value/1_000_000:.1f}M" if h.value >= 1_000_000 else f"${h.value:,.0f}",
-                                '% Owned': f"{h.percent_held:.2f}%",
-                                'Type': h.holder_type.value
-                            } for h in ownership_data.top_holders[:10]]
-                            st.dataframe(pd.DataFrame(holders_data), hide_index=True, use_container_width=True)
-                else:
-                    st.info("No institutional ownership data available for this ticker.")
-        except ImportError:
-            st.caption("Ownership tracking module loading...")
-        except Exception as own_e:
-            st.error(f"Error loading ownership data: {str(own_e)}")
-    
-    with earnings_tab:
-        st.markdown(f"### {icon('graph-up-arrow', '1.2em')} Earnings Quality & Trends", unsafe_allow_html=True)
-        
-        try:
-            from earnings_analysis import analyze_earnings_history
-            
-            with st.spinner("Analyzing earnings history..."):
-                earnings_data = analyze_earnings_history(st.session_state.ticker, periods=8)
-                
-                if earnings_data['status'] == 'success':
-                    metrics = earnings_data['metrics']
-                    
-                    # Summary metrics
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.metric("Beat Rate", f"{metrics.get('beat_rate', 0):.1f}%",
-                                 help="Percentage of earnings beats")
-                    
-                    with col2:
-                        st.metric("Avg Surprise", f"{metrics.get('avg_surprise_pct', 0):.2f}%",
-                                 help="Average earnings surprise magnitude")
-                    
-                    with col3:
-                        st.metric("EPS Momentum", f"{metrics.get('eps_momentum', 0):.1f}%",
-                                 help="EPS acceleration/deceleration")
-                    
-                    with col4:
-                        score = metrics.get('earnings_score', 0)
-                        rating = metrics.get('earnings_rating', 'N/A')
-                        st.metric("Quality Score", f"{score:.0f}/100",
-                                 help=f"Rating: {rating}")
-                    
-                    st.markdown("---")
-                    
-                    # Detailed breakdown
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**Performance:**")
-                        st.write(f"• Total Reports: {metrics.get('total_earnings_reports', 0)}")
-                        st.write(f"• Beats: {metrics.get('earnings_beats', 0)}")
-                        st.write(f"• Misses: {metrics.get('earnings_misses', 0)}")
-                        st.write(f"• Consistency: {metrics.get('surprise_consistency', 'N/A')}")
-                    
-                    with col2:
-                        st.markdown("**EPS & Trends:**")
-                        trailing_eps = metrics.get('trailing_eps', 0)
-                        forward_eps = metrics.get('forward_eps', 0)
-                        st.write(f"• **Current EPS (TTM):** ${trailing_eps:.2f}" if trailing_eps else "• Current EPS: N/A")
-                        st.write(f"• Forward EPS: ${forward_eps:.2f}" if forward_eps else "• Forward EPS: N/A")
-                        st.write(f"• EPS Growth Forecast: {metrics.get('eps_growth_forecast', 0):.1f}%")
-                        st.write(f"• EPS Trend: {metrics.get('eps_trend', 'N/A')}")
-                        st.write(f"• Quality: {metrics.get('earnings_quality', 'N/A')}")
-                    
-                    # EARNINGS REVISIONS SECTION (MILESTONE-002)
-                    st.markdown("---")
-                    st.markdown(f"### {icon('arrow-repeat', '1.1em')} Analyst Estimate Revisions", unsafe_allow_html=True)
-                    st.caption("Tracks changes in analyst EPS estimates - a key predictor of stock performance")
-                    
-                    try:
-                        from earnings_revisions import get_earnings_revisions, create_revision_gauge, create_revision_trend_chart
-                        
-                        revision_data = get_earnings_revisions(st.session_state.ticker)
-                        
-                        if revision_data:
-                            rev_dict = revision_data.to_dict()
-                            
-                            # Revision metrics row
-                            rcol1, rcol2, rcol3, rcol4 = st.columns(4)
-                            
-                            with rcol1:
-                                score = rev_dict['momentum_score']
-                                st.metric(
-                                    "Revision Momentum",
-                                    f"{score:+.0f}",
-                                    help="Score from -100 (negative revisions) to +100 (positive revisions)"
-                                )
-                            
-                            with rcol2:
-                                st.metric(
-                                    "Trend",
-                                    rev_dict['trend'],
-                                    help="Overall direction of estimate changes"
-                                )
-                            
-                            with rcol3:
-                                st.metric(
-                                    "Analyst Agreement",
-                                    rev_dict['analyst_agreement'],
-                                    help="How closely analysts agree on estimates"
-                                )
-                            
-                            with rcol4:
-                                if rev_dict['current_year']['growth']:
-                                    growth = rev_dict['current_year']['growth'] * 100
-                                    st.metric("EPS Growth Est", f"{growth:+.1f}%")
-                                else:
-                                    st.metric("EPS Growth Est", "N/A")
-                            
-                            # Revision gauge chart
-                            with st.expander("View Revision Charts", expanded=False):
-                                chart_col1, chart_col2 = st.columns(2)
-                                
-                                with chart_col1:
-                                    st.plotly_chart(create_revision_gauge(score), use_container_width=True)
-                                
-                                with chart_col2:
-                                    st.plotly_chart(
-                                        create_revision_trend_chart(rev_dict['revisions']),
-                                        use_container_width=True
-                                    )
-                        else:
-                            st.info("Revision data not available for this ticker")
-                    except ImportError:
-                        st.caption("Revision tracking module loading...")
-                    except Exception as rev_e:
-                        st.caption(f"Revisions: {str(rev_e)}")
-                    
-                else:
-                    st.warning(earnings_data.get('message', 'No earnings data available'))
-        except Exception as e:
-            st.error(f"Error analyzing earnings: {str(e)}")
-    
-    with dividend_tab:
-        st.markdown(f"### {icon('cash-coin', '1.2em')} Dividend Analysis", unsafe_allow_html=True)
-        
-        try:
-            from dividend_analysis import analyze_dividends
-            
-            with st.spinner("Analyzing dividends..."):
-                div_data = analyze_dividends(st.session_state.ticker)
-                
-                if div_data['status'] == 'success':
-                    metrics = div_data['metrics']
-                    
-                    # Current metrics
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.metric("Annual Dividend", f"${metrics.get('annual_dividend', 0):.2f}")
-                    
-                    with col2:
-                        st.metric("Dividend Yield", f"{metrics.get('dividend_yield', 0):.2f}%")
-                    
-                    with col3:
-                        st.metric("Payout Ratio", f"{metrics.get('payout_ratio', 0):.1f}%")
-                    
-                    with col4:
-                        score = metrics.get('dividend_score', 0)
-                        st.metric("Score", f"{score:.0f}/100")
-                    
-                    st.markdown("---")
-                    
-                    # History & Status
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**History & Status:**")
-                        st.write(f"• Consecutive Years: {metrics.get('consecutive_years', 0)}")
-                        st.write(f"• Status: {metrics.get('dividend_status', 'N/A')}")
-                        st.write(f"• Tier: {metrics.get('status_tier', 'N/A')}")
-                        st.write(f"• Sustainability: {metrics.get('sustainability', 'N/A')}")
-                    
-                    with col2:
-                        st.markdown("**Growth Rates:**")
-                        st.write(f"• 1-Year: {metrics.get('dividend_growth_1y', 'N/A')}%")
-                        st.write(f"• 3-Year CAGR: {metrics.get('dividend_cagr_3y', 'N/A')}%")
-                        st.write(f"• 5-Year CAGR: {metrics.get('dividend_cagr_5y', 'N/A')}%")
-                        st.write(f"• 10-Year CAGR: {metrics.get('dividend_cagr_10y', 'N/A')}%")
-                
-                elif div_data['status'] == 'no_dividend':
-                    st.info("ℹ This company does not currently pay dividends")
-                else:
-                    st.warning(div_data.get('message', 'No dividend data available'))
-        except Exception as e:
-            st.error(f"Error analyzing dividends: {str(e)}")
-    
-    with valuation_tab:
-        st.markdown(f"### {icon('bar-chart-line', '1.2em')} Valuation Multiples", unsafe_allow_html=True)
-        
-        try:
-            from valuation_multiples import analyze_valuation_multiples
-            
-            with st.spinner("Calculating valuation multiples..."):
-                val_data = analyze_valuation_multiples(st.session_state.ticker)
-                
-                if val_data['status'] == 'success':
-                    metrics = val_data['metrics']
-                    
-                    st.caption("Click any metric to see formula & insight")
-                    
-                    # P/E Ratios - Use flip cards if available
-                    st.markdown("**P/E Ratios:**")
-                    col1, col2, col3 = st.columns(3)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        with col1:
-                            render_flip_card("PE_Ratio", metrics.get('pe_trailing'), "Trailing P/E")
-                        with col2:
-                            render_flip_card("PE_Ratio", metrics.get('pe_forward'), "Forward P/E")
-                        with col3:
-                            render_flip_card("PE_Ratio", metrics.get('peg_ratio'), "PEG Ratio")
-                    else:
-                        with col1:
-                            st.metric("Trailing P/E", f"{metrics.get('pe_trailing', 'N/A')}")
-                        with col2:
-                            st.metric("Forward P/E", f"{metrics.get('pe_forward', 'N/A')}")
-                        with col3:
-                            st.metric("PEG Ratio", f"{metrics.get('peg_ratio', 'N/A')}")
-                    
-                    st.markdown("---")
-                    
-                    # Enterprise Value Ratios
-                    st.markdown("**Enterprise Value Ratios:**")
-                    col1, col2, col3 = st.columns(3)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        with col1:
-                            render_flip_card("EV_EBITDA", metrics.get('ev_to_ebitda'), "EV/EBITDA")
-                        with col2:
-                            render_flip_card("PS_Ratio", metrics.get('ev_to_revenue'), "EV/Revenue")
-                        with col3:
-                            render_flip_card("EV_EBITDA", metrics.get('ev_to_ebit'), "EV/EBIT")
-                    else:
-                        with col1:
-                            st.metric("EV/EBITDA", f"{metrics.get('ev_to_ebitda', 'N/A')}")
-                        with col2:
-                            st.metric("EV/Revenue", f"{metrics.get('ev_to_revenue', 'N/A'):.2f}" if metrics.get('ev_to_revenue') else 'N/A')
-                        with col3:
-                            st.metric("EV/EBIT", f"{metrics.get('ev_to_ebit', 'N/A'):.2f}" if metrics.get('ev_to_ebit') else 'N/A')
-                    
-                    st.markdown("---")
-                    
-                    # Price Ratios
-                    st.markdown("**Price Ratios:**")
-                    col1, col2, col3 = st.columns(3)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        with col1:
-                            render_flip_card("PB_Ratio", metrics.get('price_to_book'), "Price/Book")
-                        with col2:
-                            render_flip_card("PS_Ratio", metrics.get('price_to_sales'), "Price/Sales")
-                        with col3:
-                            render_flip_card("FCF_Yield", metrics.get('price_to_fcf'), "Price/FCF")
-                    else:
-                        with col1:
-                            st.metric("Price/Book", f"{metrics.get('price_to_book', 'N/A')}")
-                        with col2:
-                            st.metric("Price/Sales", f"{metrics.get('price_to_sales', 'N/A'):.2f}" if metrics.get('price_to_sales') else 'N/A')
-                        with col3:
-                            st.metric("Price/FCF", f"{metrics.get('price_to_fcf', 'N/A'):.2f}" if metrics.get('price_to_fcf') else 'N/A')
-                    
-                    st.markdown("---")
-                    
-                    # Overall Assessment
-                    st.markdown(f"**Overall Valuation:** {metrics.get('overall_valuation', 'N/A')}")
-                    
-                    if metrics.get('valuation_signals'):
-                        st.markdown("**Signals:**")
-                        for signal in metrics['valuation_signals']:
-                            st.write(f"• {signal}")
-                else:
-                    st.warning(val_data.get('message', 'No valuation data available'))
-        except Exception as e:
-            st.error(f"Error analyzing valuation: {str(e)}")
-    
-    with cashflow_tab:
-        st.markdown(f"### {icon('cash', '1.2em')} Cash Flow Deep Dive", unsafe_allow_html=True)
-        
-        try:
-            from cashflow_analysis import analyze_cashflow
-            
-            with st.spinner("Analyzing cash flows..."):
-                cf_data = analyze_cashflow(st.session_state.ticker)
-                
-                if cf_data['status'] == 'success':
-                    metrics = cf_data['metrics']
-                    
-                    # Key Metrics - Use flip cards if available
-                    st.caption("Click any metric for insight")
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    if FLIP_CARDS_ENABLED:
-                        fcf = metrics.get('free_cash_flow', 0)
-                        with col1:
-                            render_flip_card("FCF_Yield", fcf / 1e9 if abs(fcf) > 1e9 else fcf / 1e6, "FCF ($B)" if abs(fcf) > 1e9 else "FCF ($M)")
-                        with col2:
-                            render_flip_card("Gross_Margin", metrics.get('fcf_conversion_rate'), "FCF Conversion")
-                        with col3:
-                            render_flip_card("Net_Margin", metrics.get('fcf_margin'), "FCF Margin")
-                        with col4:
-                            render_flip_card("ROE", metrics.get('cashflow_score'), "CF Score")
-                    else:
-                        with col1:
-                            fcf = metrics.get('free_cash_flow', 0)
-                            st.metric("Free Cash Flow", f"${fcf/1e9:.2f}B" if abs(fcf) > 1e9 else f"${fcf/1e6:.2f}M")
-                        with col2:
-                            st.metric("FCF Conversion", f"{metrics.get('fcf_conversion_rate', 0):.1f}%")
-                        with col3:
-                            st.metric("FCF Margin", f"{metrics.get('fcf_margin', 0):.2f}%")
-                        with col4:
-                            st.metric("Score", f"{metrics.get('cashflow_score', 0):.0f}/100")
-                    
-                    st.markdown("---")
-                    
-                    # Quality & Efficiency
-                    col1, col2 = st.columns(2)
-                    
-                    with col1:
-                        st.markdown("**Quality:**")
-                        st.write(f"• CF to NI Ratio: {metrics.get('cf_to_ni_ratio', 'N/A')}")
-                        st.write(f"• Earnings Quality: {metrics.get('earnings_quality', 'N/A')}")
-                        st.write(f"• FCF Consistency: {metrics.get('fcf_consistency', 'N/A')}")
-                        st.write(f"• OCF Margin: {metrics.get('ocf_margin', 'N/A')}%")
-                    
-                    with col2:
-                        st.markdown("**Efficiency:**")
-                        st.write(f"• CapEx Intensity: {metrics.get('capex_intensity', 'N/A')}%")
-                        st.write(f"• CapEx Profile: {metrics.get('capex_profile', 'N/A')}")
-                        st.write(f"• CapEx to OCF: {metrics.get('capex_to_ocf_ratio', 'N/A')}%")
-                        st.write(f"• WC to Sales: {metrics.get('working_capital_to_sales', 'N/A')}%")
-                else:
-                    st.warning(cf_data.get('message', 'No cash flow data available'))
-        except Exception as e:
-            st.error(f"Error analyzing cash flow: {str(e)}")
-
-
-
-# NOTE: Other tab functions will be created as we migrate
-# For now, existing tabs use the old inline structure
-# This EXAMPLE function shows the pattern without breaking anything
-
 # ==========================================
 # MAIN CONTENT TABS (Current Structure - UNCHANGED)
 # ==========================================
@@ -2231,10 +1667,11 @@ else:
     with tab4:
         st.markdown(f"## {icon('cash-coin', '1.5em')} DCF Valuation Model", unsafe_allow_html=True)
         
-        # Create sub-tabs for different DCF modes
-        dcf_tab1, dcf_tab2 = st.tabs([
-            "📊 Quick 3-Scenario DCF",
-            "🎛️ Live Scenario Builder"
+        # Create sub-tabs for different DCF modes + Earnings Revisions
+        dcf_tab1, dcf_tab2, dcf_tab3 = st.tabs([
+            "Quick 3-Scenario DCF",
+            "Live Scenario Builder",
+            "Earnings Revisions"
         ])
         
         # ==========================================
@@ -2611,6 +2048,91 @@ else:
             except Exception as e:
                 st.error(f"Live modeling error: {e}")
                 st.info("Make sure dcf_modeling.py and live_dcf_modeling.py are available")
+        
+        # Sub-tab 3: Earnings Revisions (wired from dead code)
+        with dcf_tab3:
+            st.markdown(f"## {icon('arrow-repeat', '1.5em')} Analyst Estimate Revisions", unsafe_allow_html=True)
+            st.info("Tracks changes in analyst EPS estimates - a key predictor of stock performance")
+            
+            try:
+                from earnings_revisions import get_earnings_revisions, create_revision_gauge, create_revision_trend_chart
+                
+                with st.spinner("Analyzing earnings revisions..."):
+                    revision_data = get_earnings_revisions(st.session_state.ticker)
+                    
+                    if revision_data:
+                        rev_dict = revision_data.to_dict()
+                        
+                        # Revision metrics row
+                        rcol1, rcol2, rcol3, rcol4 = st.columns(4)
+                        
+                        with rcol1:
+                            score = rev_dict['momentum_score']
+                            st.metric(
+                                "Revision Momentum",
+                                f"{score:+.0f}",
+                                help="Score from -100 (negative revisions) to +100 (positive revisions)"
+                            )
+                        
+                        with rcol2:
+                            st.metric(
+                                "Trend",
+                                rev_dict['trend'],
+                                help="Overall direction of estimate changes"
+                            )
+                        
+                        with rcol3:
+                            st.metric(
+                                "Analyst Agreement",
+                                rev_dict['analyst_agreement'],
+                                help="How closely analysts agree on estimates"
+                            )
+                        
+                        with rcol4:
+                            if rev_dict['current_year']['growth']:
+                                growth = rev_dict['current_year']['growth'] * 100
+                                st.metric("EPS Growth Est", f"{growth:+.1f}%")
+                            else:
+                                st.metric("EPS Growth Est", "N/A")
+                        
+                        st.markdown("---")
+                        
+                        # Current Year Estimates
+                        st.markdown("### Current Year Estimates")
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown("**EPS Estimates:**")
+                            curr = rev_dict['current_year']
+                            st.write(f"• Current Estimate: ${curr['current_estimate']:.2f}" if curr['current_estimate'] else "• Current Estimate: N/A")
+                            st.write(f"• 30 Days Ago: ${curr['estimate_30d_ago']:.2f}" if curr['estimate_30d_ago'] else "• 30 Days Ago: N/A")
+                            st.write(f"• 90 Days Ago: ${curr['estimate_90d_ago']:.2f}" if curr['estimate_90d_ago'] else "• 90 Days Ago: N/A")
+                        
+                        with col2:
+                            st.markdown("**Revision Activity:**")
+                            st.write(f"• Up Revisions (7d): {curr['up_7d']}")
+                            st.write(f"• Down Revisions (7d): {curr['down_7d']}")
+                            st.write(f"• Up Revisions (30d): {curr['up_30d']}")
+                            st.write(f"• Down Revisions (30d): {curr['down_30d']}")
+                        
+                        # Revision gauge chart
+                        with st.expander("View Revision Charts", expanded=False):
+                            chart_col1, chart_col2 = st.columns(2)
+                            
+                            with chart_col1:
+                                st.plotly_chart(create_revision_gauge(score), use_container_width=True)
+                            
+                            with chart_col2:
+                                st.plotly_chart(
+                                    create_revision_trend_chart(rev_dict['revisions']),
+                                    use_container_width=True
+                                )
+                    else:
+                        st.info("Revision data not available for this ticker")
+            except ImportError:
+                st.caption("Revision tracking module loading...")
+            except Exception as rev_e:
+                st.error(f"Error loading revision data: {str(rev_e)}")
     
     # ==========================================
     # OLD TAB 7: TECHNICAL ANALYSIS - MOVED TO TAB 6 SUB-TAB
@@ -3285,7 +2807,7 @@ else:
     # ==========================================
     
     with tab5:
-        risk_sub1, risk_sub2 = st.tabs(["Forensic Shield", "Corporate Governance"])
+        risk_sub1, risk_sub2, risk_sub3, risk_sub4 = st.tabs(["Forensic Shield", "Corporate Governance", "Insider Activity", "Inst. Ownership"])
         
         # Sub-tab 1: Forensic Analysis
         with risk_sub1:
@@ -3441,6 +2963,149 @@ else:
         # Sub-tab 2: Corporate Governance
         with risk_sub2:
             render_governance_tab(st.session_state.ticker, st.session_state.financials)
+        
+        # Sub-tab 3: Insider Activity (wired from dead code)
+        with risk_sub3:
+            st.markdown(f"## {icon('person-check', '1.5em')} Insider Transactions", unsafe_allow_html=True)
+            st.info("Track insider buying and selling activity - a key signal for stock analysis.")
+            
+            try:
+                from insider_transactions import get_insider_summary, create_insider_gauge, create_insider_activity_chart, create_transaction_table
+                
+                with st.spinner("Analyzing insider activity..."):
+                    insider_data = get_insider_summary(st.session_state.ticker, days=90)
+                    
+                    if insider_data:
+                        # Summary metrics row
+                        st.caption("Click any metric for insight")
+                        icol1, icol2, icol3, icol4 = st.columns(4)
+                        
+                        with icol1:
+                            st.metric("Insider Sentiment", f"{insider_data.sentiment_score:+.0f}")
+                        with icol2:
+                            net_str = f"${insider_data.net_value/1_000_000:.1f}M" if abs(insider_data.net_value) >= 1_000_000 else f"${insider_data.net_value:,.0f}"
+                            st.metric("Net Value", net_str)
+                        with icol3:
+                            st.metric("Sentiment", insider_data.sentiment_label)
+                        with icol4:
+                            if insider_data.is_cluster_buying:
+                                st.metric("Cluster Buying", f"{insider_data.cluster_buyers_count} insiders")
+                            else:
+                                st.metric("Cluster Status", "Not Detected")
+                        
+                        st.markdown("---")
+                        
+                        # Activity breakdown
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown("**Buy Activity:**")
+                            st.write(f"• Transactions: {insider_data.buy_transactions}")
+                            st.write(f"• Total Value: ${insider_data.total_buy_value:,.0f}")
+                            st.write(f"• Shares Bought: {insider_data.total_shares_bought:,}")
+                            if insider_data.notable_buyers:
+                                st.success(f"Notable: {', '.join(insider_data.notable_buyers[:3])}")
+                        
+                        with col2:
+                            st.markdown("**Sell Activity:**")
+                            st.write(f"• Transactions: {insider_data.sell_transactions}")
+                            st.write(f"• Total Value: ${insider_data.total_sell_value:,.0f}")
+                            st.write(f"• Shares Sold: {insider_data.total_shares_sold:,}")
+                            if insider_data.notable_sellers:
+                                st.warning(f"Notable: {', '.join(insider_data.notable_sellers[:3])}")
+                        
+                        # Charts in expander
+                        with st.expander("View Insider Charts", expanded=False):
+                            chart_col1, chart_col2 = st.columns(2)
+                            
+                            with chart_col1:
+                                st.plotly_chart(create_insider_gauge(insider_data.sentiment_score), use_container_width=True)
+                            
+                            with chart_col2:
+                                st.plotly_chart(create_insider_activity_chart(insider_data), use_container_width=True)
+                        
+                        # Transaction table
+                        if insider_data.recent_transactions:
+                            with st.expander("Recent Transactions", expanded=False):
+                                df = create_transaction_table(insider_data.recent_transactions)
+                                st.dataframe(df, hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No insider transaction data available for this ticker.")
+            except ImportError:
+                st.caption("Insider tracking module loading...")
+            except Exception as ins_e:
+                st.error(f"Error loading insider data: {str(ins_e)}")
+        
+        # Sub-tab 4: Institutional Ownership (wired from dead code)
+        with risk_sub4:
+            st.markdown(f"## {icon('building', '1.5em')} Institutional Ownership", unsafe_allow_html=True)
+            st.info("Track institutional and insider ownership - smart money signals.")
+            
+            try:
+                from institutional_ownership import get_ownership_summary, create_ownership_pie, create_accumulation_gauge
+                
+                with st.spinner("Analyzing institutional ownership..."):
+                    ownership_data = get_ownership_summary(st.session_state.ticker)
+                    
+                    if ownership_data:
+                        # Summary metrics row
+                        ocol1, ocol2, ocol3, ocol4 = st.columns(4)
+                        
+                        with ocol1:
+                            st.metric("Institutional", f"{ownership_data.institutional_pct:.1f}%")
+                        with ocol2:
+                            st.metric("Insider", f"{ownership_data.insider_pct:.1f}%")
+                        with ocol3:
+                            st.metric("Top 10 Concentration", f"{ownership_data.top10_concentration:.1f}%")
+                        with ocol4:
+                            st.metric("Signal", ownership_data.sentiment_label)
+                        
+                        st.markdown("---")
+                        
+                        # Ownership breakdown
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            st.markdown("**Ownership Breakdown:**")
+                            st.write(f"• Institutional: {ownership_data.institutional_pct:.1f}%")
+                            st.write(f"• Insider: {ownership_data.insider_pct:.1f}%")
+                            st.write(f"• Retail/Other: {ownership_data.retail_pct:.1f}%")
+                            st.write(f"• Total Institutions: {ownership_data.total_institutions}")
+                        
+                        with col2:
+                            st.markdown("**Concentration Analysis:**")
+                            st.write(f"• Top 10 Hold: {ownership_data.top10_concentration:.1f}%")
+                            concentrated = "Yes - Concentrated" if ownership_data.is_concentrated else "No - Distributed"
+                            st.write(f"• Highly Concentrated: {concentrated}")
+                            st.write(f"• Accumulation Score: {ownership_data.accumulation_score:+.0f}")
+                        
+                        # Charts in expander
+                        with st.expander("View Ownership Charts", expanded=False):
+                            chart_col1, chart_col2 = st.columns(2)
+                            
+                            with chart_col1:
+                                st.plotly_chart(create_ownership_pie(ownership_data), use_container_width=True)
+                            
+                            with chart_col2:
+                                st.plotly_chart(create_accumulation_gauge(ownership_data.accumulation_score), use_container_width=True)
+                        
+                        # Top holders table
+                        if ownership_data.top_holders:
+                            with st.expander("Top Institutional Holders", expanded=False):
+                                holders_data = [{
+                                    'Holder': h.name[:40] + '...' if len(h.name) > 40 else h.name,
+                                    'Shares': f"{h.shares:,}",
+                                    'Value': f"${h.value/1_000_000:.1f}M" if h.value >= 1_000_000 else f"${h.value:,.0f}",
+                                    '% Owned': f"{h.percent_held:.2f}%",
+                                    'Type': h.holder_type.value
+                                } for h in ownership_data.top_holders[:10]]
+                                st.dataframe(pd.DataFrame(holders_data), hide_index=True, use_container_width=True)
+                    else:
+                        st.info("No institutional ownership data available for this ticker.")
+            except ImportError:
+                st.caption("Ownership tracking module loading...")
+            except Exception as own_e:
+                st.error(f"Error loading ownership data: {str(own_e)}")
     
     # ==========================================
     # TAB 6: MARKET INTELLIGENCE - Technical + Quant + Options + Compare

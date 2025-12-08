@@ -1,0 +1,723 @@
+{
+  "timestamp": "2025-11-29T22:21:55.798872",
+  "tests_run": 119,
+  "tests_passed": 79,
+  "tests_failed": 6,
+  "tests_warnings": 34,
+  "details": [
+    {
+      "test": "Extraction Speed (AAPL)",
+      "status": "PASS",
+      "message": "Completed in 8.5s (limit: 30.0s)",
+      "duration_sec": 8.48
+    },
+    {
+      "test": "Financial Statements (AAPL)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (AAPL)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (AAPL)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (AAPL)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (AAPL)",
+      "status": "PASS",
+      "message": "DCF value: $93.49/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (AAPL)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (MSFT)",
+      "status": "PASS",
+      "message": "Completed in 2.6s (limit: 30.0s)",
+      "duration_sec": 2.63
+    },
+    {
+      "test": "Financial Statements (MSFT)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (MSFT)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (MSFT)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (MSFT)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (MSFT)",
+      "status": "PASS",
+      "message": "DCF value: $126.63/share",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "DCF Scenarios (MSFT)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (GOOGL)",
+      "status": "PASS",
+      "message": "Completed in 2.6s (limit: 30.0s)",
+      "duration_sec": 2.65
+    },
+    {
+      "test": "Financial Statements (GOOGL)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (GOOGL)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (GOOGL)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (GOOGL)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (GOOGL)",
+      "status": "PASS",
+      "message": "DCF value: $162.16/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (GOOGL)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (META)",
+      "status": "PASS",
+      "message": "Completed in 2.4s (limit: 30.0s)",
+      "duration_sec": 2.38
+    },
+    {
+      "test": "Financial Statements (META)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (META)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (META)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (META)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (META)",
+      "status": "PASS",
+      "message": "DCF value: $214.15/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (META)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (NVDA)",
+      "status": "PASS",
+      "message": "Completed in 2.6s (limit: 30.0s)",
+      "duration_sec": 2.61
+    },
+    {
+      "test": "Financial Statements (NVDA)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (NVDA)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (NVDA)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (NVDA)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (NVDA)",
+      "status": "PASS",
+      "message": "DCF value: $207.15/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (NVDA)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (JPM)",
+      "status": "PASS",
+      "message": "Completed in 2.6s (limit: 30.0s)",
+      "duration_sec": 2.59
+    },
+    {
+      "test": "Financial Statements (JPM)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (JPM)",
+      "status": "FAIL",
+      "message": "Only 6/8 metrics found",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (JPM)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (JPM)",
+      "status": "WARN",
+      "message": "1 outliers: Current_Ratio=0.00 (expected 0.1-10.0)",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (JPM)",
+      "status": "PASS",
+      "message": "DCF value: $50.87/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (JPM)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (BAC)",
+      "status": "PASS",
+      "message": "Completed in 2.9s (limit: 30.0s)",
+      "duration_sec": 2.92
+    },
+    {
+      "test": "Financial Statements (BAC)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (BAC)",
+      "status": "FAIL",
+      "message": "Only 6/8 metrics found",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (BAC)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (BAC)",
+      "status": "WARN",
+      "message": "1 outliers: Current_Ratio=0.00 (expected 0.1-10.0)",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (BAC)",
+      "status": "PASS",
+      "message": "DCF value: $3.91/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (BAC)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (WFC)",
+      "status": "PASS",
+      "message": "Completed in 2.8s (limit: 30.0s)",
+      "duration_sec": 2.79
+    },
+    {
+      "test": "Financial Statements (WFC)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (WFC)",
+      "status": "FAIL",
+      "message": "Only 6/8 metrics found",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (WFC)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (WFC)",
+      "status": "WARN",
+      "message": "1 outliers: Current_Ratio=0.00 (expected 0.1-10.0)",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (WFC)",
+      "status": "PASS",
+      "message": "DCF value: $18.81/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (WFC)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (WMT)",
+      "status": "PASS",
+      "message": "Completed in 2.6s (limit: 30.0s)",
+      "duration_sec": 2.58
+    },
+    {
+      "test": "Financial Statements (WMT)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (WMT)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (WMT)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (WMT)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (WMT)",
+      "status": "PASS",
+      "message": "DCF value: $43.97/share",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "DCF Scenarios (WMT)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (AMZN)",
+      "status": "PASS",
+      "message": "Completed in 2.5s (limit: 30.0s)",
+      "duration_sec": 2.49
+    },
+    {
+      "test": "Financial Statements (AMZN)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (AMZN)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (AMZN)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (AMZN)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (AMZN)",
+      "status": "FAIL",
+      "message": "DCF returned invalid value",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (AMZN)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (COST)",
+      "status": "PASS",
+      "message": "Completed in 2.5s (limit: 30.0s)",
+      "duration_sec": 2.51
+    },
+    {
+      "test": "Financial Statements (COST)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (COST)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (COST)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (COST)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (COST)",
+      "status": "PASS",
+      "message": "DCF value: $496.65/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (COST)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (TSLA)",
+      "status": "PASS",
+      "message": "Completed in 2.4s (limit: 30.0s)",
+      "duration_sec": 2.35
+    },
+    {
+      "test": "Financial Statements (TSLA)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (TSLA)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (TSLA)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (TSLA)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (TSLA)",
+      "status": "FAIL",
+      "message": "DCF returned invalid value",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "DCF Scenarios (TSLA)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (F)",
+      "status": "PASS",
+      "message": "Completed in 2.8s (limit: 30.0s)",
+      "duration_sec": 2.82
+    },
+    {
+      "test": "Financial Statements (F)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (F)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (F)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (F)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (F)",
+      "status": "FAIL",
+      "message": "DCF returned invalid value",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (F)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (JNJ)",
+      "status": "PASS",
+      "message": "Completed in 2.9s (limit: 30.0s)",
+      "duration_sec": 2.91
+    },
+    {
+      "test": "Financial Statements (JNJ)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (JNJ)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (JNJ)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (JNJ)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (JNJ)",
+      "status": "PASS",
+      "message": "DCF value: $84.23/share",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "DCF Scenarios (JNJ)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (UNH)",
+      "status": "PASS",
+      "message": "Completed in 2.7s (limit: 30.0s)",
+      "duration_sec": 2.75
+    },
+    {
+      "test": "Financial Statements (UNH)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (UNH)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (UNH)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (UNH)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (UNH)",
+      "status": "PASS",
+      "message": "DCF value: $749.65/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (UNH)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (XOM)",
+      "status": "PASS",
+      "message": "Completed in 2.9s (limit: 30.0s)",
+      "duration_sec": 2.91
+    },
+    {
+      "test": "Financial Statements (XOM)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (XOM)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (XOM)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (XOM)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (XOM)",
+      "status": "PASS",
+      "message": "DCF value: $73.46/share",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Scenarios (XOM)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "Extraction Speed (CVX)",
+      "status": "PASS",
+      "message": "Completed in 2.8s (limit: 30.0s)",
+      "duration_sec": 2.83
+    },
+    {
+      "test": "Financial Statements (CVX)",
+      "status": "PASS",
+      "message": "All 3 statements present",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Key Metrics Present (CVX)",
+      "status": "WARN",
+      "message": "7/8 metrics found. Missing: ['balance_sheet.Total Liabilities']",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratios Calculated (CVX)",
+      "status": "WARN",
+      "message": "7/8 ratios calculated",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "Ratio Reasonableness (CVX)",
+      "status": "PASS",
+      "message": "All 5 ratios reasonable",
+      "duration_sec": 0.0
+    },
+    {
+      "test": "DCF Calculation (CVX)",
+      "status": "PASS",
+      "message": "DCF value: $40.01/share",
+      "duration_sec": 0.01
+    },
+    {
+      "test": "DCF Scenarios (CVX)",
+      "status": "PASS",
+      "message": "All 3 scenarios + weighted avg calculated",
+      "duration_sec": 0.01
+    }
+  ]
+}

@@ -25,12 +25,13 @@ from datetime import datetime
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_dividends(ticker: str) -> Dict:
+def analyze_dividends(ticker: str, financials: Dict = None) -> Dict:
     """
     Comprehensive dividend analysis
     
     Args:
         ticker: Stock ticker symbol
+        financials: Pre-extracted financials dict (optional, reduces API calls)
         
     Returns:
         Dictionary with dividend metrics and analysis
@@ -38,8 +39,15 @@ def analyze_dividends(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing dividends for {ticker}...")
         
+        # Need yfinance stock object for dividends history
         stock = yf.Ticker(ticker)
-        info = stock.info
+        
+        # Use pre-extracted info if available
+        if financials and financials.get('info'):
+            info = financials['info']
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            info = stock.info
         
         # Get dividend data
         dividends = stock.dividends

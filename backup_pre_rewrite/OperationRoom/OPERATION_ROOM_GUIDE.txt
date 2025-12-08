@@ -1,0 +1,2278 @@
+================================================================================
+================================================================================
+                          OPERATION ROOM GUIDE
+                    MULTI-AGENT COORDINATION PROTOCOL
+                              VERSION 4.0
+                      (BATCH MODE - SINGLE SOURCE)
+================================================================================
+================================================================================
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║                                                                           ║
+  ║   🎯 THIS IS THE ONLY FILE YOU NEED TO READ 🎯                           ║
+  ║                                                                           ║
+  ║   This guide is the SINGLE SOURCE OF TRUTH for all protocols.            ║
+  ║   All other Operation Room files are DATA files only.                    ║
+  ║                                                                           ║
+  ║   • ROADMAP.md .............. Data (milestones, tasks)                   ║
+  ║   • LIVE_CHAT.md ............ Data (conversation log)                    ║
+  ║   • INBOX_*.md .............. Data (task assignments)                    ║
+  ║   • ACTIVE_TASKS.md ......... Data (current work)                        ║
+  ║   • COMPLETED_TASKS.md ...... Data (finished work)                       ║
+  ║   • CONTEXT/*.md ............ Data (project state)                       ║
+  ║                                                                           ║
+  ║   DO NOT look for instructions in other files.                           ║
+  ║   EVERYTHING you need is in THIS file.                                   ║
+  ║                                                                           ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+PART 1: OVERVIEW
+  1.1  What Is The Operation Room?
+  1.2  The User (Owner)
+  1.3  The Three Agents
+  1.4  Agent Hierarchy
+  1.5  The Golden Rules
+  1.6  AUTONOMOUS OPERATION (CRITICAL)
+
+PART 2: FILE STRUCTURE
+  2.1  Complete File Map
+  2.2  File Purposes
+  2.3  Which Files Each Agent Uses
+
+PART 3: ARCHITECT PROTOCOL (Agent 1)
+  3.1  Architect Responsibilities
+  3.2  Architect Session Start
+  3.3  CONTINUOUS WORK MODE
+  3.4  Creating Tasks for Executor
+  3.5  Working on Your Own Tasks
+  3.6  Signaling Session Complete
+  3.7  Reviewing Executor's Work
+  3.8  Architect Checklist
+
+PART 4: EXECUTOR PROTOCOL (Agent 2)
+  4.1  Executor Responsibilities
+  4.2  Executor Session Start
+  4.3  CONTINUOUS WORK MODE (WAIT FOR TASKS)
+  4.4  Processing Your Inbox
+  4.5  Executing Tasks
+  4.6  Completing Tasks
+  4.7  When Inbox Is Empty
+  4.8  Executor Checklist
+
+PART 5: COMMUNICATION PROTOCOL
+  5.1  LIVE_CHAT.md Usage
+  5.2  Message Prefixes
+  5.3  Session Signals
+  5.4  Asking Questions
+  5.5  Status Updates
+  5.6  The SYNC Protocol
+  5.7  The STATUS Command
+  5.8  IMMEDIATE ERROR REPORTING (CRITICAL)
+  5.9  Error Examples
+  5.10 User Response to Errors
+
+PART 6: FILE LOCKING
+  6.1  Why Lock Files
+  6.2  How To Lock
+  6.3  How To Unlock
+  6.4  Conflict Resolution
+
+PART 7: TASK MANAGEMENT
+  7.1  Task Template (Complete)
+  7.2  Task Lifecycle
+  7.3  Dependencies
+  7.4  Handoffs
+  7.5  Blocked Tasks
+
+PART 8: VALIDATION & COMPLETION
+  8.1  Cross-Validation Protocol
+  8.2  Submitting to R&D
+  8.3  Rollback Protocol
+
+PART 9: EXAMPLES
+  9.1  Complete Autonomous Workflow
+  9.2  Executor Waiting for Tasks Example
+  9.3  Question-Answer Example
+
+PART 10: QUICK REFERENCE
+  10.1  Architect Quick Reference
+  10.2  Executor Quick Reference
+  10.3  Message Prefix Table
+  10.4  Session Signal Table
+
+PART 11: DO NOT DO (Common Mistakes)
+
+PART 12: FAQ
+
+================================================================================
+================================================================================
+                         PART 1: OVERVIEW
+================================================================================
+================================================================================
+
+================================================================================
+1.1 WHAT IS THE OPERATION ROOM?
+================================================================================
+
+The Operation Room is a FILE-BASED coordination system that enables multiple
+AI agents to work together on the same project AUTONOMOUSLY.
+
+Since AI agents CANNOT directly talk to each other, we use SHARED FILES to
+communicate. By reading and writing to these files, agents can:
+
+  - Assign tasks to each other
+  - Ask and answer questions
+  - Share status updates
+  - Coordinate work without conflicts
+  - Validate each other's work
+
+THE CORE PRINCIPLE:
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  Once triggered, agents work CONTINUOUSLY until signaled to stop.       │
+  │  Check for messages DURING work, not just at start/end.                 │
+  │  WAIT for tasks if inbox is empty - don't stop working.                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+1.2 THE USER (OWNER)
+================================================================================
+
+The USER is the project owner and ultimate decision maker.
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  USER ROLE                                                                  │
+│  ═════════                                                                  │
+│                                                                             │
+│  You are the OWNER of this project.                                        │
+│                                                                             │
+│  WHO REPORTS TO YOU:                                                        │
+│  • Architect - Reports progress, decisions needed, blockers, milestones    │
+│  • R&D - Reports validation results and research findings                  │
+│  • Executor - Does NOT report to you (reports to Architect)                │
+│                                                                             │
+│  YOUR COMMANDS:                                                             │
+│  • Talk to Architect → For planning, decisions, complex requests           │
+│  • Send "." to Executor → Triggers CONTINUOUS work mode                    │
+│  • Talk to R&D → For research requests or validation reviews               │
+│                                                                             │
+│  MINIMAL INTERVENTION:                                                      │
+│  • Start Architect with your request                                        │
+│  • Send "." to Executor (they will wait for & process ALL tasks)           │
+│  • Agents work autonomously until Architect signals [SESSION_COMPLETE]     │
+│  • You only need to intervene for decisions or blockers                    │
+│                                                                             │
+│  HOW TO MONITOR PROGRESS:                                                   │
+│  • MISSION_CONTROL.md → Quick Status table                                  │
+│  • ACTIVE_TASKS.md → What's currently in progress                           │
+│  • COMPLETED_TASKS.md → What's been finished                                │
+│  • LIVE_CHAT.md → Agent conversation (scan for [DONE], [BLOCKED])           │
+│  • VALIDATION_QUEUE.md → What needs R&D review                              │
+│                                                                             │
+│  YOUR WORKFLOW:                                                             │
+│  1. Tell Architect what you want                                            │
+│  2. Send "." to Executor (can do immediately - Executor will wait)         │
+│  3. Both agents work autonomously                                           │
+│  4. Architect signals [SESSION_COMPLETE] when all work done                │
+│  5. Call R&D for quality review when needed                                 │
+│                                                                             │
+│  WHEN TO INTERVENE:                                                         │
+│  • When Architect posts [DECISION_NEEDED]                                   │
+│  • When seeing [BLOCKED] that needs external input                          │
+│  • When you want to change priorities mid-session                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+1.3 THE THREE AGENTS
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ARCHITECT (Agent 1)                                                        │
+│  ════════════════════                                                       │
+│  Role: Lead developer, task creator, decision maker                         │
+│  Handles: Complex tasks, architecture, design, planning                     │
+│  Creates: Tasks for Executor                                                │
+│  Validates: Executor's completed work                                       │
+│  Reports to: User                                                           │
+│                                                                             │
+│  WORKS CONTINUOUSLY until all planned work is done.                         │
+│  Signals [SESSION_COMPLETE] when finished.                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EXECUTOR (Agent 2)                                                         │
+│  ═══════════════════                                                        │
+│  Role: Implementation specialist, task executor                             │
+│  Handles: Tasks assigned by Architect                                       │
+│  Receives: Detailed instructions in INBOX_EXECUTOR.md                       │
+│  Validates: Architect's completed work when asked                           │
+│  Reports to: Architect (via files)                                          │
+│                                                                             │
+│  NOTE: Executor does NOT communicate with User directly.                    │
+│        User sends "." to trigger Executor's CONTINUOUS work mode.           │
+│                                                                             │
+│  WHEN TRIGGERED:                                                            │
+│  - If inbox empty → WAIT and keep checking until tasks appear              │
+│  - If task being written → WAIT for it to be complete                      │
+│  - Process ALL tasks until [SESSION_COMPLETE] signal                       │
+│  - Do NOT stop after one task                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  R&D AGENT (Separate)                                                       │
+│  ═════════════════════                                                      │
+│  Role: Quality assurance, research, validation                              │
+│  Handles: Validating completed features, research requests                  │
+│  Receives: Items in OperationsValidation/VALIDATION_QUEUE.md                │
+│  Reports to: User                                                           │
+│                                                                             │
+│  NOTE: R&D does NOT participate in Operation Room coordination.             │
+│        R&D is called separately by User when validation is needed.          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+1.4 AGENT HIERARCHY
+================================================================================
+
+                              ┌──────────┐
+                              │   USER   │
+                              └────┬─────┘
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼              ▼              ▼
+             ┌──────────┐   ┌──────────┐   ┌──────────┐
+             │ARCHITECT │   │ EXECUTOR │   │   R&D    │
+             │(Agent 1) │   │(Agent 2) │   │ (Agent 3)│
+             └────┬─────┘   └────┬─────┘   └──────────┘
+                  │              │
+                  │   Creates    │
+                  │   Tasks      │
+                  │──────────────▶
+                  │              │
+                  │◀─────────────│
+                  │   Reports    │
+                  │   Completion │
+                  │              │
+
+COMMAND FLOW:
+  - User talks to Architect (for planning/complex work)
+  - User sends "." to Executor (triggers continuous work mode)
+  - Architect creates detailed tasks for Executor
+  - Executor WAITS for tasks if none available, processes ALL when they arrive
+  - Completed features go to R&D for validation
+
+================================================================================
+1.5 THE GOLDEN RULES
+================================================================================
+
+RULE 1: WORK CONTINUOUSLY UNTIL DONE
+         Don't stop after minimal work. Keep going until session complete.
+         Executor: WAIT for tasks if inbox empty.
+
+RULE 2: CHECK FOR MESSAGES DURING WORK
+         Read LIVE_CHAT.md between steps, not just at start/end.
+         React to [URGENT] immediately.
+
+RULE 3: LOCK FILES BEFORE EDITING
+         Check LOCKED_FILES.md before editing any code file.
+         Add your lock. Post [LOCK] in LIVE_CHAT.
+
+RULE 4: NEVER ASSUME - COMMUNICATE
+         If unclear, ask in LIVE_CHAT.md with [Q] prefix.
+         Wait for [A] answer before proceeding.
+
+RULE 5: COMPLETE ALL TASKS
+         Follow ALL acceptance criteria.
+         Process ALL tasks in inbox, not just the first one.
+
+RULE 6: VALIDATE EACH OTHER'S WORK
+         Before a task is truly done, the OTHER agent reviews it.
+
+RULE 7: ARCHITECT CONTROLS GIT (CRITICAL)
+         Only Architect commits and pushes to git.
+         Executor NEVER runs git commands.
+         This ensures single source of truth and clean history.
+
+================================================================================
+1.6 BATCH MODE TASK PLANNING (CRITICAL)
+================================================================================
+
+THIS IS THE KEY TO EFFICIENT OPERATION:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                    BATCH MODE = NO MID-SESSION BLOCKS                   │
+  │  ═══════════════════════════════════════════════════════════════════   │
+  │                                                                         │
+  │  THE PROBLEM (OLD WAY):                                                 │
+  │  ──────────────────────                                                 │
+  │  • Executor gets blocked waiting for Architect task A003 to complete   │
+  │  • Executor posts [WAITING_FOR_TASKS] and sits idle                    │
+  │  • User has to re-trigger Executor after A003 is done                  │
+  │  • Time wasted, user intervention needed                               │
+  │                                                                         │
+  │  THE SOLUTION (BATCH MODE):                                             │
+  │  ──────────────────────────                                             │
+  │  • Architect plans ALL Executor tasks at SESSION START                 │
+  │  • NO Executor task depends on any Architect task                      │
+  │  • Dependencies only exist WITHIN Executor's own task list (E001→E002) │
+  │  • Executor works through their batch without ever waiting on Architect│
+  │  • Session completes with ZERO user re-triggers                        │
+  │                                                                         │
+  │  SMART TASK FILLING:                                                    │
+  │  ────────────────────                                                   │
+  │  If Executor would finish too quickly (light workload):                 │
+  │  1. Architect pulls LOW-PRIORITY tasks from ROADMAP.md bottom          │
+  │  2. Architect asks User: "Adding tasks X, Y, Z to fill Executor's      │
+  │     schedule. OK?"                                                      │
+  │  3. User confirms → Architect adds to batch                            │
+  │  4. User declines → Architect proceeds with lighter batch              │
+  │                                                                         │
+  │  THE RULES:                                                             │
+  │  ───────────                                                            │
+  │  ✅ Executor tasks can depend on OTHER Executor tasks (E001→E002)      │
+  │  ✅ Architect tasks can depend on Executor tasks (E005→A003)           │
+  │  ❌ Executor tasks CANNOT depend on Architect tasks                    │
+  │  ❌ No mid-session [WAITING_FOR_TASKS] - Executor always has work      │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+BATCH MODE WORKFLOW:
+
+  1. User tells Architect what to build
+  2. Architect reads ROADMAP.md and plans:
+     - Which tasks Architect will do (complex/design)
+     - Which tasks Executor will do (implementation/data)
+  3. Architect ensures ZERO Executor→Architect dependencies
+  4. If Executor batch is light, Architect pulls filler tasks from roadmap
+  5. Architect asks User: "Plan includes [filler tasks]. Confirm?"
+  6. User sends "." to Executor
+  7. Architect posts ALL Executor tasks in INBOX_EXECUTOR.md
+  8. Architect posts [BATCH_READY] (all Executor tasks are defined)
+  9. Both work continuously until done
+  10. Executor NEVER waits for Architect
+
+================================================================================
+1.7 AUTONOMOUS OPERATION
+================================================================================
+
+THIS IS THE KEY DIFFERENCE FROM STOP-START SYSTEMS:
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        AUTONOMOUS OPERATION MODE                            │
+│                        ════════════════════════                             │
+│                                                                             │
+│  ARCHITECT:                                                                 │
+│  ──────────                                                                 │
+│  1. Receives request from User                                              │
+│  2. Plans all work needed                                                   │
+│  3. Works on complex tasks themselves                                       │
+│  4. Creates tasks for Executor in INBOX_EXECUTOR.md                         │
+│  5. Continues working while Executor processes tasks                        │
+│  6. Validates Executor's completed work                                     │
+│  7. Creates more tasks if needed                                            │
+│  8. When ALL work complete → Posts [SESSION_COMPLETE]                       │
+│                                                                             │
+│  EXECUTOR:                                                                  │
+│  ─────────                                                                  │
+│  1. User sends "." to trigger                                               │
+│  2. Checks INBOX_EXECUTOR.md                                                │
+│  3. If empty → WAIT (check every few seconds), post [WAITING_FOR_TASKS]    │
+│  4. If task marked "PENDING" → Check if complete (not still being written) │
+│  5. If task complete → Execute it fully                                    │
+│  6. When done → Check for MORE tasks                                       │
+│  7. Repeat until [SESSION_COMPLETE] signal from Architect                   │
+│  8. Only then stop working                                                  │
+│                                                                             │
+  │  THE SIGNALS (BATCH MODE):                                                  │
+  │  ───────────────────────────                                                │
+  │  [BATCH_READY] - Architect: "All Executor tasks are defined in inbox"      │
+  │  [TASK_READY] - Architect: (Individual signal, optional in batch mode)     │
+  │  [ALL_TASKS_ASSIGNED] - Architect: "No more tasks coming this session"     │
+  │  [SESSION_COMPLETE] - Architect: "All work done, session finished"         │
+  │                                                                             │
+  │  NOTE: [WAITING_FOR_TASKS] should NEVER occur in Batch Mode!               │
+  │        If Executor has nothing to do, Architect failed to plan correctly.  │
+  │                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+BATCH MODE TIMING DIAGRAM:
+
+  User              Architect              Executor
+    │                   │                     │
+    │──"Build X"───────▶│                     │
+    │                   │ Plans ALL tasks     │
+    │                   │ (Batch Mode)        │
+    │◀─"Adding filler"──│                     │
+    │──"OK"────────────▶│                     │
+    │                   │──ALL Tasks (Batch)─▶│
+    │──"."─────────────────────────────────▶│
+    │                   │ [BATCH_READY]       │ [SYNC]
+    │                   │                     │ Has ALL tasks ready!
+    │                   │ Works on A001       │ Works on E001
+    │                   │ (own complex work)  │ Finishes E001
+    │                   │                     │ [DONE] E001
+    │                   │                     │ Starts E002 (no waiting!)
+    │                   │ Finishes A001       │ Working...
+    │                   │ [DONE] A001         │ Finishes E002
+    │                   │                     │ [DONE] E002
+    │                   │ Works on A002       │ Starts E003 (internal dep OK)
+    │                   │ (uses E001 output)  │ Working...
+    │                   │                     │ Finishes E003
+    │                   │                     │ [DONE] E003
+    │                   │ Finishes A002       │ All Executor tasks done!
+    │                   │ [VALIDATED] all     │
+    │                   │ [SESSION_COMPLETE] ─│
+    │◀──Report─────────│                     │ Stops
+    │                   │                     │
+
+KEY DIFFERENCE:
+  ❌ OLD: Executor waits for A001 → User re-triggers → Executor continues
+  ✅ NEW: Executor NEVER waits for Architect. Always has work to do.
+
+================================================================================
+================================================================================
+                         PART 2: FILE STRUCTURE
+================================================================================
+================================================================================
+
+================================================================================
+2.1 COMPLETE FILE MAP
+================================================================================
+
+OperationRoom/
+│
+├── MISSION_CONTROL.md         ◄── Project status, priorities, quick view
+│
+├── ROADMAP.md                 ◄── Milestones & roadmap (Architect maintains)
+│
+├── LIVE_CHAT.md               ◄── Real-time conversation (CHECK DURING WORK)
+│
+├── INBOX_ARCHITECT.md         ◄── Tasks assigned TO Architect
+│
+├── INBOX_EXECUTOR.md          ◄── Tasks assigned TO Executor
+│
+├── LOCKED_FILES.md            ◄── Files currently being edited (claim here)
+│
+├── ACTIVE_TASKS.md            ◄── All in-progress work
+│
+├── COMPLETED_TASKS.md         ◄── Archive of completed work
+│
+├── CHAT_ARCHIVE/              ◄── Old chat logs (daily archives)
+│   └── README.md
+│
+├── CONTEXT/
+│   ├── PROJECT_STATE.md       ◄── Current codebase status
+│   ├── BLOCKERS.md            ◄── Active blockers
+│   └── DECISIONS_LOG.md       ◄── Key decisions made
+│
+├── OPERATION_ROOM_GUIDE.txt   ◄── This file (Agent protocol)
+│
+└── USER_GUIDE.txt             ◄── User/Owner quick reference
+
+OperationsValidation/
+│
+├── VALIDATION_QUEUE.md        ◄── Features awaiting R&D validation
+└── [validation reports]       ◄── R&D validation outputs
+
+================================================================================
+2.2 FILE PURPOSES
+================================================================================
+
+MISSION_CONTROL.md
+  - Overview of current project status
+  - Today's priorities
+  - Quick status of both agents
+  - Read at session start
+
+ROADMAP.md
+  - Project milestones and phases
+  - Current session objective
+  - Task breakdown per milestone
+  - Session history
+  - ARCHITECT MAINTAINS THIS (Executor reads only)
+
+LIVE_CHAT.md
+  - Real-time conversation between agents
+  - Session signals ([TASK_READY], [SESSION_COMPLETE], etc.)
+  - Questions, answers, status updates
+  - CHECK THIS DURING WORK (between steps)
+
+INBOX_ARCHITECT.md
+  - Tasks assigned TO the Architect
+  - Executor creates tasks here when needed
+  - Architect checks this for work to do
+
+INBOX_EXECUTOR.md
+  - Tasks assigned TO the Executor
+  - Architect creates DETAILED tasks here
+  - Executor checks this for work to do
+  - Tasks marked [TASK_READY] in LIVE_CHAT are complete
+  - MUST contain complete instructions (Executor doesn't talk to User)
+
+LOCKED_FILES.md
+  - Prevents two agents from editing same file
+  - Check BEFORE editing any file
+  - Add your lock entry
+  - Remove when done
+
+ACTIVE_TASKS.md
+  - Track all currently in-progress work
+  - Shows what each agent is working on
+  - Update when starting/completing tasks
+
+COMPLETED_TASKS.md
+  - Archive of all completed work
+  - Reference for similar future work
+  - Required for R&D validation submission
+
+================================================================================
+2.3 WHICH FILES EACH AGENT USES
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ARCHITECT reads:                      ARCHITECT writes:                    │
+│  ─────────────────                     ──────────────────                   │
+│  • LIVE_CHAT.md (during work)          • LIVE_CHAT.md (updates + signals)   │
+│  • INBOX_ARCHITECT.md (own inbox)      • INBOX_EXECUTOR.md (create tasks)   │
+│  • LOCKED_FILES.md (before editing)    • LOCKED_FILES.md (add/remove locks) │
+│  • MISSION_CONTROL.md (priorities)     • ACTIVE_TASKS.md (track work)       │
+│  • ACTIVE_TASKS.md (status)            • COMPLETED_TASKS.md (archive)       │
+│  • CONTEXT/* files                     • CONTEXT/* files                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EXECUTOR reads:                       EXECUTOR writes:                     │
+│  ────────────────                      ─────────────────                    │
+│  • LIVE_CHAT.md (during work)          • LIVE_CHAT.md (updates)             │
+│  • INBOX_EXECUTOR.md (own inbox)       • INBOX_ARCHITECT.md (if needed)     │
+│  • LOCKED_FILES.md (before editing)    • LOCKED_FILES.md (add/remove locks) │
+│  • MISSION_CONTROL.md (context)        • ACTIVE_TASKS.md (track work)       │
+│  • ACTIVE_TASKS.md (status)            • COMPLETED_TASKS.md (archive)       │
+│  • CONTEXT/* files                     • CONTEXT/* files                    │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+================================================================================
+                     PART 3: ARCHITECT PROTOCOL
+================================================================================
+================================================================================
+
+================================================================================
+3.1 ARCHITECT RESPONSIBILITIES
+================================================================================
+
+As the ARCHITECT, you are responsible for:
+
+  1. ROADMAP: Maintain ROADMAP.md with milestones, objectives, and progress
+  2. BATCH PLANNING: Plan ALL Executor tasks at SESSION START (see 3.2a)
+  3. NO CROSS-DEPS: Ensure NO Executor task depends on your tasks
+  4. COMPLEX WORK: Handle architecture, design, and difficult tasks yourself
+  5. DELEGATING: Create detailed tasks for Executor in INBOX_EXECUTOR.md
+  6. SIGNALING: Post [BATCH_READY] when all Executor tasks are defined
+  7. COORDINATING: Keep work flowing efficiently
+  8. VALIDATING: Review Executor's completed work
+  9. DECIDING: Make final calls on technical approaches
+  10. COMPLETING: Signal [SESSION_COMPLETE] when ALL work is done
+
+YOU communicate with the User directly.
+YOU create tasks for Executor.
+YOU ensure Executor NEVER waits for you.
+YOU signal when the session is complete.
+YOU are the lead of this development team.
+
+================================================================================
+3.2 ARCHITECT SESSION START
+================================================================================
+
+Every time you start a session, do these steps IN ORDER:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  ARCHITECT SESSION START CHECKLIST                                      │
+  │  ══════════════════════════════════                                     │
+  │                                                                         │
+  │  [ ] 1. Read MISSION_CONTROL.md - understand current priorities         │
+  │  [ ] 2. Read ROADMAP.md - review milestones and current objective       │
+  │  [ ] 3. Read LIVE_CHAT.md - catch up on any messages                    │
+  │  [ ] 4. Read INBOX_ARCHITECT.md - check for tasks from Executor         │
+  │  [ ] 5. Read ACTIVE_TASKS.md - see what's in progress                   │
+  │  [ ] 6. Read LOCKED_FILES.md - see what files are claimed               │
+  │  [ ] 7. Plan BATCH MODE (see 3.2a below) ← CRITICAL!                    │
+  │  [ ] 8. Post [SYNC] message in LIVE_CHAT.md                             │
+  │  [ ] 9. Write ALL Executor tasks to INBOX_EXECUTOR.md                   │
+  │  [ ] 10. Post [BATCH_READY] in LIVE_CHAT.md                             │
+  │  [ ] 11. Begin CONTINUOUS work on your own tasks                        │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+3.2a BATCH MODE PLANNING (CRITICAL - DO THIS BEFORE CREATING ANY TASKS)
+================================================================================
+
+Before creating ANY tasks, plan the entire session:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  BATCH MODE PLANNING CHECKLIST                                          │
+  │  ═════════════════════════════                                          │
+  │                                                                         │
+  │  STEP 1: CATEGORIZE WORK                                                │
+  │  ────────────────────────                                               │
+  │  [ ] List all tasks needed for the milestone                            │
+  │  [ ] Mark each task as: ARCHITECT (complex) or EXECUTOR (implementation)│
+  │  [ ] Complex/design/architecture → ARCHITECT                            │
+  │  [ ] Implementation/data/research/testing → EXECUTOR                    │
+  │                                                                         │
+  │  STEP 2: CHECK FOR CROSS-DEPENDENCIES                                   │
+  │  ────────────────────────────────────                                   │
+  │  [ ] Review Executor tasks: Do ANY depend on your tasks?                │
+  │  [ ] If YES → RESTRUCTURE! Move dependent work to your list             │
+  │  [ ] Executor tasks can ONLY depend on other Executor tasks (E001→E002) │
+  │  [ ] Your tasks CAN depend on Executor tasks (E005 complete → you start)│
+  │                                                                         │
+  │  STEP 3: ESTIMATE WORKLOAD BALANCE                                      │
+  │  ────────────────────────────────                                       │
+  │  [ ] Estimate total Executor time                                       │
+  │  [ ] Estimate your own task time                                        │
+  │  [ ] If Executor would finish early → Go to Step 4                      │
+  │  [ ] If balanced → Skip to Step 5                                       │
+  │                                                                         │
+  │  STEP 4: ADD FILLER TASKS (If Executor would be idle)                   │
+  │  ─────────────────────────────────────────────────────                  │
+  │  [ ] Look at ROADMAP.md "FILLER TASKS (Low Priority)" section           │
+  │  [ ] Pick tasks that don't depend on current milestone                  │
+  │  [ ] ASK USER: "Adding [task names] to fill Executor's schedule. OK?"   │
+  │  [ ] If User approves → Add to Executor batch                           │
+  │  [ ] If User declines → Proceed with lighter batch                      │
+  │                                                                         │
+  │  STEP 5: CREATE THE BATCH                                               │
+  │  ────────────────────────                                               │
+  │  [ ] Write ALL Executor tasks to INBOX_EXECUTOR.md at once              │
+  │  [ ] Include internal dependencies (E001→E002) in task descriptions     │
+  │  [ ] Post [BATCH_READY] in LIVE_CHAT.md                                 │
+  │  [ ] Update ROADMAP.md with task breakdown                              │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+EXAMPLE: Good vs Bad Task Dependencies
+
+  ❌ BAD (Executor waits for Architect):
+  
+     TASK-A001: Design FCF calculator          (Architect)
+     TASK-E001: Implement FCF calculator       (Executor - DEPENDS ON A001!)
+     → Executor gets blocked waiting for A001!
+  
+  ✅ GOOD (No cross-dependencies):
+  
+     TASK-A001: Design FCF calculator          (Architect)
+     TASK-A002: Implement FCF calculator       (Architect - does own design+impl)
+     TASK-E001: Research FRED API              (Executor - independent)
+     TASK-E002: Download Damodaran data        (Executor - independent)
+     TASK-E003: Validate AAPL metrics          (Executor - uses E002)
+     → Executor never waits for Architect!
+  
+  ✅ ALSO GOOD (Architect waits for Executor - this is OK):
+  
+     TASK-E001: Research FRED API              (Executor - goes first)
+     TASK-E002: Implement fred_api.py          (Executor - uses E001)
+     TASK-A001: Integrate FRED into DCF        (Architect - uses E002 when ready)
+     → Architect can wait for Executor. Executor keeps working.
+
+================================================================================
+3.3 CONTINUOUS WORK MODE
+================================================================================
+
+Once you start, KEEP WORKING until the session is complete:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  ARCHITECT CONTINUOUS WORK LOOP                                         │
+  │  ══════════════════════════════                                         │
+  │                                                                         │
+  │  WHILE (work remains) DO:                                               │
+  │                                                                         │
+  │    1. Identify next piece of work                                       │
+  │       - Complex/architecture → Do it yourself                          │
+  │       - Implementation → Create task for Executor                      │
+  │                                                                         │
+  │    2. If creating Executor task:                                        │
+  │       - Write COMPLETE task in INBOX_EXECUTOR.md                        │
+  │       - Post [TASK_READY] TASK-EXXX in LIVE_CHAT.md                     │
+  │       - Continue with your own work immediately                         │
+  │                                                                         │
+  │    3. Between steps, check LIVE_CHAT.md for:                            │
+  │       - [DONE] messages from Executor → Validate their work            │
+  │       - [Q] questions → Answer with [A]                                │
+  │       - [BLOCKED] → Help resolve                                       │
+  │                                                                         │
+  │    4. Repeat until all planned work is done                             │
+  │                                                                         │
+  │  END WHILE                                                              │
+  │                                                                         │
+  │  Post [ALL_TASKS_ASSIGNED] when no more Executor tasks needed           │
+  │  Post [SESSION_COMPLETE] when ALL work is done                          │
+  │  Report summary to User                                                 │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+DO NOT:
+  - Stop after creating one task
+  - Wait for User to ask "what's next"
+  - Stop after each small step
+
+DO:
+  - Keep working continuously
+  - Create multiple tasks as needed
+  - Work on your own tasks while Executor works on theirs
+  - Only stop when everything is complete
+
+================================================================================
+3.4 CREATING TASKS FOR EXECUTOR
+================================================================================
+
+When you need Executor to do something:
+
+  1. Open INBOX_EXECUTOR.md
+  2. Add a NEW task using the COMPLETE template below
+  3. Post in LIVE_CHAT.md: "[TIMESTAMP] [ARCHITECT]: [TASK_READY] TASK-EXXX ready"
+  4. CONTINUE your own work immediately (don't wait for Executor)
+
+CRITICAL: Your task must be COMPLETE and SELF-CONTAINED.
+          Executor does NOT talk to User. Executor only has YOUR instructions.
+          Include EVERYTHING they need to complete the task.
+          Only post [TASK_READY] when the task is FULLY WRITTEN.
+
+COMPLETE TASK TEMPLATE FOR EXECUTOR:
+
+```
+### TASK-E[XXX]: [Clear, Specific Title]
+- **From:** Architect
+- **Priority:** P0 / P1 / P2
+- **Created:** [YYYY-MM-DD HH:MM]
+- **Est. Time:** [Realistic estimate]
+- **Status:** PENDING
+
+**Dependencies:**
+- **Depends On:** [Task IDs that must complete first, or "None"]
+- **Blocks:** [Task IDs waiting on this, or "None"]
+
+**Description:**
+[DETAILED description. Be specific. Include WHY this is needed.]
+
+**Step-by-Step Instructions:**
+1. [First step with specific details]
+2. [Second step with specific details]
+3. [Continue until complete]
+
+**Files to Modify:**
+- [filepath1.py] - [what to change]
+- [filepath2.py] - [what to change]
+
+**Acceptance Criteria:**
+- [ ] [Specific, testable criterion 1]
+- [ ] [Specific, testable criterion 2]
+- [ ] [Specific, testable criterion 3]
+
+**Context:**
+- [Why this task exists]
+- [How it fits into the bigger picture]
+- [Related decisions or constraints]
+
+**Testing Instructions:**
+- [How to verify the task is complete]
+- [What to check]
+
+**Rollback Plan:**
+[If this breaks something: specific steps to undo, or "N/A - low risk"]
+
+**Questions?**
+Post in LIVE_CHAT.md with [Q] prefix. I will respond.
+```
+
+================================================================================
+3.5 WORKING ON YOUR OWN TASKS
+================================================================================
+
+When working on your own tasks (complex work you do yourself):
+
+  BEFORE STARTING:
+  [ ] Check LIVE_CHAT.md for any urgent messages or questions
+  [ ] Check LOCKED_FILES.md - are the files you need available?
+  [ ] Add your locks to LOCKED_FILES.md
+  [ ] Post in LIVE_CHAT: "[LOCK] Claimed [files] for [purpose]"
+  [ ] Add entry to ACTIVE_TASKS.md
+
+  WHILE WORKING:
+  [ ] Check LIVE_CHAT.md between major steps
+  [ ] Answer any [Q] questions from Executor
+  [ ] Validate any [DONE] tasks from Executor
+  [ ] Post [UPDATE] messages for significant progress
+  [ ] If blocked, post [BLOCKED] and add to BLOCKERS.md
+
+  AFTER COMPLETING:
+  [ ] Remove locks from LOCKED_FILES.md
+  [ ] Post in LIVE_CHAT: "[UNLOCK] Released [files]"
+  [ ] Post in LIVE_CHAT: "[DONE] [Task description]"
+  [ ] Update ACTIVE_TASKS.md (remove task)
+  [ ] Move to COMPLETED_TASKS.md with details
+  [ ] CONTINUE to next task (don't stop)
+
+================================================================================
+3.6 SIGNALING SESSION COMPLETE (WITH CHECKPOINT VALIDATION)
+================================================================================
+
+When ALL work for this session is done:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  CHECKPOINT VALIDATION (REQUIRED BEFORE SESSION COMPLETE)               │
+  │  ═══════════════════════════════════════════════════════                │
+  │                                                                         │
+  │  STEP 1: STOP NEW WORK                                                  │
+  │  Post: "[VALIDATION_CHECKPOINT] Stopping for cross-validation."         │
+  │                                                                         │
+  │  STEP 2: ARCHITECT VALIDATES ALL EXECUTOR TASKS                         │
+  │  For each Executor [DONE] task:                                         │
+  │  - Read the files they created/modified                                 │
+  │  - Check acceptance criteria                                            │
+  │  - Look for gaps, bugs, or quality issues                               │
+  │  - Post: "[VALIDATED] TASK-EXXX" or request revision                    │
+  │                                                                         │
+  │  STEP 3: EXECUTOR VALIDATES ALL ARCHITECT TASKS                         │
+  │  For each Architect [DONE] task:                                        │
+  │  - Read the files they created/modified                                 │
+  │  - Check for obvious issues or gaps                                     │
+  │  - Post: "[VALIDATED] TASK-AXXX" or flag concerns                       │
+  │                                                                         │
+  │  STEP 4: FIX ANY ISSUES                                                 │
+  │  If issues found → Fix them → Re-validate                               │
+  │                                                                         │
+  │  STEP 5: CONFIRM ALL VALIDATED                                          │
+  │  Post: "[VALIDATION_COMPLETE] All tasks validated. X/X passed."         │
+  │                                                                         │
+  │  STEP 6: POST TESTING REPORT (MANDATORY)                                │
+  │  Post: "[TESTING_REPORT]" with pytest results + accuracy comparisons    │
+  │  See Section 8.4 for required format.                                   │
+  │                                                                         │
+  │  STEP 7: SESSION COMPLETE                                               │
+  │  Only NOW post: "[SESSION_COMPLETE]"                                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  After validation checkpoint:
+  1. Post: "[SESSION_COMPLETE] All work done and validated."
+  2. Update ROADMAP.md:
+     - Mark completed tasks as ✅
+     - Update milestone status
+     - Add entry to "Session History"
+  3. Update MISSION_CONTROL.md with session summary
+  4. Report to User:
+     - What was accomplished (reference milestone)
+     - Validation results
+     - Any issues found and fixed
+     - What's next on the roadmap
+
+================================================================================
+3.7 REVIEWING EXECUTOR'S WORK
+================================================================================
+
+When Executor marks a task as [DONE]:
+
+  1. Read their completion message in LIVE_CHAT.md
+  2. Review the files they changed
+  3. Check against the acceptance criteria
+  4. Test if applicable
+
+  IF APPROVED:
+  - Post: "[TIMESTAMP] [ARCHITECT]: [VALIDATED] TASK-EXXX. Good work."
+  - Update COMPLETED_TASKS.md with validation note
+  - If significant feature, add to OperationsValidation/VALIDATION_QUEUE.md
+  - CONTINUE your own work
+
+  IF ISSUES FOUND:
+  - Post: "[TIMESTAMP] [ARCHITECT]: TASK-EXXX needs revision: [specific issues]"
+  - Executor will fix and report [DONE] again
+
+================================================================================
+3.8 ARCHITECT CHECKLIST (Print This)
+================================================================================
+
+SESSION START:
+  [ ] Read MISSION_CONTROL.md
+  [ ] Read LIVE_CHAT.md
+  [ ] Read INBOX_ARCHITECT.md
+  [ ] Read ACTIVE_TASKS.md
+  [ ] Read LOCKED_FILES.md
+  [ ] Post [SYNC] message
+  [ ] Update Quick Status in MISSION_CONTROL.md
+
+CONTINUOUS WORK:
+  [ ] Work on tasks without stopping
+  [ ] Check LIVE_CHAT.md between steps
+  [ ] Answer Executor questions
+  [ ] Validate Executor completions
+  [ ] Create new tasks as needed
+  [ ] Post [TASK_READY] for each new task
+
+BEFORE EDITING FILES:
+  [ ] Check LOCKED_FILES.md
+  [ ] Add your lock
+  [ ] Post [LOCK] in LIVE_CHAT
+
+AFTER COMPLETING EACH TASK:
+  [ ] Remove locks from LOCKED_FILES.md
+  [ ] Post [UNLOCK] in LIVE_CHAT
+  [ ] Post [DONE] in LIVE_CHAT
+  [ ] Update ACTIVE_TASKS.md
+  [ ] Move to COMPLETED_TASKS.md
+  [ ] Continue to next task
+
+SESSION END (CHECKPOINT VALIDATION + TESTING):
+  [ ] Post [VALIDATION_CHECKPOINT] - stop new work
+  [ ] Validate ALL Executor [DONE] tasks
+  [ ] Post [VALIDATED] for each passing task
+  [ ] Wait for Executor to validate YOUR tasks
+  [ ] Fix any issues found
+  [ ] Post [VALIDATION_COMPLETE] X/X passed
+  [ ] Run pytest suite: tests/test_financial_accuracy.py, etc.
+  [ ] Post [TESTING_REPORT] with accuracy comparisons (see 8.4)
+  [ ] ONLY THEN: Post [SESSION_COMPLETE]
+  [ ] Update ROADMAP.md (Session History)
+  [ ] Update MISSION_CONTROL.md
+  [ ] Report summary to User
+
+IF PROBLEMS:
+  [ ] Post [AGENT_ERROR] @USER immediately
+  [ ] Post [PROTOCOL_BREAK] if Executor not following protocol
+  [ ] STOP and wait for User response
+
+================================================================================
+================================================================================
+                      PART 4: EXECUTOR PROTOCOL
+================================================================================
+================================================================================
+
+================================================================================
+4.1 EXECUTOR RESPONSIBILITIES
+================================================================================
+
+As the EXECUTOR, you are responsible for:
+
+  1. WAITING: If inbox empty, WAIT and keep checking until tasks appear
+  2. EXECUTING: Complete tasks assigned in INBOX_EXECUTOR.md
+  3. FOLLOWING: Follow Architect's instructions precisely
+  4. ASKING: If unclear, ask in LIVE_CHAT.md (don't guess)
+  5. REPORTING: Keep LIVE_CHAT.md updated with your progress
+  6. VALIDATING: Review Architect's completed work when asked
+  7. QUALITY: Meet all acceptance criteria before marking [DONE]
+  8. CONTINUING: Process ALL tasks, not just the first one
+
+YOU DO NOT communicate with User directly.
+YOU receive all orders from Architect via INBOX_EXECUTOR.md.
+When User sends "." - you enter CONTINUOUS WORK MODE until [SESSION_COMPLETE].
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: NEVER RUN GIT COMMANDS                                         ║
+  ║  ─────────────────────────────────                                        ║
+  ║  • NO git add                                                             ║
+  ║  • NO git commit                                                          ║
+  ║  • NO git push                                                            ║
+  ║  • NO git checkout                                                        ║
+  ║                                                                           ║
+  ║  Only Architect manages git. This ensures:                                ║
+  ║  • Clean commit history                                                   ║
+  ║  • No merge conflicts                                                     ║
+  ║  • Single source of truth                                                 ║
+  ║  • Coordinated releases                                                   ║
+  ║                                                                           ║
+  ║  When you complete work, post [DONE]. Architect will commit.              ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+4.2 EXECUTOR SESSION START
+================================================================================
+
+When User sends ".":
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  EXECUTOR SESSION START CHECKLIST                                       │
+  │  ═════════════════════════════════                                      │
+  │                                                                         │
+  │  [ ] 1. Read LIVE_CHAT.md - check for any messages from Architect       │
+  │  [ ] 2. Read LOCKED_FILES.md - see what files are claimed               │
+  │  [ ] 3. Read ACTIVE_TASKS.md - see current state                        │
+  │  [ ] 4. Post [SYNC] message in LIVE_CHAT.md:                            │
+  │                                                                         │
+  │      [TIMESTAMP] [EXECUTOR]: [SYNC] Online. Entering continuous mode.   │
+  │                                                                         │
+  │  [ ] 5. Check INBOX_EXECUTOR.md                                         │
+  │  [ ] 6. Enter CONTINUOUS WORK MODE (see below)                          │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+4.3 CONTINUOUS WORK MODE (BATCH MODE)
+================================================================================
+
+IN BATCH MODE, YOU ALWAYS HAVE WORK. You never wait for Architect.
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  EXECUTOR CONTINUOUS WORK LOOP (BATCH MODE)                             │
+  │  ═══════════════════════════════════════════                            │
+  │                                                                         │
+  │  WHILE (no [SESSION_COMPLETE] signal) DO:                               │
+  │                                                                         │
+  │    1. Read INBOX_EXECUTOR.md                                            │
+  │                                                                         │
+  │    2. IF [BATCH_READY] seen in LIVE_CHAT:                               │
+  │       - ALL tasks are defined - start working immediately               │
+  │       - Pick highest priority unblocked task                            │
+  │       - Check internal dependencies (E001→E002 = wait for E001 first)   │
+  │       - Execute the task fully                                          │
+  │       - Post [DONE] when complete                                       │
+  │       - Go to step 1 (get next task)                                    │
+  │                                                                         │
+  │    3. IF [BATCH_READY] NOT seen yet:                                    │
+  │       - Architect is still writing tasks                                │
+  │       - Wait briefly for [BATCH_READY] signal                           │
+  │       - Once seen → Go to step 2                                        │
+  │                                                                         │
+  │    4. IF all tasks COMPLETED:                                           │
+  │       - Post: "All Executor tasks complete."                            │
+  │       - Wait for [SESSION_COMPLETE] from Architect                      │
+  │       - Architect may still be working on their own tasks               │
+  │                                                                         │
+  │    5. Check LIVE_CHAT.md for [SESSION_COMPLETE] from Architect          │
+  │       - If seen → Exit loop, session done                               │
+  │                                                                         │
+  │  END WHILE                                                              │
+  │                                                                         │
+  │  Post: "[SYNC] Session complete. Signing off."                          │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+BATCH MODE BENEFITS:
+  ✅ You ALWAYS have work (unless all tasks are done)
+  ✅ You NEVER wait for Architect's tasks to complete
+  ✅ Internal dependencies (E001→E002) are fine - just order your work
+  ✅ No [WAITING_FOR_TASKS] needed - if you're waiting, something is wrong
+
+IF YOU FIND YOURSELF WAITING:
+  ────────────────────────────
+  If inbox is empty but no [BATCH_READY], wait briefly for the signal.
+  If [BATCH_READY] was posted but inbox is empty → [AGENT_ERROR] @USER
+  Something went wrong with task creation.
+
+INTERNAL DEPENDENCIES (EXECUTOR→EXECUTOR):
+  ─────────────────────────────────────────
+  If E002 depends on E001:
+    1. Work on E001 first (or other independent tasks)
+    2. When E001 is [DONE], start E002
+    3. This is NORMAL and expected in Batch Mode
+
+================================================================================
+4.4 PROCESSING YOUR INBOX
+================================================================================
+
+When you find a task in INBOX_EXECUTOR.md:
+
+  1. Check LIVE_CHAT for [TASK_READY] signal for this task
+     - If NOT found → Task might still be written, WAIT
+     - If FOUND → Task is complete, proceed
+
+  2. Read the ENTIRE task carefully
+
+  3. Check Dependencies - are prerequisite tasks done?
+     - If NOT → Wait for them, work on other tasks
+
+  4. Check LOCKED_FILES.md - are needed files available?
+     - If NOT → Wait for unlock, work on other tasks
+
+  IF YOU UNDERSTAND THE TASK:
+     - Change status from PENDING to IN_PROGRESS
+     - Post in LIVE_CHAT: "[TIMESTAMP] [EXECUTOR]: Starting TASK-EXXX."
+     - Proceed to execute
+
+  IF YOU HAVE QUESTIONS:
+     - Post in LIVE_CHAT: "[TIMESTAMP] [EXECUTOR]: [Q] TASK-EXXX: [question]"
+     - WAIT for Architect's [A] response before starting
+     - Keep checking LIVE_CHAT for the answer
+
+================================================================================
+4.5 EXECUTING TASKS
+================================================================================
+
+Once you start a task:
+
+  SETUP:
+  [ ] Update task status to IN_PROGRESS in INBOX_EXECUTOR.md
+  [ ] Add entry to ACTIVE_TASKS.md
+  [ ] Check LOCKED_FILES.md for files you need
+  [ ] Add your locks to LOCKED_FILES.md
+  [ ] Post in LIVE_CHAT: "[LOCK] Claimed [files] for TASK-EXXX"
+
+  DURING EXECUTION:
+  [ ] Follow the Step-by-Step Instructions in the task
+  [ ] Check LIVE_CHAT.md between steps for messages
+  [ ] Post [UPDATE] for significant progress
+  [ ] If stuck, post [Q] and WAIT for [A]
+  [ ] If blocked, post [BLOCKED] and work on other tasks
+
+  IMPORTANT: Never guess if instructions are unclear. ASK and WAIT.
+
+================================================================================
+4.6 COMPLETING TASKS
+================================================================================
+
+When you finish a task:
+
+  COMPLETION CHECKLIST:
+  [ ] Verify ALL acceptance criteria are met
+  [ ] Run any testing instructions
+  [ ] Remove locks from LOCKED_FILES.md
+  [ ] Post in LIVE_CHAT: "[UNLOCK] Released [files]"
+  [ ] Post in LIVE_CHAT:
+      "[TIMESTAMP] [EXECUTOR]: [DONE] TASK-EXXX: [brief summary]"
+  [ ] Update task status to COMPLETED in INBOX_EXECUTOR.md
+  [ ] Remove from ACTIVE_TASKS.md
+  [ ] Add to COMPLETED_TASKS.md with details
+
+  THEN IMMEDIATELY:
+  [ ] Go back to INBOX_EXECUTOR.md for next task
+  [ ] If no more tasks → Enter waiting mode (section 4.7)
+  [ ] Do NOT stop working
+
+================================================================================
+4.7 WHEN ALL TASKS ARE COMPLETED (BATCH MODE)
+================================================================================
+
+In Batch Mode, inbox should never be "empty" unexpectedly.
+
+  NORMAL SITUATION (All tasks done):
+  ──────────────────────────────────
+  1. You've completed all tasks in your batch
+  2. Post: "All Executor tasks complete. [X/X tasks done]"
+  3. Wait for [SESSION_COMPLETE] from Architect
+  4. Architect may still be working on their own tasks
+  5. When [SESSION_COMPLETE] seen → Sign off
+
+  ABNORMAL SITUATION (Empty inbox, no [BATCH_READY]):
+  ────────────────────────────────────────────────────
+  1. If inbox is empty but [BATCH_READY] was NOT posted:
+     - Architect is still writing tasks
+     - Wait briefly for [BATCH_READY] signal
+     - Once seen → Start working on tasks
+
+  ERROR SITUATION (Empty inbox after [BATCH_READY]):
+  ──────────────────────────────────────────────────
+  1. If inbox is empty but [BATCH_READY] WAS posted:
+     - Something went wrong!
+     - Post: "[AGENT_ERROR] @USER Inbox empty after [BATCH_READY]"
+     - Wait for User to resolve
+
+================================================================================
+4.8 EXECUTOR CHECKLIST (Print This)
+================================================================================
+
+WHEN USER SENDS ".":
+  [ ] Read LIVE_CHAT.md
+  [ ] Post [SYNC] message
+  [ ] Enter CONTINUOUS WORK MODE
+
+CONTINUOUS WORK MODE:
+  [ ] Check INBOX_EXECUTOR.md
+  [ ] If tasks with [TASK_READY] → Execute them
+  [ ] If tasks without [TASK_READY] → Wait for signal
+  [ ] If empty → Post [WAITING_FOR_TASKS], keep checking
+  [ ] NEVER stop until [SESSION_COMPLETE]
+
+BEFORE EDITING FILES:
+  [ ] Check LOCKED_FILES.md
+  [ ] Add your lock
+  [ ] Post [LOCK] in LIVE_CHAT
+
+DURING WORK:
+  [ ] Check LIVE_CHAT.md between steps
+  [ ] Post [UPDATE] for progress
+  [ ] Post [Q] if unclear (then WAIT for [A])
+
+AFTER COMPLETING EACH TASK:
+  [ ] Verify acceptance criteria met
+  [ ] Remove locks from LOCKED_FILES.md
+  [ ] Post [UNLOCK] in LIVE_CHAT
+  [ ] Post [DONE] in LIVE_CHAT
+  [ ] Update task status to COMPLETED
+  [ ] Update ACTIVE_TASKS.md
+  [ ] Add to COMPLETED_TASKS.md
+  [ ] Go back for next task (DON'T STOP)
+
+WHEN [VALIDATION_CHECKPOINT] RECEIVED:
+  [ ] STOP new work immediately
+  [ ] Validate ALL Architect [DONE] tasks:
+      - Read files they created/modified
+      - Check for obvious issues or gaps
+      - Post [VALIDATED] TASK-AXXX for each passing task
+      - Flag concerns if issues found
+  [ ] Wait for [VALIDATION_COMPLETE]
+
+SESSION END:
+  [ ] Confirm [VALIDATION_COMPLETE] received
+  [ ] Confirm [SESSION_COMPLETE] received
+  [ ] Post signing off message
+
+IF PROBLEMS:
+  [ ] Post [AGENT_ERROR] @USER immediately
+  [ ] Post [PROTOCOL_BREAK] if Architect not following protocol
+  [ ] STOP and wait for User response
+
+================================================================================
+================================================================================
+                     PART 5: COMMUNICATION PROTOCOL
+================================================================================
+================================================================================
+
+================================================================================
+5.1 LIVE_CHAT.md USAGE
+================================================================================
+
+LIVE_CHAT.md is the PRIMARY communication channel.
+
+FORMAT:
+  [YYYY-MM-DD HH:MM] [AGENT]: [PREFIX] Message content
+
+EXAMPLES:
+  [2025-12-07 14:30] [ARCHITECT]: [TASK_READY] TASK-E001 ready for Executor.
+  [2025-12-07 14:35] [EXECUTOR]: Starting TASK-E001.
+  [2025-12-07 15:00] [EXECUTOR]: [DONE] TASK-E001 complete.
+  [2025-12-07 15:05] [ARCHITECT]: [VALIDATED] TASK-E001. Good work.
+  [2025-12-07 15:30] [ARCHITECT]: [SESSION_COMPLETE] All work done.
+
+WHEN TO POST:
+  - Starting work
+  - Completing a step
+  - Task ready for other agent
+  - Asking a question
+  - Answering a question
+  - Encountering an issue
+  - Completing a task
+  - Locking/unlocking files
+  - Session signals
+
+================================================================================
+5.2 MESSAGE PREFIXES
+================================================================================
+
+ALWAYS use a prefix. This makes messages scannable.
+
+  ┌──────────────────────┬───────────────────────────────────────────────────┐
+  │  PREFIX              │  USE WHEN                                         │
+  ├──────────────────────┼───────────────────────────────────────────────────┤
+  │  [SYNC]              │  Starting a session (first message)               │
+  │  [Q]                 │  Asking a question (need answer before continuing)│
+  │  [A]                 │  Answering a question                             │
+  │  [UPDATE]            │  Progress update (no response needed)             │
+  │  [DONE]              │  Task completed                                   │
+  │  [VALIDATED]         │  Confirmed other agent's work is good             │
+  │  [URGENT]            │  Needs immediate attention                        │
+  │  [BLOCKED]           │  Cannot proceed, need help                        │
+  │  [LOCK]              │  Claiming a file for editing                      │
+  │  [UNLOCK]            │  Releasing a file                                 │
+  │  [STATUS]            │  Requesting or providing full status dump         │
+  │  [HANDOFF]           │  Transferring work to other agent                 │
+  │  [BATCH_READY]           │  Architect: ALL Executor tasks are defined    │
+  │  [TASK_READY]            │  Architect: Individual task ready (legacy)    │
+  │  [ALL_TASKS_ASSIGNED]    │  Architect: No more tasks coming              │
+  │  [VALIDATION_CHECKPOINT] │  Architect: Stop work, begin validation       │
+  │  [VALIDATED]             │  Either: Task passed validation               │
+  │  [VALIDATION_COMPLETE]   │  Architect: All tasks validated, X/X passed   │
+  │  [TESTING_REPORT]        │  Either: Pytest + accuracy results (8.4)      │
+  │  [TESTING_INCOMPLETE]    │  Either: Cannot end - tests missing           │
+  │  [SESSION_COMPLETE]      │  Architect: All work done, validated, tested  │
+  │  [DECISION_NEEDED]       │  Architect: User input required               │
+  │  [FILLER_CONFIRM]        │  Architect: Asking User about filler tasks    │
+  │  [AGENT_ERROR]           │  CRITICAL: Agent malfunction, report to User  │
+  │  [PROTOCOL_BREAK]        │  Other agent not following protocol           │
+  └──────────────────────────┴───────────────────────────────────────────────┘
+
+NOTE: [SESSION_COMPLETE] requires [VALIDATION_COMPLETE] first!
+      No session ends without checkpoint validation.
+
+================================================================================
+5.3 SESSION SIGNALS (BATCH MODE)
+================================================================================
+
+These signals control the Batch Mode workflow:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  SIGNAL                  │  FROM      │  MEANING                        │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  [FILLER_CONFIRM]        │  Architect │  Asking User about filler tasks │
+  │  [BATCH_READY]           │  Architect │  ALL Executor tasks defined     │
+  │  [TASK_READY] TASK-XXX   │  Architect │  Individual task ready (legacy) │
+  │  [ALL_TASKS_ASSIGNED]    │  Architect │  Implicit with [BATCH_READY]    │
+  │  [SESSION_COMPLETE]      │  Architect │  Session done, stop working     │
+  │  [DECISION_NEEDED]       │  Architect │  User must provide input        │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+BATCH MODE WORKFLOW:
+
+  1. User tells Architect what to build
+  2. Architect plans all tasks (Batch Mode planning)
+  3. If filler tasks needed → Posts [FILLER_CONFIRM] to User
+  4. User confirms (or not)
+  5. Architect writes ALL Executor tasks to INBOX_EXECUTOR.md
+  6. Architect posts [BATCH_READY] in LIVE_CHAT
+  7. User sends "." to Executor
+  8. Executor sees [BATCH_READY] → Processes ALL tasks in order
+  9. Executor handles internal deps (E001→E002) by ordering work
+  10. Executor finishes all → Posts "All Executor tasks complete"
+  11. Architect finishes own tasks → Posts [SESSION_COMPLETE]
+  12. Everyone stops
+
+KEY DIFFERENCE FROM OLD MODE:
+  ❌ OLD: Executor waits mid-session for Architect tasks
+  ✅ NEW: Executor NEVER waits for Architect - always has work
+
+================================================================================
+5.4 ASKING QUESTIONS
+================================================================================
+
+When you need clarification:
+
+  1. Post in LIVE_CHAT with [Q] prefix
+  2. Be specific about what you need to know
+  3. Reference the task ID if applicable
+  4. WAIT for [A] response before proceeding
+
+  GOOD QUESTION:
+  [2025-12-07 14:35] [EXECUTOR]: [Q] TASK-E001: Should the Treasury rate cache
+  expire after 1 hour or 24 hours?
+
+  BAD QUESTION:
+  [2025-12-07 14:35] [EXECUTOR]: [Q] How should I do the caching?
+
+  (Too vague. Be specific about what you're unsure about.)
+
+================================================================================
+5.5 STATUS UPDATES
+================================================================================
+
+Post [UPDATE] messages to keep the other agent informed.
+
+  WHEN TO POST UPDATES:
+  - Starting a new step
+  - Completing a step
+  - Finding something unexpected
+  - Making progress (every 10-15 min of work)
+
+  GOOD UPDATE:
+  [2025-12-07 14:45] [EXECUTOR]: [UPDATE] TASK-E001: FRED API connected.
+  Testing rate retrieval now.
+
+================================================================================
+5.6 THE SYNC PROTOCOL
+================================================================================
+
+At the START of every session:
+
+  ARCHITECT:
+  [2025-12-07 09:00] [ARCHITECT]: [SYNC] Online. Working on [description].
+  Will create Executor tasks as needed.
+
+  EXECUTOR (when User sends "."):
+  [2025-12-07 09:05] [EXECUTOR]: [SYNC] Online. Entering continuous mode.
+  Will process all tasks until [SESSION_COMPLETE].
+
+================================================================================
+5.7 THE STATUS COMMAND
+================================================================================
+
+For a quick snapshot of current state:
+
+  REQUEST:
+  [2025-12-07 14:00] [ARCHITECT]: [STATUS] Request
+
+  RESPONSE:
+  [2025-12-07 14:01] [EXECUTOR]: [STATUS] Dump:
+  - Current Task: TASK-E001 Treasury API
+  - Status: IN_PROGRESS (70% done)
+  - Files Locked: usa_backend.py
+  - Blockers: None
+  - ETA: 20 minutes
+  - Waiting for: Nothing, actively working
+
+================================================================================
+================================================================================
+                  PART 5B: AGENT ERROR REPORTING (CRITICAL)
+================================================================================
+================================================================================
+
+================================================================================
+5.8 IMMEDIATE ERROR REPORTING
+================================================================================
+
+If either agent experiences a PROBLEM or sees the OTHER agent malfunctioning:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  AGENT ERROR PROTOCOL                                                   │
+  │  ═════════════════════                                                  │
+  │                                                                         │
+  │  WHAT COUNTS AS AN ERROR:                                               │
+  │  ────────────────────────                                               │
+  │  • Cannot read/write to Operation Room files                            │
+  │  • Other agent not responding to messages                               │
+  │  • Other agent not following protocol (no [SYNC], no [TASK_READY], etc)│
+  │  • Stuck in a loop or repeating actions                                 │
+  │  • Task instructions are impossible to follow                           │
+  │  • Unexpected behavior from codebase                                    │
+  │  • Cannot understand what to do                                         │
+  │  • Session is not progressing                                           │
+  │                                                                         │
+  │  WHEN YOU DETECT AN ERROR:                                              │
+  │  ─────────────────────────                                              │
+  │                                                                         │
+  │  1. POST IMMEDIATELY in LIVE_CHAT.md:                                   │
+  │                                                                         │
+  │     [TIMESTAMP] [AGENT]: [AGENT_ERROR] @USER                            │
+  │     Problem: [What's wrong]                                             │
+  │     Impact: [What this blocks]                                          │
+  │     Tried: [What you attempted]                                         │
+  │     Need: [What would help]                                             │
+  │                                                                         │
+  │  2. STOP the current action (don't make it worse)                       │
+  │                                                                         │
+  │  3. WAIT for User acknowledgment before continuing                      │
+  │                                                                         │
+  │  WHEN OTHER AGENT IS NOT FOLLOWING PROTOCOL:                            │
+  │  ────────────────────────────────────────────                           │
+  │                                                                         │
+  │  1. POST in LIVE_CHAT.md:                                               │
+  │                                                                         │
+  │     [TIMESTAMP] [AGENT]: [PROTOCOL_BREAK] @USER @OTHER_AGENT            │
+  │     Issue: [Executor/Architect] is not [specific violation]             │
+  │     Expected: [What should happen per protocol]                         │
+  │     Actual: [What is happening]                                         │
+  │                                                                         │
+  │  2. WAIT for correction before proceeding                               │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+5.9 ERROR EXAMPLES
+================================================================================
+
+EXAMPLE 1: Executor not responding
+
+  [2025-12-07 14:30] [ARCHITECT]: [PROTOCOL_BREAK] @USER @EXECUTOR
+  Issue: Executor has not posted [SYNC] or any message for 20+ minutes
+  Expected: Executor should be in continuous mode, checking inbox
+  Actual: No activity in LIVE_CHAT since my [TASK_READY] at 14:10
+  
+EXAMPLE 2: Cannot access files
+
+  [2025-12-07 14:30] [EXECUTOR]: [AGENT_ERROR] @USER
+  Problem: Cannot read INBOX_EXECUTOR.md - file appears corrupted/empty
+  Impact: Cannot receive tasks, session blocked
+  Tried: Re-reading file 3 times
+  Need: User to verify file exists and has content
+
+EXAMPLE 3: Task impossible
+
+  [2025-12-07 14:30] [EXECUTOR]: [AGENT_ERROR] @USER
+  Problem: TASK-E001 asks to modify file.py but file doesn't exist
+  Impact: Cannot complete task
+  Tried: Searched for similar filenames
+  Need: Architect to clarify correct filename
+
+EXAMPLE 4: Architect not validating
+
+  [2025-12-07 15:00] [EXECUTOR]: [PROTOCOL_BREAK] @USER @ARCHITECT
+  Issue: Architect has not validated 3 completed tasks
+  Expected: [VALIDATED] or revision request within reasonable time
+  Actual: Tasks TASK-E001, E002, E003 all [DONE] but no response
+
+EXAMPLE 5: Session stuck
+
+  [2025-12-07 16:00] [ARCHITECT]: [AGENT_ERROR] @USER
+  Problem: Session not progressing - both agents waiting for each other
+  Impact: No work being done
+  Tried: Posted [STATUS] request, no response
+  Need: User to restart Executor or clarify workflow
+
+================================================================================
+5.10 USER RESPONSE TO ERRORS
+================================================================================
+
+When you see [AGENT_ERROR] or [PROTOCOL_BREAK]:
+
+  1. Read the error details
+  2. Respond to the affected agent with guidance
+  3. If needed, restart the other agent
+  4. Confirm when issue is resolved
+
+COMMON FIXES:
+  - Agent not responding → Send "." to restart Executor, or talk to Architect
+  - File issues → Verify files exist and are readable
+  - Protocol violations → Remind agent of correct protocol
+  - Stuck session → Issue new instructions to Architect
+
+================================================================================
+================================================================================
+                      PART 6: FILE LOCKING
+================================================================================
+================================================================================
+
+================================================================================
+6.1 WHY LOCK FILES
+================================================================================
+
+If two agents edit the same file simultaneously, changes can conflict.
+File locking prevents this by ensuring only ONE agent edits a file at a time.
+
+================================================================================
+6.2 HOW TO LOCK
+================================================================================
+
+BEFORE editing any code file:
+
+  1. Open LOCKED_FILES.md
+  2. Check if the file is already locked
+  3. If NOT locked, add your entry:
+
+     | filepath.py | ARCHITECT | 2025-12-07 14:30 | Adding X feature | ~1 hour |
+
+  4. Post in LIVE_CHAT:
+     [2025-12-07 14:30] [ARCHITECT]: [LOCK] Claimed filepath.py for X feature.
+
+  5. Now you can safely edit the file
+
+================================================================================
+6.3 HOW TO UNLOCK
+================================================================================
+
+AFTER you finish editing:
+
+  1. Open LOCKED_FILES.md
+  2. Remove your entry
+  3. Post in LIVE_CHAT:
+     [2025-12-07 15:00] [ARCHITECT]: [UNLOCK] Released filepath.py.
+
+================================================================================
+6.4 CONFLICT RESOLUTION
+================================================================================
+
+If a file you need is locked:
+
+  OPTION 1: Wait and work on something else
+  - Check LIVE_CHAT for unlock message
+  - Work on another task meanwhile
+  - Keep checking periodically
+
+  OPTION 2: Coordinate
+  - Post in LIVE_CHAT: "Need access to [file]. Can you release soon?"
+  - Wait for response
+
+  OPTION 3: Emergency Override (use rarely)
+  - If other agent unresponsive for 30+ minutes
+  - Post: "[FORCE_UNLOCK] Taking [file] - [urgent reason]"
+  - Remove their lock, add yours
+
+================================================================================
+================================================================================
+                      PART 7: TASK MANAGEMENT
+================================================================================
+================================================================================
+
+================================================================================
+7.1 TASK TEMPLATE (COMPLETE)
+================================================================================
+
+Every task in INBOX files must use this template:
+
+```
+### TASK-[A/E][XXX]: [Clear, Specific Title]
+- **From:** [Architect/Executor]
+- **Priority:** P0 (urgent) / P1 (high) / P2 (normal)
+- **Created:** [YYYY-MM-DD HH:MM]
+- **Est. Time:** [e.g., 2 hours]
+- **Status:** PENDING / IN_PROGRESS / COMPLETED / BLOCKED
+
+**Dependencies:**
+- **Depends On:** [Task IDs, or "None"]
+- **Blocks:** [Task IDs, or "None"]
+
+**Description:**
+[Detailed description of what needs to be done and WHY]
+
+**Step-by-Step Instructions:**
+1. [Specific step]
+2. [Specific step]
+3. [Continue...]
+
+**Files to Modify:**
+- [file1.py] - [what changes]
+- [file2.py] - [what changes]
+
+**Acceptance Criteria:**
+- [ ] [Testable criterion]
+- [ ] [Testable criterion]
+
+**Context:**
+- [Background information]
+- [Related decisions]
+
+**Testing Instructions:**
+- [How to verify it works]
+
+**Current State:** (for handoffs)
+- [What's done so far]
+- [What remains]
+
+**Rollback Plan:**
+- [How to undo if it breaks something, or "N/A"]
+
+**Questions?**
+Post [Q] in LIVE_CHAT.md with task ID.
+```
+
+================================================================================
+7.2 TASK LIFECYCLE
+================================================================================
+
+  PENDING ──► IN_PROGRESS ──► COMPLETED ──► VALIDATED
+                  │
+                  ▼
+               BLOCKED ──► (resolve) ──► IN_PROGRESS
+
+  PENDING:      Task created, [TASK_READY] signal sent
+  IN_PROGRESS:  Currently being worked on
+  BLOCKED:      Cannot proceed, waiting for something
+  COMPLETED:    Work done, awaiting validation
+  VALIDATED:    Other agent confirmed it's good
+
+================================================================================
+7.3 DEPENDENCIES
+================================================================================
+
+Tasks can depend on other tasks:
+
+  **Depends On:** TASK-A001, TASK-E002
+  **Blocks:** TASK-E005
+
+  DEPENDS ON: This task cannot start until listed tasks are COMPLETED.
+  BLOCKS: These tasks are waiting for THIS task to complete.
+
+Check dependencies before starting. If not met, work on something else.
+
+================================================================================
+7.4 HANDOFFS
+================================================================================
+
+When transferring work to another agent:
+
+  1. Document current state in the task's "Current State" section:
+     - What's already done
+     - What remains
+     - Any gotchas or notes
+
+  2. Post in LIVE_CHAT:
+     [2025-12-07 15:00] [ARCHITECT]: [HANDOFF] TASK-E001 to Executor.
+     Context: API connected, needs caching implementation.
+
+  3. Update ACTIVE_TASKS.md to show new owner
+
+================================================================================
+7.5 BLOCKED TASKS
+================================================================================
+
+When you cannot proceed:
+
+  1. Update task status to BLOCKED
+  2. Add entry to CONTEXT/BLOCKERS.md
+  3. Post in LIVE_CHAT:
+     [2025-12-07 15:00] [EXECUTOR]: [BLOCKED] TASK-E001: Need API key.
+     Added to BLOCKERS.md.
+  4. Work on a different task (DON'T STOP WORKING)
+  5. Check back later for resolution
+
+================================================================================
+================================================================================
+                   PART 8: VALIDATION & COMPLETION
+================================================================================
+================================================================================
+
+================================================================================
+8.1 CROSS-VALIDATION PROTOCOL
+================================================================================
+
+THERE ARE TWO TYPES OF VALIDATION:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  TYPE 1: INLINE VALIDATION (Optional - During Work)                     │
+  │  ═══════════════════════════════════════════════════                    │
+  │                                                                         │
+  │  When the other agent posts [DONE], you MAY validate between your       │
+  │  own tasks. This is optional during Batch Mode to maintain speed.       │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  TYPE 2: CHECKPOINT VALIDATION (REQUIRED - At Milestone End)            │
+  │  ══════════════════════════════════════════════════════════             │
+  │                                                                         │
+  │  Before posting [SESSION_COMPLETE], BOTH agents MUST:                   │
+  │                                                                         │
+  │  1. STOP all new work                                                   │
+  │  2. Architect posts: "[VALIDATION_CHECKPOINT]"                          │
+  │  3. EACH agent validates ALL of the OTHER agent's completed tasks       │
+  │  4. Post [VALIDATED] for each task that passes                          │
+  │  5. Request revision for any issues found                               │
+  │  6. Fix issues and re-validate                                          │
+  │  7. Post: "[VALIDATION_COMPLETE] X/X tasks passed"                      │
+  │  8. ONLY THEN can Architect post [SESSION_COMPLETE]                     │
+  │                                                                         │
+  │  THIS IS MANDATORY. No session ends without checkpoint validation.      │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  WHAT TO CHECK DURING VALIDATION:
+  ─────────────────────────────────
+  - Files created/modified exist and are correct
+  - Acceptance criteria from task are met
+  - No obvious bugs or gaps
+  - Code follows project patterns
+  - Research docs are complete and accurate
+  - Tests pass (if applicable)
+  - **TESTING STANDARDS MET** (see section 8.4)
+
+  IF APPROVED:
+  Post: "[VALIDATED] TASK-EXXX. [Brief note on what you checked]"
+
+  IF ISSUES FOUND:
+  Post: "TASK-EXXX needs revision: [specific issues]"
+  Original agent fixes → Reports [DONE] again → Re-validate
+
+================================================================================
+8.4 TESTING STANDARDS (MANDATORY)
+================================================================================
+
+ALL features must pass COMPREHENSIVE testing before [SESSION_COMPLETE].
+Testing "does it run" is NOT enough. You must test "is it ACCURATE".
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  THE THREE TESTING LEVELS (ALL REQUIRED FOR EACH FEATURE)               │
+  │  ═══════════════════════════════════════════════════════                │
+  │                                                                         │
+  │  LEVEL 1: FUNCTIONAL ✅                                                 │
+  │  ──────────────────────                                                 │
+  │  "Does it run without crashing?"                                        │
+  │  - Import works                                                         │
+  │  - Functions execute without errors                                     │
+  │  - Returns expected data types                                          │
+  │                                                                         │
+  │  LEVEL 2: ACCURACY ✅                                                   │
+  │  ────────────────────                                                   │
+  │  "Is the OUTPUT correct?"                                               │
+  │  - Compare calculations to MANUAL calculation                           │
+  │  - Compare to EXTERNAL source (Yahoo Finance, Gurufocus, SEC)           │
+  │  - Values within acceptable tolerance (±5% for most, ±10% for WACC)     │
+  │                                                                         │
+  │  LEVEL 3: INTEGRATION ✅                                                │
+  │  ───────────────────────                                                │
+  │  "Does it work with the REST of the system?"                            │
+  │  - Full flow test: input → processing → output                          │
+  │  - Works with real tickers (AAPL, MSFT, at minimum)                     │
+  │  - No conflicts with existing modules                                   │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+REQUIRED TESTS BY FEATURE TYPE:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  CALCULATION MODULES (WACC, DCF, FCF, Monte Carlo)                      │
+  │  ─────────────────────────────────────────────────                      │
+  │                                                                         │
+  │  [ ] Manual calculation verification:                                   │
+  │      Calculate WACC/DCF/FCF by hand, compare to module output           │
+  │                                                                         │
+  │  [ ] External source comparison:                                        │
+  │      Compare to Gurufocus, Finbox, Yahoo Finance where available        │
+  │      Document: "AAPL WACC: Module=9.2%, External=9.0%, Delta=+0.2%"     │
+  │                                                                         │
+  │  [ ] Reasonableness check:                                              │
+  │      WACC should be 5-15% for most companies                            │
+  │      DCF intrinsic value should be 50-200% of current price             │
+  │      FCF methods should agree within 30%                                │
+  │                                                                         │
+  │  [ ] Edge cases:                                                        │
+  │      What if debt=0? What if negative earnings?                         │
+  │      Run: pytest tests/test_financial_accuracy.py -v                    │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  DATA EXTRACTION MODULES (yfinance, SEC EDGAR, FRED)                    │
+  │  ────────────────────────────────────────────────────                   │
+  │                                                                         │
+  │  [ ] Field availability:                                                │
+  │      Test 10+ tickers across sectors, document missing fields           │
+  │                                                                         │
+  │  [ ] Data accuracy:                                                     │
+  │      Compare 3+ tickers to Yahoo Finance website                        │
+  │      "AAPL P/E: Module=28.5, Yahoo=28.4, ✅ Match"                      │
+  │                                                                         │
+  │  [ ] Error handling:                                                    │
+  │      Test invalid ticker, test API timeout simulation                   │
+  │                                                                         │
+  │  [ ] Performance:                                                       │
+  │      Document load times, verify caching works                          │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  UI MODULES (new tabs, displays, charts)                                │
+  │  ───────────────────────────────────────                                │
+  │                                                                         │
+  │  [ ] Visual verification:                                               │
+  │      Actually RUN the app and check the UI works                        │
+  │      Document with screenshot or description                            │
+  │                                                                         │
+  │  [ ] Data display accuracy:                                             │
+  │      Verify displayed values match underlying data                      │
+  │                                                                         │
+  │  [ ] Responsive behavior:                                               │
+  │      Test different inputs, verify no crashes                           │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+TESTING CHECKLIST (Post in LIVE_CHAT before [SESSION_COMPLETE]):
+
+```
+[TESTING_REPORT] Session Testing Summary:
+
+PYTEST RESULTS:
+- tests/test_financial_accuracy.py: X/X passed
+- tests/test_fcf_calculator.py: X/X passed
+- tests/test_edge_cases.py: X/X passed
+
+CALCULATION ACCURACY:
+| Module | Ticker | Module Value | External Value | Delta | Status |
+|--------|--------|--------------|----------------|-------|--------|
+| WACC   | AAPL   | 9.2%         | 9.0%           | +0.2% | ✅     |
+| DCF    | AAPL   | $205         | $195-$220      | OK    | ✅     |
+| FCF    | AAPL   | $98B         | $99B           | -1%   | ✅     |
+
+DATA ACCURACY:
+| Ticker | Field     | Module | Yahoo | Match |
+|--------|-----------|--------|-------|-------|
+| AAPL   | P/E       | 28.5   | 28.4  | ✅    |
+| MSFT   | Div Yield | 0.85%  | 0.85% | ✅    |
+
+INTEGRATION:
+- Full DCF flow tested: ✅
+- All new modules import correctly: ✅
+- No regressions: ✅
+```
+
+IF TESTING INCOMPLETE:
+  Post: "[TESTING_INCOMPLETE] Cannot end session. Missing: [list what's needed]"
+  Complete the missing tests, then proceed to [SESSION_COMPLETE].
+
+================================================================================
+8.2 SUBMITTING TO R&D
+================================================================================
+
+For significant features, submit to R&D for quality validation:
+
+  1. Open OperationsValidation/VALIDATION_QUEUE.md
+  2. Add entry:
+
+     ### VALIDATION-XXX: [Feature Name]
+     - **Submitted By:** [Agent]
+     - **Submitted:** [Date]
+     - **Files Changed:** [list]
+     - **Description:** [what was done]
+     - **Test Instructions:** [how to verify]
+
+  3. Post in LIVE_CHAT:
+     [2025-12-07 16:00] [ARCHITECT]: Submitted [feature] to R&D validation queue.
+
+================================================================================
+8.3 ROLLBACK PROTOCOL
+================================================================================
+
+If something breaks after a task:
+
+  1. Post in LIVE_CHAT:
+     [2025-12-07 16:00] [EXECUTOR]: [URGENT] [ROLLBACK] TASK-E001 broke [what]
+
+  2. Stop related work
+
+  3. Execute the Rollback Plan from the task template
+     - If git: revert the commit
+     - If manual: undo changes using task's "Files to Modify" list
+
+  4. Post when resolved:
+     [2025-12-07 16:15] [EXECUTOR]: Rollback complete. [what was undone]
+
+  5. Document in CONTEXT/BLOCKERS.md what happened
+
+  6. Continue with other work
+
+================================================================================
+================================================================================
+                         PART 9: EXAMPLES
+================================================================================
+================================================================================
+
+================================================================================
+9.1 COMPLETE AUTONOMOUS WORKFLOW
+================================================================================
+
+This shows how both agents work continuously with minimal User intervention.
+
+USER → ARCHITECT: "Add Treasury rate API and industry benchmarks to DCF"
+
+ARCHITECT reads request, plans work, posts:
+  [2025-12-07 10:00] [ARCHITECT]: [SYNC] Online. Working on DCF improvements.
+  Will create Executor tasks for API work, handling benchmarks myself.
+
+USER → EXECUTOR: "."
+
+EXECUTOR starts:
+  [2025-12-07 10:01] [EXECUTOR]: [SYNC] Online. Entering continuous mode.
+  [2025-12-07 10:01] [EXECUTOR]: [WAITING_FOR_TASKS] Inbox empty. Standing by.
+
+ARCHITECT creates first task, continues own work:
+  [2025-12-07 10:05] [ARCHITECT]: [TASK_READY] TASK-E001 (Treasury API) ready.
+  [2025-12-07 10:05] [ARCHITECT]: [LOCK] Claimed dcf_modeling.py for benchmarks.
+
+EXECUTOR sees [TASK_READY], works:
+  [2025-12-07 10:06] [EXECUTOR]: Starting TASK-E001.
+  [2025-12-07 10:06] [EXECUTOR]: [LOCK] Claimed usa_backend.py for Treasury API.
+  [2025-12-07 10:20] [EXECUTOR]: [UPDATE] FRED API connected, implementing cache.
+
+ARCHITECT continues, creates another task:
+  [2025-12-07 10:25] [ARCHITECT]: [TASK_READY] TASK-E002 (Data validation) ready.
+  [2025-12-07 10:30] [ARCHITECT]: [UPDATE] Industry benchmarks 50% done.
+
+EXECUTOR finishes first, moves to second:
+  [2025-12-07 10:35] [EXECUTOR]: [UNLOCK] Released usa_backend.py.
+  [2025-12-07 10:35] [EXECUTOR]: [DONE] TASK-E001 complete. API working, cached.
+  [2025-12-07 10:36] [EXECUTOR]: Starting TASK-E002.
+  [2025-12-07 10:36] [EXECUTOR]: [LOCK] Claimed validation_engine.py.
+
+ARCHITECT validates while working:
+  [2025-12-07 10:40] [ARCHITECT]: [VALIDATED] TASK-E001. Good work.
+  [2025-12-07 10:45] [ARCHITECT]: [DONE] Industry benchmarks complete.
+  [2025-12-07 10:45] [ARCHITECT]: [UNLOCK] Released dcf_modeling.py.
+  [2025-12-07 10:45] [ARCHITECT]: [ALL_TASKS_ASSIGNED] No more Executor tasks.
+
+EXECUTOR finishes remaining:
+  [2025-12-07 11:00] [EXECUTOR]: [UNLOCK] Released validation_engine.py.
+  [2025-12-07 11:00] [EXECUTOR]: [DONE] TASK-E002 complete.
+  [2025-12-07 11:01] [EXECUTOR]: All assigned tasks complete. Awaiting session end.
+
+ARCHITECT validates and ends:
+  [2025-12-07 11:05] [ARCHITECT]: [VALIDATED] TASK-E002. All looks good.
+  [2025-12-07 11:05] [ARCHITECT]: [SESSION_COMPLETE] All DCF work done.
+
+EXECUTOR signs off:
+  [2025-12-07 11:06] [EXECUTOR]: [SYNC] Session complete. Signing off.
+
+ARCHITECT reports to USER:
+  "Session complete. Added Treasury API (dynamic WACC) and industry benchmarks.
+   2 tasks delegated to Executor, both validated. Ready for R&D review."
+
+================================================================================
+9.2 EXECUTOR WAITING FOR TASKS EXAMPLE
+================================================================================
+
+Shows what happens when Executor starts before Architect has tasks ready.
+
+USER → EXECUTOR: "."
+
+EXECUTOR:
+  [2025-12-07 10:00] [EXECUTOR]: [SYNC] Online. Entering continuous mode.
+  [2025-12-07 10:00] [EXECUTOR]: Checking inbox...
+  [2025-12-07 10:00] [EXECUTOR]: [WAITING_FOR_TASKS] Inbox empty. Standing by.
+
+  (Executor waits, periodically checks inbox)
+
+  [2025-12-07 10:03] [EXECUTOR]: Still waiting for tasks...
+
+ARCHITECT (working on planning):
+  [2025-12-07 10:05] [ARCHITECT]: [TASK_READY] TASK-E001 ready.
+
+EXECUTOR (sees it):
+  [2025-12-07 10:05] [EXECUTOR]: Task found! Starting TASK-E001.
+
+  (Executor proceeds normally)
+
+================================================================================
+9.3 QUESTION-ANSWER EXAMPLE
+================================================================================
+
+EXECUTOR needs clarification (doesn't stop working, just asks):
+
+  [2025-12-07 10:20] [EXECUTOR]: [Q] TASK-E001: The existing cache uses
+  _cache_ttl dict. Should I add a new "treasury_rate" key with 3600 seconds,
+  or reuse "market_data" which is also 3600?
+
+  (Executor can work on non-blocked parts while waiting)
+
+ARCHITECT responds (while continuing own work):
+  [2025-12-07 10:22] [ARCHITECT]: [A] Add new "treasury_rate" key. Cleaner and
+  lets us adjust it independently later.
+
+EXECUTOR continues:
+  [2025-12-07 10:22] [EXECUTOR]: Got it. Proceeding with new key.
+
+================================================================================
+================================================================================
+                       PART 10: QUICK REFERENCE
+================================================================================
+================================================================================
+
+================================================================================
+10.1 ARCHITECT QUICK REFERENCE (BATCH MODE)
+================================================================================
+
+SESSION:
+  1. Read all relevant files
+  2. Plan BATCH MODE (no cross-dependencies!)
+  3. If filler needed → Ask User: [FILLER_CONFIRM]
+  4. Write ALL Executor tasks to inbox
+  5. Post [BATCH_READY]
+  6. Post [SYNC]
+  7. Work CONTINUOUSLY on your own tasks
+  
+SESSION END (CHECKPOINT VALIDATION + TESTING):
+  8. Post [VALIDATION_CHECKPOINT] - stop new work
+  9. Validate ALL Executor tasks → Post [VALIDATED] each
+  10. Wait for Executor to validate your tasks
+  11. Post [VALIDATION_COMPLETE] X/X passed
+  12. Run pytest suite + accuracy tests
+  13. Post [TESTING_REPORT] (see 8.4 for format)
+  14. Post [SESSION_COMPLETE]
+  15. Report to User
+
+RULES:
+  ✅ Executor tasks can depend on Executor tasks (E001→E002)
+  ✅ Your tasks can depend on Executor tasks (E005→A003)
+  ❌ Executor tasks CANNOT depend on your tasks
+  ❌ No [SESSION_COMPLETE] without [VALIDATION_COMPLETE]
+
+================================================================================
+10.2 EXECUTOR QUICK REFERENCE (BATCH MODE)
+================================================================================
+
+WHEN USER SENDS ".":
+  1. Post [SYNC]
+  2. Check LIVE_CHAT for [BATCH_READY]
+  3. If [BATCH_READY] → ALL tasks are defined, start working!
+  4. If NOT [BATCH_READY] → Wait briefly for signal
+  5. Check INBOX_EXECUTOR.md for tasks
+  6. Handle internal dependencies (E001→E002) by ordering work
+  7. Process ALL tasks in priority order
+  8. When all done → Post "All Executor tasks complete"
+
+WHEN [VALIDATION_CHECKPOINT] RECEIVED:
+  9. STOP new work
+  10. Validate ALL Architect tasks → Post [VALIDATED] each
+  11. Wait for [VALIDATION_COMPLETE]
+  12. Wait for [SESSION_COMPLETE] → Sign off
+
+KEY RULES:
+  ✅ You ALWAYS have work (no waiting for Architect)
+  ✅ All tasks defined upfront
+  ✅ MUST validate Architect's work at checkpoint
+
+================================================================================
+10.3 MESSAGE PREFIX TABLE
+================================================================================
+
+  PREFIX                   USE WHEN
+  ────────────────────────────────────────────────────────
+  [SYNC]                   Starting session
+  [Q]                      Question (need answer)
+  [A]                      Answer to question
+  [UPDATE]                 Progress update
+  [DONE]                   Task completed (needs validation)
+  [VALIDATED]              Confirmed other's work passes
+  [VALIDATION_CHECKPOINT]  Architect: Stop work, begin validation
+  [VALIDATION_COMPLETE]    Architect: All X/X tasks validated
+  [TESTING_REPORT]         Pytest + accuracy test results
+  [TESTING_INCOMPLETE]     Cannot end - tests missing
+  [URGENT]                 Immediate attention
+  [BLOCKED]                Cannot proceed
+  [LOCK]                   Claiming file
+  [UNLOCK]                 Releasing file
+  [STATUS]                 Status dump
+  [HANDOFF]                Transferring work
+  [BATCH_READY]            ALL Executor tasks defined
+  [SESSION_COMPLETE]       All work done AND validated
+  [DECISION_NEEDED]        User input required
+  [AGENT_ERROR]            Agent problem - report to User
+  [PROTOCOL_BREAK]         Other agent violating protocol
+
+================================================================================
+10.4 SESSION SIGNAL TABLE (BATCH MODE)
+================================================================================
+
+  SIGNAL                   FROM        MEANS
+  ─────────────────────────────────────────────────────────
+  [FILLER_CONFIRM]         Architect   Asking User about filler tasks
+  [BATCH_READY]            Architect   ALL Executor tasks are defined
+  [VALIDATION_CHECKPOINT]  Architect   Stop new work, begin validation
+  [VALIDATED]              Either      Task passed validation check
+  [VALIDATION_COMPLETE]    Architect   All X/X tasks validated
+  [TESTING_REPORT]         Either      Pytest + accuracy results
+  [SESSION_COMPLETE]       Architect   Work done + validated + tested
+  [DECISION_NEEDED]        Architect   User must decide
+  [AGENT_ERROR] @USER      Either      STOP - problem occurred
+  [PROTOCOL_BREAK] @USER   Either      Other agent malfunctioning
+
+  NOTE: [SESSION_COMPLETE] requires:
+        1. [VALIDATION_COMPLETE] - Both agents validated each other's work
+        2. [TESTING_REPORT] - Pytest results + accuracy comparisons (8.4)
+
+================================================================================
+================================================================================
+                   PART 11: DO NOT DO (Common Mistakes)
+================================================================================
+================================================================================
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  ARCHITECT: DO NOT create Executor tasks that depend on your tasks        ║
+  ║  → INSTEAD: Restructure so Executor tasks are independent                 ║
+  ║  → This is the CORE RULE of Batch Mode!                                   ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT stop after completing one small step                              ║
+  ║  → INSTEAD: Keep working continuously until [SESSION_COMPLETE]            ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: DO NOT start before [BATCH_READY] signal                       ║
+  ║  → INSTEAD: Wait briefly - Architect is finishing task definitions        ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT edit a file without locking it first                              ║
+  ║  → INSTEAD: Check LOCKED_FILES.md, add lock, post [LOCK]                  ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT guess if instructions are unclear                                 ║
+  ║  → INSTEAD: Post [Q] and WAIT for [A]                                     ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT mark [DONE] until ALL acceptance criteria are met                 ║
+  ║  → INSTEAD: Verify each criterion, then post [DONE]                       ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: DO NOT expect User to give instructions                        ║
+  ║  → INSTEAD: All orders come from INBOX_EXECUTOR.md                        ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  ARCHITECT: DO NOT post [SESSION_COMPLETE] without validation             ║
+  ║  → INSTEAD: First [VALIDATION_CHECKPOINT], validate all tasks, then end   ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT skip checkpoint validation - quality over speed!                  ║
+  ║  → INSTEAD: Both agents validate each other's work before session ends    ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT test only "does it run" - test "is it ACCURATE"!                  ║
+  ║  → INSTEAD: Run pytest suite + compare to external sources                ║
+  ║  → Post [TESTING_REPORT] before [SESSION_COMPLETE]                        ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT ignore problems or hope they resolve themselves                   ║
+  ║  → INSTEAD: Post [AGENT_ERROR] @USER immediately and STOP                 ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  DO NOT continue when other agent is not following protocol               ║
+  ║  → INSTEAD: Post [PROTOCOL_BREAK] @USER @OTHER_AGENT and wait             ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  EXECUTOR: DO NOT run any git commands                                    ║
+  ║  → INSTEAD: Post [DONE], Architect will commit your work                  ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+================================================================================
+================================================================================
+                            PART 12: FAQ (BATCH MODE)
+================================================================================
+================================================================================
+
+Q: What if Executor sends "." before Architect has any tasks?
+A: Executor waits for [BATCH_READY] signal. Once seen, all tasks are defined
+   and Executor can start working. This wait is brief and expected.
+
+Q: How does Executor know when to stop?
+A: Executor stops when [SESSION_COMPLETE] is seen AND all their tasks are done.
+
+Q: What if a task in the inbox depends on an Architect task?
+A: THIS SHOULD NOT HAPPEN IN BATCH MODE! Architect must restructure.
+   Executor tasks can only depend on OTHER Executor tasks (E001→E002).
+   If you see this, post [PROTOCOL_BREAK] @USER @ARCHITECT.
+
+Q: What if both agents need the same file?
+A: Higher priority task gets it. Same priority = Architect decides.
+   Post in LIVE_CHAT to coordinate.
+
+Q: What if the other agent isn't responding?
+A: Check if they're active. If inactive 30+ min, you can [FORCE_UNLOCK] files
+   and proceed. Document it.
+
+Q: What if a task is too complex for Executor?
+A: Executor posts [Q] asking for clarification or breakdown.
+   Architect can split it or take it back.
+
+Q: When should Architect post [BATCH_READY]?
+A: After ALL Executor tasks are written to INBOX_EXECUTOR.md.
+   This is the signal for Executor to start. No more tasks will be added.
+
+Q: When should Architect post [SESSION_COMPLETE]?
+A: When ALL work is done - both Architect's own work AND all Executor
+   tasks validated. This ends the session.
+
+Q: What are "filler tasks"?
+A: Low-priority tasks from ROADMAP.md that Architect adds if Executor
+   would otherwise finish too early. Architect asks User for confirmation
+   before adding them: [FILLER_CONFIRM] "Adding X, Y, Z. OK?"
+
+Q: Can User send multiple "." to Executor?
+A: Not needed. One "." starts continuous mode. Executor works until
+   [SESSION_COMPLETE]. Only send another "." if starting a new session.
+
+Q: What if Executor finishes before Architect?
+A: Normal! Executor posts "All Executor tasks complete" and waits for
+   [SESSION_COMPLETE]. Architect may still be working on complex tasks.
+
+================================================================================
+================================================================================
+                           END OF GUIDE
+================================================================================
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   AUTONOMOUS OPERATION:                                                │
+  │   • Architect works continuously until [SESSION_COMPLETE]              │
+  │   • Executor works continuously, WAITS for tasks if inbox empty        │
+  │   • User intervention only needed for decisions/blockers               │
+  │                                                                         │
+  │   KEY SIGNALS:                                                          │
+  │   • [TASK_READY] = Task ready for Executor                             │
+  │   • [WAITING_FOR_TASKS] = Executor needs work                          │
+  │   • [ALL_TASKS_ASSIGNED] = No more tasks coming                        │
+  │   • [SESSION_COMPLETE] = Session over, stop                            │
+  │                                                                         │
+  │   Welcome to the team!                                                  │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================

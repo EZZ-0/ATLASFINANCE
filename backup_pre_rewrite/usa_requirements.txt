@@ -1,0 +1,33 @@
+# USA EARNINGS ENGINE - DEPENDENCIES
+# =====================================
+# Install with: pip install -r usa_requirements.txt
+
+# Core Data Extraction
+yfinance>=0.2.32              # Yahoo Finance API for market data
+requests>=2.31.0              # HTTP requests for SEC API
+pandas>=2.1.0                 # Data manipulation and analysis
+numpy>=1.24.0                 # Numerical computations
+
+# Quantitative Finance (REQUIRED for Fama-French)
+pandas-datareader>=0.10.0     # Kenneth French Data Library access
+statsmodels>=0.14.0           # Statistical modeling and regression
+scipy>=1.11.0                 # Scientific computing
+
+# Web Application
+streamlit>=1.28.0             # Interactive web dashboard
+python-dotenv>=1.0.0          # Environment variable management
+
+# Visualization
+plotly>=5.17.0                # Interactive charts and graphs
+
+# Machine Learning (Optional but Recommended)
+scikit-learn>=1.3.0           # Machine learning utilities
+
+# Data Formatting
+openpyxl>=3.1.0               # Excel export functionality
+xlsxwriter>=3.1.0             # Advanced Excel formatting
+
+# Development/Testing (Optional)
+pytest>=7.4.0                 # Unit testing framework
+black>=23.0.0                 # Code formatting
+

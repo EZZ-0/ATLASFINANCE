@@ -1,0 +1,96 @@
+{
+  "_README": "MANUAL DATA ENTRY REQUIRED - Fill in values from BA 10-K",
+  "_SOURCE": "https://www.sec.gov/cgi-bin/browse-edgar",
+  "_FISCAL_YEAR_END": "2024-12-31",
+  "_FISCAL_YEAR_LABEL": "Fiscal 2024",
+  "_FISCAL_YEAR_OFFSET": 0,
+  "_FILING_DATE": "2025-02-01",
+  "_NOTE": "Using offset=0 for most recent fiscal year (FY2024 ending Dec 31, 2024). COMPLEX/MESSY DATA - restructuring, losses, contract accounting issues.",
+  "_INSTRUCTIONS": "Download 10-K, extract exact values (in dollars, not thousands). Note: Boeing has complex revenue recognition and may have unusual line items.",
+  "ticker": "BA",
+  "company_name": "The Boeing Company",
+  "fiscal_year": 2024,
+  "fiscal_period": "FY",
+  "income_statement": {
+    "_NOTE": "All values in actual dollars (not thousands or millions). Boeing may have losses, negative margins.",
+    "total_revenue": 66520000000.0,
+    "cost_of_revenue": null,
+    "gross_profit": null,
+    "research_development": null,
+    "selling_general_admin": null,
+    "operating_expenses": null,
+    "operating_income": null,
+    "interest_expense": null,
+    "other_income_expense": null,
+    "pretax_income": null,
+    "income_tax": null,
+    "net_income": null,
+    "ebitda": null,
+    "depreciation_amortization": null
+  },
+  "balance_sheet": {
+    "_NOTE": "All values in actual dollars (not thousands or millions)",
+    "total_assets": null,
+    "current_assets": null,
+    "cash_and_equivalents": null,
+    "accounts_receivable": null,
+    "inventory": null,
+    "total_liabilities": null,
+    "current_liabilities": null,
+    "accounts_payable": null,
+    "short_term_debt": null,
+    "long_term_debt": null,
+    "total_equity": null,
+    "retained_earnings": null,
+    "common_stock": null
+  },
+  "cash_flow": {
+    "_NOTE": "All values in actual dollars (not thousands or millions)",
+    "operating_cash_flow": null,
+    "investing_cash_flow": null,
+    "financing_cash_flow": null,
+    "capital_expenditures": null,
+    "free_cash_flow": null,
+    "dividends_paid": null,
+    "stock_repurchases": null
+  },
+  "calculated_ratios": {
+    "_NOTE": "Calculate these manually from above values for validation. Boeing may have negative ratios due to losses.",
+    "_FORMULA_gross_margin": "(gross_profit / total_revenue)",
+    "gross_margin": null,
+    "_FORMULA_operating_margin": "(operating_income / total_revenue)",
+    "operating_margin": null,
+    "_FORMULA_net_margin": "(net_income / total_revenue)",
+    "net_margin": null,
+    "_FORMULA_roe": "(net_income / total_equity)",
+    "roe": null,
+    "_FORMULA_roa": "(net_income / total_assets)",
+    "roa": null,
+    "_FORMULA_debt_to_equity": "(total_liabilities / total_equity)", 
+    "debt_to_equity": null,
+    "_FORMULA_current_ratio": "(current_assets / current_liabilities)",
+    "current_ratio": null,
+    "_FORMULA_free_cash_flow": "(operating_cash_flow + capital_expenditures)",
+    "free_cash_flow_manual": null
+  },
+  "per_share_data": {
+    "_NOTE": "Per share values. Boeing may have negative EPS.",
+    "basic_eps": null,
+    "diluted_eps": null,
+    "book_value_per_share": null,
+    "shares_outstanding": null
+  },
+  "validation_notes": {
+    "data_source": "BA 10-K Filing",
+    "validation_date": "2025-11-28",
+    "validated_by": "User",
+    "confidence": "medium",
+    "special_notes": "STRESS TEST - Boeing has recent losses, restructuring charges, 737 MAX issues, complex contract accounting. Tests engine's resilience to messy financials."
+  }
+}
+
+
+
+
+
+

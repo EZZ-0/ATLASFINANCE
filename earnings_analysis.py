@@ -27,13 +27,14 @@ from datetime import datetime, timedelta
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_earnings_history(ticker: str, periods: int = 8) -> Dict:
+def analyze_earnings_history(ticker: str, periods: int = 8, financials: Dict = None) -> Dict:
     """
     Analyze earnings history, surprises, and trends
     
     Args:
         ticker: Stock ticker symbol
         periods: Number of quarters to analyze
+        financials: Pre-extracted financials dict (optional)
         
     Returns:
         Dictionary with earnings analysis metrics
@@ -41,7 +42,14 @@ def analyze_earnings_history(ticker: str, periods: int = 8) -> Dict:
     try:
         print(f"\n[INFO] Analyzing earnings for {ticker}...")
         
+        # Need yfinance stock object for earnings_dates (not in standard extraction)
         stock = yf.Ticker(ticker)
+        
+        # Can reuse info from financials if available
+        if financials and financials.get('info'):
+            info = financials['info']
+        else:
+            info = stock.info
         
         # Get earnings data
         earnings_dates = stock.earnings_dates

@@ -25,12 +25,13 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_balance_sheet_health(ticker: str) -> Dict:
+def analyze_balance_sheet_health(ticker: str, financials: Dict = None) -> Dict:
     """
     Comprehensive balance sheet health analysis
     
     Args:
         ticker: Stock ticker symbol
+        financials: Pre-extracted financials dict (optional, reduces API calls)
         
     Returns:
         Dictionary with balance sheet metrics and health score
@@ -38,10 +39,18 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing balance sheet health for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        balance_sheet = stock.balance_sheet
-        income_stmt = stock.financials
+        # Use pre-extracted data if available
+        if financials:
+            info = financials.get('info', {})
+            balance_sheet = financials.get('balance_sheet', pd.DataFrame())
+            income_stmt = financials.get('income_statement', pd.DataFrame())
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            # Fallback to direct yfinance call
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            balance_sheet = stock.balance_sheet
+            income_stmt = stock.financials
         
         if balance_sheet.empty:
             return {
@@ -63,24 +72,39 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
         current_liabilities = None
         cash = None
         inventory = None
+        ca_key = None
+        cl_key = None
         
-        for ca_key in ['Current Assets', 'Total Current Assets']:
-            if ca_key in balance_sheet.index:
-                current_assets = bs[ca_key]
-                break
+        # Try yfinance format first, then SEC format
+        for key in ['Current Assets', 'Total Current Assets', 'CurrentAssets', 'Current_Assets']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    current_assets = float(val)
+                    ca_key = key
+                    break
         
-        for cl_key in ['Current Liabilities', 'Total Current Liabilities']:
-            if cl_key in balance_sheet.index:
-                current_liabilities = bs[cl_key]
-                break
+        for key in ['Current Liabilities', 'Total Current Liabilities', 'CurrentLiabilities', 'Current_Liabilities']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    current_liabilities = float(val)
+                    cl_key = key
+                    break
         
-        for cash_key in ['Cash', 'Cash And Cash Equivalents', 'Cash Cash Equivalents And Short Term Investments']:
-            if cash_key in balance_sheet.index:
-                cash = bs[cash_key]
-                break
+        for key in ['Cash', 'Cash And Cash Equivalents', 'Cash Cash Equivalents And Short Term Investments', 'CashAndCashEquivalentsAtCarryingValue', 'Cash_And_Cash_Equivalents']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    cash = float(val)
+                    break
         
-        if 'Inventory' in balance_sheet.index:
-            inventory = bs['Inventory']
+        for key in ['Inventory', 'Inventories']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    inventory = float(val)
+                    break
         
         # Current Ratio
         if current_assets and current_liabilities and current_liabilities > 0:
@@ -133,20 +157,26 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
         total_equity = None
         total_assets = None
         
-        for debt_key in ['Total Debt', 'Long Term Debt', 'Net Debt']:
-            if debt_key in balance_sheet.index:
-                total_debt = bs[debt_key]
-                break
+        for key in ['Total Debt', 'Long Term Debt', 'Net Debt', 'Total_Debt', 'LongTermDebt']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    total_debt = float(val)
+                    break
         
-        for equity_key in ['Stockholders Equity', 'Total Equity', 'Total Stockholder Equity']:
-            if equity_key in balance_sheet.index:
-                total_equity = bs[equity_key]
-                break
+        for key in ['Stockholders Equity', 'Total Equity', 'Total Stockholder Equity', 'Total_Equity', 'StockholdersEquity']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    total_equity = float(val)
+                    break
         
-        for assets_key in ['Total Assets']:
-            if assets_key in balance_sheet.index:
-                total_assets = bs[assets_key]
-                break
+        for key in ['Total Assets', 'Total_Assets', 'Assets']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    total_assets = float(val)
+                    break
         
         # Debt-to-Equity Ratio
         if total_debt and total_equity and total_equity > 0:
@@ -202,14 +232,20 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
                 metrics['working_capital_ratio'] = round(wc_ratio * 100, 2)
         
         # Net Working Capital Trend (if multiple years available)
-        if len(balance_sheet.columns) >= 2:
+        if len(balance_sheet.columns) >= 2 and current_assets is not None and current_liabilities is not None:
             wc_current = current_assets - current_liabilities
             
             # Previous year
-            bs_prev = balance_sheet.iloc[:, 1]
-            ca_prev = bs_prev.get(ca_key, 0) if ca_key else 0
-            cl_prev = bs_prev.get(cl_key, 0) if cl_key else 0
-            wc_prev = ca_prev - cl_prev
+            try:
+                bs_prev = balance_sheet.iloc[:, 1]
+                ca_prev = float(bs_prev.get(ca_key, 0)) if ca_key and ca_key in bs_prev.index else 0
+                cl_prev = float(bs_prev.get(cl_key, 0)) if cl_key and cl_key in bs_prev.index else 0
+                # Handle NaN values
+                ca_prev = 0 if pd.isna(ca_prev) else ca_prev
+                cl_prev = 0 if pd.isna(cl_prev) else cl_prev
+                wc_prev = ca_prev - cl_prev
+            except Exception:
+                wc_prev = 0
             
             if wc_prev > 0:
                 wc_change = ((wc_current - wc_prev) / wc_prev) * 100
@@ -227,8 +263,20 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
         # ====================================
         
         # Tangible Book Value
-        goodwill = bs.get('Goodwill', 0) if 'Goodwill' in balance_sheet.index else 0
-        intangibles = bs.get('Intangible Assets', 0) if 'Intangible Assets' in balance_sheet.index else 0
+        goodwill = 0
+        intangibles = 0
+        for key in ['Goodwill', 'GoodwillAndOtherIntangibleAssets']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    goodwill = float(val)
+                    break
+        for key in ['Intangible Assets', 'IntangibleAssets', 'OtherIntangibleAssets']:
+            if key in balance_sheet.index:
+                val = bs.get(key)
+                if val is not None and not pd.isna(val):
+                    intangibles = float(val)
+                    break
         
         if total_equity:
             tangible_equity = total_equity - goodwill - intangibles
@@ -256,17 +304,21 @@ def analyze_balance_sheet_health(ticker: str) -> Dict:
             ebit = None
             interest = None
             
-            for ebit_key in ['EBIT', 'Operating Income']:
-                if ebit_key in income_stmt.index:
-                    ebit = inc[ebit_key]
-                    break
+            for key in ['EBIT', 'Operating Income', 'OperatingIncome', 'Operating_Income']:
+                if key in income_stmt.index:
+                    val = inc.get(key)
+                    if val is not None and not pd.isna(val):
+                        ebit = float(val)
+                        break
             
-            for int_key in ['Interest Expense', 'Interest Expense Non Operating']:
-                if int_key in income_stmt.index:
-                    interest = abs(inc[int_key])  # Usually negative
-                    break
+            for key in ['Interest Expense', 'Interest Expense Non Operating', 'InterestExpense']:
+                if key in income_stmt.index:
+                    val = inc.get(key)
+                    if val is not None and not pd.isna(val):
+                        interest = abs(float(val))  # Usually negative
+                        break
             
-            if ebit and interest and interest > 0:
+            if ebit is not None and interest is not None and interest > 0:
                 interest_coverage = ebit / interest
                 metrics['interest_coverage'] = round(interest_coverage, 2)
                 

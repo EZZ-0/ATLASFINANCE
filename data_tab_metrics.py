@@ -18,10 +18,11 @@ from typing import Dict, Any, Optional
 
 # Import flip card components with fallback
 try:
-    from flip_card_component import FlipCardMetric, RATIO_DEFINITIONS
+    from flip_cards import RATIO_DEFINITIONS
     FLIP_CARDS_AVAILABLE = True
 except ImportError:
     FLIP_CARDS_AVAILABLE = False
+    RATIO_DEFINITIONS = {}
     RATIO_DEFINITIONS = {}
 
 

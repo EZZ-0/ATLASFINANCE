@@ -191,51 +191,119 @@ class USAFinancialExtractor:
     """
     
     # Field priority map: which source to try first for each field type
+    # Order: best source first, then fallbacks
+    # Sources: 'sec', 'yfinance', 'fmp', 'alphavantage', 'calculate'
     FIELD_SOURCE_PRIORITY = {
-        # Financial statements - SEC most accurate
-        'revenue': ['sec', 'yfinance'],
-        'net_income': ['sec', 'yfinance'],
-        'total_assets': ['sec', 'yfinance'],
-        'total_liabilities': ['sec', 'yfinance'],
-        'total_equity': ['sec', 'yfinance'],
-        'operating_income': ['sec', 'yfinance'],
-        'gross_profit': ['sec', 'yfinance'],
-        'total_debt': ['sec', 'yfinance'],
-        'cash_and_equivalents': ['sec', 'yfinance'],
-        'free_cash_flow': ['sec', 'yfinance'],
+        # ========== FINANCIAL STATEMENTS (SEC most accurate) ==========
+        'revenue': ['sec', 'fmp', 'yfinance', 'alphavantage'],
+        'net_income': ['sec', 'fmp', 'yfinance', 'alphavantage'],
+        'total_assets': ['sec', 'fmp', 'yfinance'],
+        'total_liabilities': ['sec', 'fmp', 'yfinance'],
+        'total_equity': ['sec', 'fmp', 'yfinance'],
+        'operating_income': ['sec', 'fmp', 'yfinance'],
+        'gross_profit': ['sec', 'fmp', 'yfinance'],
+        'total_debt': ['sec', 'fmp', 'yfinance'],
+        'cash_and_equivalents': ['sec', 'fmp', 'yfinance'],
+        'free_cash_flow': ['sec', 'fmp', 'yfinance', 'calculate'],
+        'ebitda': ['sec', 'fmp', 'yfinance', 'calculate'],
+        'eps': ['sec', 'fmp', 'yfinance'],
+        'eps_diluted': ['sec', 'fmp', 'yfinance'],
         
-        # Market data - yfinance better for real-time
-        'current_price': ['yfinance', 'sec'],
-        'market_cap': ['yfinance', 'sec'],
-        'volume': ['yfinance'],
-        'shares_outstanding': ['yfinance', 'sec'],
-        'beta': ['yfinance'],
-        'fifty_two_week_high': ['yfinance'],
-        'fifty_two_week_low': ['yfinance'],
+        # ========== REAL-TIME MARKET DATA (yfinance best) ==========
+        'current_price': ['yfinance', 'fmp', 'alphavantage'],
+        'market_cap': ['yfinance', 'fmp', 'alphavantage'],
+        'volume': ['yfinance', 'fmp', 'alphavantage'],
+        'average_volume': ['yfinance', 'fmp'],
+        'shares_outstanding': ['yfinance', 'fmp', 'sec'],
+        'beta': ['yfinance', 'fmp'],
+        'fifty_two_week_high': ['yfinance', 'fmp'],
+        'fifty_two_week_low': ['yfinance', 'fmp'],
+        'enterprise_value': ['yfinance', 'fmp', 'calculate'],
         
-        # Ratios - calculated from source data
-        'pe_ratio': ['yfinance', 'sec'],
-        'forward_pe': ['yfinance'],
-        'peg_ratio': ['yfinance'],
-        'price_to_book': ['yfinance', 'sec'],
-        'price_to_sales': ['yfinance', 'sec'],
-        'debt_to_equity': ['yfinance', 'sec'],
-        'current_ratio': ['yfinance', 'sec'],
-        'quick_ratio': ['yfinance', 'sec'],
-        'roe': ['yfinance', 'sec'],
-        'roa': ['yfinance', 'sec'],
+        # ========== VALUATION RATIOS (yfinance, then calculate) ==========
+        'pe_ratio': ['yfinance', 'fmp', 'calculate'],
+        'forward_pe': ['yfinance', 'fmp'],
+        'peg_ratio': ['yfinance', 'fmp'],
+        'price_to_book': ['yfinance', 'fmp', 'calculate'],
+        'price_to_sales': ['yfinance', 'fmp', 'calculate'],
+        'ev_to_ebitda': ['yfinance', 'fmp', 'calculate'],
+        'ev_to_sales': ['yfinance', 'fmp', 'calculate'],
         
-        # Company info
-        'sector': ['yfinance', 'sec'],
-        'industry': ['yfinance', 'sec'],
-        'employees': ['yfinance', 'sec'],
-        'description': ['yfinance', 'sec'],
-        'company_name': ['yfinance', 'sec'],
+        # ========== PROFITABILITY RATIOS (calculate from SEC if possible) ==========
+        'gross_margin': ['yfinance', 'fmp', 'calculate'],
+        'operating_margin': ['yfinance', 'fmp', 'calculate'],
+        'profit_margin': ['yfinance', 'fmp', 'calculate'],
+        'roe': ['yfinance', 'fmp', 'calculate'],
+        'roa': ['yfinance', 'fmp', 'calculate'],
+        'roic': ['fmp', 'calculate'],
         
-        # Analyst/sentiment
-        'analyst_rating': ['yfinance'],
-        'target_price': ['yfinance'],
-        'recommendation': ['yfinance'],
+        # ========== SOLVENCY/LIQUIDITY RATIOS ==========
+        'debt_to_equity': ['yfinance', 'fmp', 'calculate'],
+        'current_ratio': ['yfinance', 'fmp', 'calculate'],
+        'quick_ratio': ['yfinance', 'fmp', 'calculate'],
+        'interest_coverage': ['fmp', 'calculate'],
+        
+        # ========== GROWTH METRICS ==========
+        'revenue_growth': ['yfinance', 'fmp', 'calculate'],
+        'earnings_growth': ['yfinance', 'fmp', 'calculate'],
+        
+        # ========== DIVIDENDS ==========
+        'dividend_yield': ['yfinance', 'fmp'],
+        'payout_ratio': ['yfinance', 'fmp', 'calculate'],
+        'dividend_per_share': ['yfinance', 'fmp'],
+        
+        # ========== COMPANY INFO ==========
+        'sector': ['yfinance', 'fmp', 'sec'],
+        'industry': ['yfinance', 'fmp', 'sec'],
+        'employees': ['yfinance', 'fmp'],
+        'description': ['yfinance', 'fmp'],
+        'company_name': ['yfinance', 'fmp', 'sec'],
+        'website': ['yfinance', 'fmp'],
+        'headquarters': ['yfinance', 'fmp'],
+        
+        # ========== ANALYST DATA (FMP best for this) ==========
+        'target_price': ['fmp', 'yfinance'],
+        'target_price_avg': ['fmp', 'yfinance'],
+        'recommendation': ['yfinance', 'fmp'],
+        'eps_estimate_avg': ['fmp', 'yfinance'],
+        'fmp_rating': ['fmp'],
+        'fmp_rating_score': ['fmp'],
+        'graham_number': ['fmp', 'calculate'],
+    }
+    
+    # ========== FIELD NAME ALIASES (for mapping across sources) ==========
+    FIELD_ALIASES = {
+        'revenue': ['totalRevenue', 'revenue', 'Total Revenue', 'Revenues', 'Net Sales', 'netSales', 'operatingRevenue'],
+        'net_income': ['netIncome', 'net_income', 'Net Income', 'netIncomeToCommon', 'netIncomeApplicableToCommonShares'],
+        'total_assets': ['totalAssets', 'total_assets', 'Total Assets'],
+        'total_liabilities': ['totalLiabilities', 'total_liabilities', 'Total Liabilities', 'totalLiab'],
+        'total_equity': ['totalStockholdersEquity', 'totalEquity', 'Total Equity', 'stockholdersEquity', 'totalShareholderEquity'],
+        'gross_profit': ['grossProfit', 'gross_profit', 'Gross Profit'],
+        'operating_income': ['operatingIncome', 'operating_income', 'Operating Income', 'ebit', 'EBIT'],
+        'ebitda': ['ebitda', 'EBITDA', 'operatingEBITDA'],
+        'eps': ['eps', 'EPS', 'earningsPerShare', 'basicEPS'],
+        'eps_diluted': ['epsDiluted', 'dilutedEPS', 'earningsPerShareDiluted'],
+        'current_price': ['currentPrice', 'regularMarketPrice', 'price', 'lastPrice'],
+        'market_cap': ['marketCap', 'market_cap', 'marketCapitalization'],
+        'pe_ratio': ['trailingPE', 'peRatio', 'pe_ratio', 'priceEarningsRatio'],
+        'forward_pe': ['forwardPE', 'forwardPriceEarningsRatio'],
+        'price_to_book': ['priceToBook', 'pbRatio', 'priceBookValueRatio'],
+        'price_to_sales': ['priceToSalesTrailing12Months', 'psRatio', 'priceSalesRatio'],
+        'roe': ['returnOnEquity', 'roe', 'ROE'],
+        'roa': ['returnOnAssets', 'roa', 'ROA'],
+        'debt_to_equity': ['debtToEquity', 'debtEquityRatio', 'totalDebtToEquity'],
+        'current_ratio': ['currentRatio', 'current_ratio'],
+        'quick_ratio': ['quickRatio', 'quick_ratio'],
+        'dividend_yield': ['dividendYield', 'dividend_yield', 'trailingAnnualDividendYield'],
+        'beta': ['beta', 'Beta'],
+        'sector': ['sector', 'Sector', 'gicsSector'],
+        'industry': ['industry', 'Industry', 'gicsSubIndustry'],
+        'employees': ['fullTimeEmployees', 'employees', 'numberOfEmployees'],
+        'target_price': ['targetMeanPrice', 'targetPrice', 'analystTargetPrice'],
+        'recommendation': ['recommendationKey', 'recommendation', 'analystRating'],
+        'shares_outstanding': ['sharesOutstanding', 'shares_outstanding', 'commonStockSharesOutstanding'],
+        'enterprise_value': ['enterpriseValue', 'enterprise_value'],
+        'free_cash_flow': ['freeCashflow', 'freeCashFlow', 'free_cash_flow', 'operatingCashFlow'],
     }
     
     def __init__(self, user_agent: str = "AtlasFinancialIntelligence/2.0 (Educational Research; Python 3.13; Contact: research@atlas-fi.com)"):
@@ -626,6 +694,15 @@ class USAFinancialExtractor:
                 "per_share_data": self._extract_per_share_data(us_gaap, filing_types)
             }
             
+            # Normalize DataFrame indices from SEC format (underscores) to yfinance format (spaces)
+            financials = self._normalize_financials(financials)
+            
+            # Calculate growth rates for SEC extraction too
+            print(f"   Calculating growth rates (CAGR)...")
+            growth_dict = self.calculate_growth_rates(financials)
+            if growth_dict and growth_dict.get("status") != "error":
+                financials["growth_rates"] = growth_dict
+            
             _logger.info(f"SEC Extraction Complete for {ticker}: {financials['extraction_time']}")
             EngineLogger.log_data_extraction(ticker, success=True)
             print(f"[OK] SEC Extraction Complete: {financials['extraction_time']}")
@@ -959,7 +1036,7 @@ class USAFinancialExtractor:
         Args:
             ticker: Stock symbol
             source: "sec", "yfinance", or "auto" (tries SEC first)
-            filing_types: List of SEC filing types ["10-K"], ["10-Q"], ["10-K", "10-Q"], ["S-1"]
+            filing_types: List of SEC filing types ["10-K"], ["10-Q"], ["10-K", "10-Q"]
             include_quant: If True, run Fama-French quant analysis
             use_cache: If True, use cached data if available and not expired
             
@@ -1016,6 +1093,8 @@ class USAFinancialExtractor:
         # Manual source selection
         elif source == "sec":
             financials = self.extract_from_sec(ticker, filing_types=filing_types)
+            # Still run gap filling for SEC to get yfinance info and fill gaps
+            financials = self._fill_data_gaps(ticker, financials, "sec")
         elif source == "yfinance":
             financials = self.extract_from_yfinance(ticker, fiscal_year_offset=fiscal_year_offset)
         else:
@@ -1036,15 +1115,56 @@ class USAFinancialExtractor:
         if "extraction_time" in financials and hasattr(self, '_overall_start_time'):
             financials["extraction_time"] = f"{time.time() - self._overall_start_time:.2f}s"
         
-        # Cache the results (only if successful)
+        # Validate extraction results
         if "status" not in financials or financials.get("status") != "error":
+            validation_result = self.validate_extraction(financials)
+            financials['_validation'] = validation_result
+            
+            # Cache the results (only if successful)
             self._cache_set(cache_key, financials, cache_type="financials")
             _logger.info(f"Cached financial data for {ticker}")
         
         return financials
     
     # ==========================================
-    # 4B. FIELD-LEVEL GAP FILLING (PHASE 1)
+    # 4B. DATAFRAME INDEX NORMALIZATION
+    # ==========================================
+    
+    def _normalize_dataframe_index(self, df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Normalize DataFrame index names from SEC format to yfinance format.
+        SEC uses underscores (Current_Assets), yfinance uses spaces (Current Assets).
+        """
+        if df is None or df.empty:
+            return df
+        
+        try:
+            # Normalize index (row names)
+            if isinstance(df.index, pd.Index) and df.index.dtype == 'object':
+                df.index = df.index.str.replace('_', ' ')
+            
+            # Normalize columns if they're strings
+            if isinstance(df.columns, pd.Index) and df.columns.dtype == 'object':
+                df.columns = df.columns.str.replace('_', ' ')
+        except Exception:
+            pass  # Keep original if normalization fails
+        
+        return df
+    
+    def _normalize_financials(self, financials: Dict) -> Dict:
+        """
+        Normalize all DataFrames in financials dict from SEC format to yfinance format.
+        """
+        dataframe_keys = ['income_statement', 'balance_sheet', 'cash_flow', 'per_share_data']
+        
+        for key in dataframe_keys:
+            if key in financials and isinstance(financials[key], pd.DataFrame):
+                financials[key] = self._normalize_dataframe_index(financials[key])
+        
+        return financials
+    
+    # ==========================================
+    # 4C. FIELD-LEVEL GAP FILLING (PHASE 1)
     # ==========================================
     
     def _fill_data_gaps(self, ticker: str, financials: Dict, primary_source: str) -> Dict:
@@ -1101,6 +1221,24 @@ class USAFinancialExtractor:
         
         if not gaps:
             print(f"   [GAP FILL] No gaps detected")
+            # Still need to fetch yfinance info for analysis modules even if no gaps
+            if YFINANCE_AVAILABLE and 'info' not in financials:
+                try:
+                    stock = yf.Ticker(ticker)
+                    info = stock.info
+                    if info:
+                        financials['info'] = info
+                        financials['market_data'] = {
+                            'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
+                            'market_cap': info.get('marketCap'),
+                            'volume': info.get('volume'),
+                            'beta': info.get('beta'),
+                            'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+                            'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+                        }
+                        print(f"   [GAP FILL] Added yfinance info ({len(info)} fields)")
+                except Exception as e:
+                    print(f"   [GAP FILL] Could not fetch yfinance info: {e}")
             return financials
         
         print(f"   [GAP FILL] Found {len(gaps)} gaps: {', '.join(gaps[:5])}{'...' if len(gaps) > 5 else ''}")
@@ -1115,37 +1253,69 @@ class USAFinancialExtractor:
                 stock = yf.Ticker(ticker)
                 info = stock.info
                 
+                # CRITICAL: Store full info dict for analysis modules to use
+                if info and 'info' not in financials:
+                    financials['info'] = info
+                    print(f"   [GAP FILL] Added yfinance info dict ({len(info)} fields)")
+                
+                # Also populate market_data if not present
+                if 'market_data' not in financials:
+                    financials['market_data'] = {
+                        'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
+                        'market_cap': info.get('marketCap'),
+                        'volume': info.get('volume'),
+                        'beta': info.get('beta'),
+                        'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+                        'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+                    }
+                    print(f"   [GAP FILL] Added market_data dict")
+                
+                # Use class-level FIELD_ALIASES for comprehensive mapping
                 yf_field_map = {
-                    'current_price': ['currentPrice', 'regularMarketPrice'],
-                    'market_cap': ['marketCap'],
-                    'pe_ratio': ['trailingPE'],
-                    'forward_pe': ['forwardPE'],
+                    'current_price': ['currentPrice', 'regularMarketPrice', 'price'],
+                    'market_cap': ['marketCap', 'marketCapitalization'],
+                    'pe_ratio': ['trailingPE', 'peRatio'],
+                    'forward_pe': ['forwardPE', 'forwardPriceEarningsRatio'],
                     'peg_ratio': ['pegRatio'],
-                    'price_to_book': ['priceToBook'],
-                    'price_to_sales': ['priceToSalesTrailing12Months'],
+                    'price_to_book': ['priceToBook', 'pbRatio'],
+                    'price_to_sales': ['priceToSalesTrailing12Months', 'psRatio'],
+                    'ev_to_ebitda': ['enterpriseToEbitda'],
+                    'ev_to_sales': ['enterpriseToRevenue'],
                     'roe': ['returnOnEquity'],
                     'roa': ['returnOnAssets'],
-                    'debt_to_equity': ['debtToEquity'],
+                    'roic': ['returnOnCapital'],
+                    'debt_to_equity': ['debtToEquity', 'totalDebtToEquity'],
                     'current_ratio': ['currentRatio'],
                     'quick_ratio': ['quickRatio'],
-                    'revenue_growth': ['revenueGrowth'],
-                    'earnings_growth': ['earningsGrowth'],
-                    'dividend_yield': ['dividendYield'],
+                    'interest_coverage': ['interestCoverage'],
+                    'revenue_growth': ['revenueGrowth', 'revenueQuarterlyGrowth'],
+                    'earnings_growth': ['earningsGrowth', 'earningsQuarterlyGrowth'],
+                    'dividend_yield': ['dividendYield', 'trailingAnnualDividendYield'],
+                    'dividend_per_share': ['dividendRate', 'trailingAnnualDividendRate'],
+                    'payout_ratio': ['payoutRatio'],
                     'beta': ['beta'],
-                    'sector': ['sector'],
-                    'industry': ['industry'],
+                    'sector': ['sector', 'gicsSector'],
+                    'industry': ['industry', 'gicsSubIndustry'],
                     'employees': ['fullTimeEmployees'],
-                    'fifty_two_week_high': ['fiftyTwoWeekHigh'],
-                    'fifty_two_week_low': ['fiftyTwoWeekLow'],
-                    'shares_outstanding': ['sharesOutstanding'],
-                    'target_price': ['targetMeanPrice'],
-                    'recommendation': ['recommendationKey'],
+                    'fifty_two_week_high': ['fiftyTwoWeekHigh', '52WeekHigh'],
+                    'fifty_two_week_low': ['fiftyTwoWeekLow', '52WeekLow'],
+                    'shares_outstanding': ['sharesOutstanding', 'impliedSharesOutstanding'],
+                    'target_price': ['targetMeanPrice', 'targetMedianPrice'],
+                    'target_price_avg': ['targetMeanPrice'],
+                    'recommendation': ['recommendationKey', 'recommendationMean'],
+                    'eps_estimate_avg': ['forwardEps'],
                     'enterprise_value': ['enterpriseValue'],
-                    'average_volume': ['averageVolume'],
+                    'average_volume': ['averageVolume', 'averageDailyVolume10Day'],
                     'gross_margin': ['grossMargins'],
                     'operating_margin': ['operatingMargins'],
                     'profit_margin': ['profitMargins'],
-                    'payout_ratio': ['payoutRatio'],
+                    'ebitda': ['ebitda'],
+                    'free_cash_flow': ['freeCashflow', 'operatingCashflow'],
+                    'eps': ['trailingEps'],
+                    'eps_diluted': ['trailingEps'],
+                    'website': ['website'],
+                    'description': ['longBusinessSummary', 'description'],
+                    'company_name': ['longName', 'shortName'],
                 }
                 
                 for field in gaps:
@@ -1209,11 +1379,267 @@ class USAFinancialExtractor:
             except Exception:
                 pass  # Alpha Vantage failed silently
         
-        total_filled = gaps_filled_yf + gaps_filled_fmp + gaps_filled_av
+        # ========== STEP 4: Calculate derived metrics from existing data ==========
+        gaps_filled_calc = 0
+        if remaining_gaps:
+            gaps_filled_calc = self._calculate_missing_fields(financials, remaining_gaps)
+            if gaps_filled_calc > 0:
+                print(f"   [GAP FILL] Calculated {gaps_filled_calc} gaps from existing data")
+        
+        total_filled = gaps_filled_yf + gaps_filled_fmp + gaps_filled_av + gaps_filled_calc
         if total_filled > 0:
             print(f"   [GAP FILL] Total: {total_filled}/{len(gaps)} gaps filled")
         
+        # Log remaining gaps for debugging
+        if remaining_gaps:
+            print(f"   [GAP FILL] Remaining unfilled: {', '.join(remaining_gaps[:10])}{'...' if len(remaining_gaps) > 10 else ''}")
+        
         return financials
+    
+    def _calculate_missing_fields(self, financials: Dict, remaining_gaps: List[str]) -> int:
+        """
+        Calculate derived metrics from existing financial data.
+        Only calculates if source data is reliable.
+        
+        Returns:
+            Number of gaps successfully filled
+        """
+        filled = 0
+        
+        # Get source data
+        income = financials.get("income_statement", pd.DataFrame())
+        balance = financials.get("balance_sheet", pd.DataFrame())
+        cashflow = financials.get("cash_flow", pd.DataFrame())
+        market_data = financials.get("market_data", {})
+        
+        # Helper to get latest value from DataFrame
+        def get_latest(df, possible_names):
+            if df.empty:
+                return None
+            for name in possible_names:
+                if name in df.index:
+                    val = df.loc[name].iloc[0] if not df.loc[name].empty else None
+                    if val is not None and pd.notnull(val) and val != 0:
+                        return float(val)
+                elif name in df.columns:
+                    val = df[name].iloc[0] if len(df[name]) > 0 else None
+                    if val is not None and pd.notnull(val) and val != 0:
+                        return float(val)
+            return None
+        
+        # Calculate P/E Ratio
+        if 'pe_ratio' in remaining_gaps:
+            price = financials.get('current_price') or market_data.get('current_price')
+            eps = financials.get('eps') or get_latest(income, ['Basic EPS', 'Diluted EPS', 'earningsPerShare'])
+            if price and eps and eps != 0:
+                pe = price / eps
+                if 0 < pe < 1000:  # Sanity check
+                    financials['pe_ratio'] = round(pe, 2)
+                    financials['_sources']['pe_ratio'] = 'calculated'
+                    remaining_gaps.remove('pe_ratio')
+                    filled += 1
+        
+        # Calculate Price to Book
+        if 'price_to_book' in remaining_gaps:
+            price = financials.get('current_price') or market_data.get('current_price')
+            equity = get_latest(balance, ['Total Stockholders Equity', 'totalStockholdersEquity', 'Total Equity'])
+            shares = financials.get('shares_outstanding')
+            if price and equity and shares and shares != 0:
+                book_value_per_share = equity / shares
+                if book_value_per_share != 0:
+                    pb = price / book_value_per_share
+                    if 0 < pb < 100:  # Sanity check
+                        financials['price_to_book'] = round(pb, 2)
+                        financials['_sources']['price_to_book'] = 'calculated'
+                        remaining_gaps.remove('price_to_book')
+                        filled += 1
+        
+        # Calculate Gross Margin
+        if 'gross_margin' in remaining_gaps:
+            revenue = get_latest(income, ['Total Revenue', 'revenue', 'Revenue'])
+            gross_profit = get_latest(income, ['Gross Profit', 'grossProfit'])
+            if revenue and gross_profit and revenue != 0:
+                margin = gross_profit / revenue
+                if 0 <= margin <= 1:  # Sanity check
+                    financials['gross_margin'] = round(margin, 4)
+                    financials['_sources']['gross_margin'] = 'calculated'
+                    remaining_gaps.remove('gross_margin')
+                    filled += 1
+        
+        # Calculate Operating Margin
+        if 'operating_margin' in remaining_gaps:
+            revenue = get_latest(income, ['Total Revenue', 'revenue', 'Revenue'])
+            op_income = get_latest(income, ['Operating Income', 'operatingIncome', 'EBIT'])
+            if revenue and op_income and revenue != 0:
+                margin = op_income / revenue
+                if -1 <= margin <= 1:  # Sanity check (can be negative)
+                    financials['operating_margin'] = round(margin, 4)
+                    financials['_sources']['operating_margin'] = 'calculated'
+                    remaining_gaps.remove('operating_margin')
+                    filled += 1
+        
+        # Calculate Profit Margin
+        if 'profit_margin' in remaining_gaps:
+            revenue = get_latest(income, ['Total Revenue', 'revenue', 'Revenue'])
+            net_income = get_latest(income, ['Net Income', 'netIncome'])
+            if revenue and net_income and revenue != 0:
+                margin = net_income / revenue
+                if -1 <= margin <= 1:  # Sanity check
+                    financials['profit_margin'] = round(margin, 4)
+                    financials['_sources']['profit_margin'] = 'calculated'
+                    remaining_gaps.remove('profit_margin')
+                    filled += 1
+        
+        # Calculate ROE
+        if 'roe' in remaining_gaps:
+            net_income = get_latest(income, ['Net Income', 'netIncome'])
+            equity = get_latest(balance, ['Total Stockholders Equity', 'totalStockholdersEquity'])
+            if net_income and equity and equity != 0:
+                roe = net_income / equity
+                if -2 <= roe <= 2:  # Sanity check
+                    financials['roe'] = round(roe, 4)
+                    financials['_sources']['roe'] = 'calculated'
+                    remaining_gaps.remove('roe')
+                    filled += 1
+        
+        # Calculate ROA
+        if 'roa' in remaining_gaps:
+            net_income = get_latest(income, ['Net Income', 'netIncome'])
+            assets = get_latest(balance, ['Total Assets', 'totalAssets'])
+            if net_income and assets and assets != 0:
+                roa = net_income / assets
+                if -1 <= roa <= 1:  # Sanity check
+                    financials['roa'] = round(roa, 4)
+                    financials['_sources']['roa'] = 'calculated'
+                    remaining_gaps.remove('roa')
+                    filled += 1
+        
+        # Calculate Debt to Equity
+        if 'debt_to_equity' in remaining_gaps:
+            debt = get_latest(balance, ['Total Debt', 'totalDebt', 'Long Term Debt', 'longTermDebt'])
+            equity = get_latest(balance, ['Total Stockholders Equity', 'totalStockholdersEquity'])
+            if debt is not None and equity and equity != 0:
+                de = debt / equity
+                if 0 <= de < 50:  # Sanity check
+                    financials['debt_to_equity'] = round(de, 2)
+                    financials['_sources']['debt_to_equity'] = 'calculated'
+                    remaining_gaps.remove('debt_to_equity')
+                    filled += 1
+        
+        # Calculate Current Ratio
+        if 'current_ratio' in remaining_gaps:
+            current_assets = get_latest(balance, ['Total Current Assets', 'currentAssets'])
+            current_liab = get_latest(balance, ['Total Current Liabilities', 'currentLiabilities'])
+            if current_assets and current_liab and current_liab != 0:
+                cr = current_assets / current_liab
+                if 0 < cr < 50:  # Sanity check
+                    financials['current_ratio'] = round(cr, 2)
+                    financials['_sources']['current_ratio'] = 'calculated'
+                    remaining_gaps.remove('current_ratio')
+                    filled += 1
+        
+        # Calculate Free Cash Flow
+        if 'free_cash_flow' in remaining_gaps:
+            op_cf = get_latest(cashflow, ['Operating Cash Flow', 'operatingCashflow', 'Cash Flow From Operating Activities'])
+            capex = get_latest(cashflow, ['Capital Expenditure', 'capitalExpenditure', 'capitalExpenditures'])
+            if op_cf is not None and capex is not None:
+                fcf = op_cf - abs(capex)  # CapEx is usually negative
+                financials['free_cash_flow'] = fcf
+                financials['_sources']['free_cash_flow'] = 'calculated'
+                remaining_gaps.remove('free_cash_flow')
+                filled += 1
+        
+        return filled
+    
+    def validate_extraction(self, financials: Dict) -> Dict:
+        """
+        Validate extracted financial data for sanity and consistency.
+        Marks suspicious values and logs warnings.
+        
+        Args:
+            financials: Extracted financial data dictionary
+            
+        Returns:
+            Validation report with issues found
+        """
+        issues = []
+        warnings = []
+        
+        # Skip validation if extraction failed
+        if financials.get('status') == 'error':
+            return {'valid': False, 'issues': ['Extraction failed'], 'warnings': []}
+        
+        # Validation rules
+        validations = {
+            # (field, min_value, max_value, description)
+            'pe_ratio': (0, 1000, 'P/E ratio out of range'),
+            'forward_pe': (0, 1000, 'Forward P/E out of range'),
+            'peg_ratio': (-10, 100, 'PEG ratio out of range'),
+            'price_to_book': (0, 100, 'P/B ratio out of range'),
+            'price_to_sales': (0, 100, 'P/S ratio out of range'),
+            'roe': (-2, 2, 'ROE out of range (-200% to 200%)'),
+            'roa': (-1, 1, 'ROA out of range (-100% to 100%)'),
+            'debt_to_equity': (0, 50, 'D/E ratio unusually high'),
+            'current_ratio': (0, 50, 'Current ratio out of range'),
+            'gross_margin': (0, 1, 'Gross margin should be 0-100%'),
+            'operating_margin': (-1, 1, 'Operating margin out of range'),
+            'profit_margin': (-1, 1, 'Profit margin out of range'),
+            'dividend_yield': (0, 0.5, 'Dividend yield > 50% suspicious'),
+            'beta': (-5, 5, 'Beta out of normal range'),
+        }
+        
+        for field, (min_val, max_val, msg) in validations.items():
+            value = financials.get(field)
+            if value is not None and value != 'N/A':
+                try:
+                    num_val = float(value)
+                    if num_val < min_val or num_val > max_val:
+                        warnings.append(f"{field}: {msg} (value: {num_val})")
+                except (ValueError, TypeError):
+                    warnings.append(f"{field}: Invalid numeric value ({value})")
+        
+        # Check for negative values that shouldn't be negative
+        non_negative_fields = ['market_cap', 'shares_outstanding', 'current_price', 'employees', 'average_volume']
+        for field in non_negative_fields:
+            value = financials.get(field)
+            if value is not None and value != 'N/A':
+                try:
+                    if float(value) < 0:
+                        issues.append(f"{field}: Negative value not allowed ({value})")
+                except (ValueError, TypeError):
+                    pass
+        
+        # Check revenue vs net income consistency
+        revenue = financials.get('revenue')
+        net_income = financials.get('net_income')
+        if revenue and net_income and revenue != 'N/A' and net_income != 'N/A':
+            try:
+                if abs(float(net_income)) > abs(float(revenue)):
+                    warnings.append(f"Net income ({net_income}) greater than revenue ({revenue})")
+            except (ValueError, TypeError):
+                pass
+        
+        # Check market data freshness
+        extraction_time = financials.get('extraction_time')
+        if extraction_time:
+            print(f"   [VALIDATE] Extraction time: {extraction_time}")
+        
+        # Log validation results
+        if issues:
+            print(f"   [VALIDATE] Found {len(issues)} issues")
+            for issue in issues[:3]:
+                print(f"      - {issue}")
+        if warnings:
+            print(f"   [VALIDATE] Found {len(warnings)} warnings")
+            for warning in warnings[:3]:
+                print(f"      - {warning}")
+        
+        return {
+            'valid': len(issues) == 0,
+            'issues': issues,
+            'warnings': warnings,
+            'sources': financials.get('_sources', {})
+        }
     
     # ==========================================
     # 5. DATA ENRICHMENT & CALCULATIONS
@@ -1604,6 +2030,58 @@ class USAFinancialExtractor:
                         growth["NOPAT_Latest_Value"] = latest_nopat
                         growth["NOPAT_Oldest_Value"] = oldest_nopat
                         growth["NOPAT_Effective_Tax_Rate"] = round(effective_tax_rate * 100, 1)
+            
+            # ==========================================
+            # CALCULATE BALANCE SHEET CAGR (Total Assets, Total Equity)
+            # ==========================================
+            balance = financials.get("balance_sheet", pd.DataFrame())
+            if not balance.empty:
+                balance_metrics = {
+                    "Total_Assets": ["Total Assets", "Assets", "Total_Assets"],
+                    "Total_Equity": ["Stockholders Equity", "Total Equity", "Total_Equity", "StockholdersEquity"],
+                    "Total_Debt": ["Total Debt", "Long Term Debt", "Total_Debt", "LongTermDebt"],
+                }
+                
+                for metric_name, possible_names in balance_metrics.items():
+                    series = get_time_series(balance, possible_names)
+                    
+                    if series is not None and len(series) >= 2:
+                        latest = series.iloc[-1] if isinstance(balance.index[0], str) else series.iloc[0]
+                        oldest = series.iloc[0] if isinstance(balance.index[0], str) else series.iloc[-1]
+                        n_years = len(series) - 1
+                        
+                        if oldest > 0 and latest > 0 and n_years > 0:
+                            cagr = ((latest / oldest) ** (1 / n_years) - 1) * 100
+                            if abs(cagr) <= 1000:
+                                growth[f"{metric_name}_CAGR"] = round(cagr, 2)
+                            
+                            growth[f"{metric_name}_Latest_Value"] = latest
+                            growth[f"{metric_name}_Oldest_Value"] = oldest
+            
+            # ==========================================
+            # CALCULATE EPS CAGR (per-share data)
+            # ==========================================
+            # Try from income statement first (yfinance format)
+            eps_series = get_time_series(income, ["Basic EPS", "Diluted EPS", "Basic Eps", "Diluted Eps"])
+            
+            # If not found, try per_share_data
+            if eps_series is None:
+                per_share = financials.get("per_share_data", pd.DataFrame())
+                if not per_share.empty:
+                    eps_series = get_time_series(per_share, ["Basic_EPS", "Diluted_EPS", "EPS"])
+            
+            if eps_series is not None and len(eps_series) >= 2:
+                latest = eps_series.iloc[-1] if isinstance(eps_series.index[0], str) else eps_series.iloc[0]
+                oldest = eps_series.iloc[0] if isinstance(eps_series.index[0], str) else eps_series.iloc[-1]
+                n_years = len(eps_series) - 1
+                
+                if oldest > 0 and latest > 0 and n_years > 0:
+                    cagr = ((latest / oldest) ** (1 / n_years) - 1) * 100
+                    if abs(cagr) <= 1000:
+                        growth["EPS_CAGR"] = round(cagr, 2)
+                    
+                    growth["EPS_Latest_Value"] = latest
+                    growth["EPS_Oldest_Value"] = oldest
             
             return growth if growth else {"status": "error", "message": "Could not calculate growth rates"}
             

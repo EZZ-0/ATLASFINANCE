@@ -25,12 +25,13 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_cashflow(ticker: str) -> Dict:
+def analyze_cashflow(ticker: str, financials: Dict = None) -> Dict:
     """
     Deep dive into cash flow metrics and quality
     
     Args:
         ticker: Stock ticker symbol
+        financials: Pre-extracted financials dict (optional, reduces API calls)
         
     Returns:
         Dictionary with cash flow analysis
@@ -38,13 +39,20 @@ def analyze_cashflow(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing cash flow for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        
-        # Get financial statements
-        cashflow = stock.cashflow
-        income = stock.financials
-        balance = stock.balance_sheet
+        # Use pre-extracted data if available
+        if financials:
+            info = financials.get('info', {})
+            cashflow = financials.get('cash_flow', pd.DataFrame())
+            income = financials.get('income_statement', pd.DataFrame())
+            balance = financials.get('balance_sheet', pd.DataFrame())
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            # Fallback to direct yfinance call
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            cashflow = stock.cashflow
+            income = stock.financials
+            balance = stock.balance_sheet
         
         if cashflow.empty:
             return {

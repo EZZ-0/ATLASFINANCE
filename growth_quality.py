@@ -25,12 +25,13 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_growth_quality(ticker: str) -> Dict:
+def analyze_growth_quality(ticker: str, financials_dict: Dict = None) -> Dict:
     """
     Comprehensive growth quality analysis
     
     Args:
         ticker: Stock ticker symbol
+        financials_dict: Pre-extracted financials dict (optional, reduces API calls)
         
     Returns:
         Dictionary with growth quality metrics and score
@@ -38,9 +39,15 @@ def analyze_growth_quality(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing growth quality for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        info = stock.info
-        financials = stock.financials
+        # Use pre-extracted data if available
+        if financials_dict:
+            info = financials_dict.get('info', {})
+            financials = financials_dict.get('income_statement', pd.DataFrame())
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            financials = stock.financials
         
         metrics = {}
         

@@ -1,0 +1,644 @@
+================================================================================
+================================================================================
+                            USER GUIDE
+                     OPERATION ROOM CONTROL
+                           VERSION 1.0
+================================================================================
+================================================================================
+
+                    ╔══════════════════════════════════════╗
+                    ║  YOU ARE THE OWNER OF THIS PROJECT   ║
+                    ║  This guide shows you how to         ║
+                    ║  control and monitor your agents     ║
+                    ╚══════════════════════════════════════╝
+
+================================================================================
+TABLE OF CONTENTS
+================================================================================
+
+1. QUICK START (Read This First)
+2. YOUR AGENTS
+3. HOW TO START A SESSION
+4. HOW TO MONITOR PROGRESS
+5. WHEN TO INTERVENE
+6. AGENT PROMPTS (Copy-Paste Ready)
+7. TROUBLESHOOTING
+8. FILE REFERENCE
+
+================================================================================
+================================================================================
+                        1. QUICK START
+================================================================================
+================================================================================
+
+THE BATCH MODE WORKFLOW:
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │  STEP 1: Tell Architect what you want                                  │
+  │          "Build feature X" or "Fix issue Y"                            │
+  │                                                                         │
+  │  STEP 2: Architect plans ALL tasks (Batch Mode)                        │
+  │          • May ask: "[FILLER_CONFIRM] Adding X, Y, Z. OK?"             │
+  │          • Confirm or decline the filler tasks                         │
+  │                                                                         │
+  │  STEP 3: Send "." to Executor after [BATCH_READY]                      │
+  │          (All tasks defined - Executor will never wait mid-session)    │
+  │                                                                         │
+  │  STEP 4: Wait for [SESSION_COMPLETE]                                   │
+  │          Agents work autonomously until done                           │
+  │          NO RE-TRIGGERING NEEDED! Executor always has work.            │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+THAT'S IT. Agents handle the rest. You only intervene if:
+  - You see [FILLER_CONFIRM] → Approve or decline filler tasks
+  - You see [DECISION_NEEDED]
+  - You see [AGENT_ERROR]
+  - You see [PROTOCOL_BREAK]
+  - You want to change priorities
+
+BATCH MODE BENEFITS:
+  ✅ No mid-session re-triggering of Executor
+  ✅ Executor NEVER waits for Architect tasks
+  ✅ Maximum parallel efficiency
+  ✅ Single "." trigger for entire session
+
+================================================================================
+================================================================================
+                        2. YOUR AGENTS
+================================================================================
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  ARCHITECT (Agent 1)                                                        │
+│  ═══════════════════                                                        │
+│                                                                             │
+│  Role: Lead developer, planner, decision maker                              │
+│  Does: Complex work, creates tasks for Executor, validates work             │
+│  Maintains: ROADMAP.md with milestones and progress                         │
+│  Reports to: YOU                                                            │
+│                                                                             │
+│  HOW TO START: Paste the Architect prompt (Section 6) + your request       │
+│  HOW TO TALK: Normal conversation                                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  EXECUTOR (Agent 2)                                                         │
+│  ═══════════════════                                                        │
+│                                                                             │
+│  Role: Implementation specialist, task executor                             │
+│  Does: Executes tasks assigned by Architect                                 │
+│  Reports to: ARCHITECT (not you directly)                                   │
+│                                                                             │
+│  HOW TO START: Send "." (just a period)                                    │
+│  HOW TO TALK: You don't - they get orders from Architect                   │
+│                                                                             │
+│  NOTE: Executor works CONTINUOUSLY until [SESSION_COMPLETE]                │
+│        They WAIT for tasks if inbox is empty (don't stop)                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  R&D AGENT (Agent 3 - Separate)                                             │
+│  ═══════════════════════════════                                            │
+│                                                                             │
+│  Role: Quality assurance, research, validation                              │
+│  Does: Validates completed features, conducts research                      │
+│  Reports to: YOU                                                            │
+│                                                                             │
+│  HOW TO START: Talk directly with research request                         │
+│  HOW TO TALK: Normal conversation                                           │
+│                                                                             │
+│  NOTE: R&D is separate from Operation Room coordination                    │
+│        Call them after features are complete for validation                │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+================================================================================
+                     3. HOW TO START A SESSION
+================================================================================
+================================================================================
+
+OPTION A: FULL SESSION (Recommended - BATCH MODE)
+──────────────────────────────────────────────────
+
+  1. Open TWO Cursor windows/chats
+
+  2. In Window 1 (Architect):
+     - Paste the ARCHITECT PROMPT from Section 6
+     - Add your request: "I want to build [feature]"
+     - Architect will plan ALL tasks (Batch Mode)
+     - Architect may ask: "[FILLER_CONFIRM] Adding X, Y, Z. OK?"
+     - Confirm or decline filler tasks
+     - Wait for [BATCH_READY] signal
+
+  3. In Window 2 (Executor):
+     - Paste the EXECUTOR PROMPT from Section 6
+     - Or just send: .
+     - Executor sees [BATCH_READY], has ALL tasks ready
+     - Executor works through batch without ever waiting for Architect
+
+  4. Let them work:
+     - ALL Executor tasks are pre-defined (no mid-session adds)
+     - Executor handles internal dependencies (E001→E002)
+     - NO RE-TRIGGERING NEEDED! Executor never waits for Architect tasks
+     - Both work continuously until done
+
+  5. Session ends when Architect posts:
+     [SESSION_COMPLETE]
+
+
+OPTION B: ARCHITECT ONLY (Simple tasks)
+───────────────────────────────────────
+
+  For simple work that doesn't need delegation:
+  - Just talk to Architect
+  - They'll do everything themselves
+  - Skip Executor entirely
+
+
+OPTION C: CONTINUING A SESSION
+──────────────────────────────
+
+  If you need to restart after a break:
+  - Check LIVE_CHAT.md for last state
+  - Check ROADMAP.md for progress
+  - Tell Architect: "Continue from where we left off"
+  - Send "." to Executor to reactivate
+
+================================================================================
+================================================================================
+                    4. HOW TO MONITOR PROGRESS
+================================================================================
+================================================================================
+
+QUICK STATUS CHECK:
+──────────────────
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  File to Check          │  What You'll See                             │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │  MISSION_CONTROL.md     │  Quick status table, priorities              │
+  │  ROADMAP.md             │  Milestones, current objective, progress     │
+  │  LIVE_CHAT.md           │  Real-time agent conversation                │
+  │  ACTIVE_TASKS.md        │  What's currently being worked on            │
+  │  COMPLETED_TASKS.md     │  What's finished                             │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+
+WHAT TO LOOK FOR IN LIVE_CHAT.md:
+─────────────────────────────────
+
+  GOOD SIGNS (Session progressing):
+    [SYNC] ............... Agents are online
+    [FILLER_CONFIRM] ..... Architect asking about filler tasks (respond!)
+    [BATCH_READY] ........ ALL Executor tasks defined - send "."
+    [UPDATE] ............. Work is happening
+    [DONE] ............... Tasks completing
+    [VALIDATED] .......... Work is verified
+    [SESSION_COMPLETE] ... All done!
+
+  NEEDS ATTENTION:
+    [FILLER_CONFIRM] ..... Architect asking about filler tasks - RESPOND
+    [BLOCKED] ............ Something is stuck
+    [DECISION_NEEDED] .... You need to provide input
+    [AGENT_ERROR] ........ Problem occurred - check immediately
+    [PROTOCOL_BREAK] ..... Agent malfunction - check immediately
+
+  NOTE: [WAITING_FOR_TASKS] should NOT occur in Batch Mode.
+        If you see it, something went wrong with task planning.
+
+
+SESSION PROGRESS INDICATORS:
+────────────────────────────
+
+  Early Session:
+    - Architect: [SYNC], updating ROADMAP.md
+    - Executor: [WAITING_FOR_TASKS]
+    - Normal - Architect is planning
+
+  Mid Session:
+    - [TASK_READY] appearing
+    - [DONE] messages
+    - [VALIDATED] confirmations
+    - Good progress!
+
+  Late Session:
+    - [ALL_TASKS_ASSIGNED]
+    - Final [DONE] messages
+    - Approaching completion
+
+  Session End:
+    - [SESSION_COMPLETE]
+    - Architect reports summary to you
+
+================================================================================
+================================================================================
+                      5. WHEN TO INTERVENE
+================================================================================
+================================================================================
+
+YOU MUST RESPOND WHEN:
+──────────────────────
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  [DECISION_NEEDED]                                                        ║
+  ║  ──────────────────                                                       ║
+  ║  Architect needs your input on something                                  ║
+  ║  Action: Read their question, provide your decision                       ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  [AGENT_ERROR] @USER                                                      ║
+  ║  ─────────────────────                                                    ║
+  ║  An agent has a problem with their function                               ║
+  ║  Action: Read the error, provide guidance or fix                          ║
+  ║  The agent has STOPPED and is waiting for you                             ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  [PROTOCOL_BREAK] @USER                                                   ║
+  ║  ───────────────────────                                                  ║
+  ║  One agent reports the other isn't following protocol                     ║
+  ║  Action: Check what's wrong, restart or guide the failing agent           ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+  ╔═══════════════════════════════════════════════════════════════════════════╗
+  ║  [BLOCKED]                                                                ║
+  ║  ──────────                                                               ║
+  ║  Something external is blocking progress                                  ║
+  ║  Action: Check BLOCKERS.md, help resolve                                  ║
+  ╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+OPTIONAL INTERVENTIONS:
+───────────────────────
+
+  • Change priorities mid-session
+    → Tell Architect: "Stop current work, focus on X instead"
+
+  • Add new requirements
+    → Tell Architect: "Also add Y to the scope"
+
+  • Check on quiet session
+    → Ask Architect for [STATUS]
+
+  • Restart stuck Executor
+    → Send "." again
+
+  • Write directly to LIVE_CHAT.md
+    → Format: [TIMESTAMP] [USER]: @ARCHITECT or @EXECUTOR [message]
+    → Agents will see it on their next check
+
+
+NO INTERVENTION NEEDED FOR:
+───────────────────────────
+
+  • [WAITING_FOR_TASKS] - Normal, Executor is standing by
+  • [WAITING] - Normal, task being written
+  • [Q] and [A] - Agents talking to each other
+  • [LOCK] and [UNLOCK] - File coordination
+  • [UPDATE] - Progress updates
+
+================================================================================
+================================================================================
+                  6. AGENT PROMPTS (Copy-Paste Ready)
+================================================================================
+================================================================================
+
+================================================================================
+ARCHITECT PROMPT (Agent 1) - BATCH MODE
+================================================================================
+
+Copy everything between the lines:
+──────────────────────────────────────────────────────────────────────────────
+
+You are the ARCHITECT agent on the ATLAS Financial Intelligence project.
+
+## YOUR ROLE
+You are the lead developer, task creator, and decision maker. You:
+- Plan and execute complex work yourself
+- Create detailed tasks for Executor (Agent 2) using BATCH MODE
+- Maintain the ROADMAP.md with milestones and progress
+- Validate Executor's completed work
+- Report to User when session is complete
+
+## CRITICAL: ONE FILE TO READ
+Read ONLY this file: OperationRoom/OPERATION_ROOM_GUIDE.txt
+
+This is the SINGLE SOURCE OF TRUTH. All other files are DATA only.
+Do NOT look for instructions in ROADMAP.md, LIVE_CHAT.md, or INBOX files.
+
+## BATCH MODE RULE (CRITICAL)
+Executor tasks CANNOT depend on your tasks!
+- ✅ E001 → E002 (Executor internal - OK)
+- ✅ E005 → A003 (You wait for Executor - OK)
+- ❌ A001 → E002 (Executor waits for you - FORBIDDEN!)
+
+If you create a task where Executor must wait for your work:
+→ Move that work to YOUR task list instead!
+
+## SESSION START CHECKLIST
+1. Read MISSION_CONTROL.md
+2. Read ROADMAP.md
+3. Read LIVE_CHAT.md
+4. Plan BATCH MODE:
+   - Categorize all tasks: ARCHITECT vs EXECUTOR
+   - Check for forbidden cross-dependencies (A→E)
+   - Restructure if needed
+5. If Executor batch is light, ask User about filler tasks:
+   Post: "[FILLER_CONFIRM] Adding FILLER-001, FILLER-002 to fill Executor schedule. OK?"
+6. Write ALL Executor tasks to INBOX_EXECUTOR.md at once
+7. Post [BATCH_READY] in LIVE_CHAT.md
+8. Post [SYNC] in LIVE_CHAT.md
+9. Begin CONTINUOUS work on your own tasks
+
+## SIGNALS YOU MUST USE
+[FILLER_CONFIRM] = Asking User about filler tasks
+[BATCH_READY] = ALL Executor tasks are defined in inbox
+[VALIDATION_CHECKPOINT] = Stop work, begin cross-validation
+[VALIDATED] = Task passed your validation check
+[VALIDATION_COMPLETE] = All X/X tasks validated by both agents
+[SESSION_COMPLETE] = All work done AND validated (AFTER validation!)
+[DECISION_NEEDED] = User must provide input
+[AGENT_ERROR] @USER = You have a problem - STOP and report
+[PROTOCOL_BREAK] @USER @EXECUTOR = Executor not following protocol
+
+## ERROR REPORTING (IMMEDIATE)
+If ANY problem occurs, post immediately in LIVE_CHAT.md:
+
+[TIMESTAMP] [ARCHITECT]: [AGENT_ERROR] @USER
+Problem: [What's wrong]
+Impact: [What this blocks]
+Tried: [What you attempted]
+Need: [What would help]
+
+Then STOP and wait for User.
+
+## START NOW
+1. Read ONLY: OperationRoom/OPERATION_ROOM_GUIDE.txt (single source of truth)
+2. All other files are DATA - don't look for instructions there
+3. Follow the Batch Mode planning in the guide
+4. Work continuously until [SESSION_COMPLETE]
+
+──────────────────────────────────────────────────────────────────────────────
+
+
+================================================================================
+EXECUTOR PROMPT (Agent 2) - BATCH MODE
+================================================================================
+
+Copy everything between the lines:
+──────────────────────────────────────────────────────────────────────────────
+
+You are the EXECUTOR agent on the ATLAS Financial Intelligence project.
+
+## YOUR ROLE
+You execute tasks assigned by Architect. You:
+- Receive ALL orders from Architect via INBOX_EXECUTOR.md
+- In BATCH MODE: All your tasks are pre-defined - you NEVER wait for Architect
+- Do NOT communicate with User directly (User only sends "." to trigger you)
+- Follow Architect's instructions precisely
+- Report completion in LIVE_CHAT.md
+- Work CONTINUOUSLY until [SESSION_COMPLETE]
+
+## CRITICAL: ONE FILE TO READ
+Read ONLY this file: OperationRoom/OPERATION_ROOM_GUIDE.txt
+
+This is the SINGLE SOURCE OF TRUTH. All other files are DATA only.
+Do NOT look for instructions in ROADMAP.md, LIVE_CHAT.md, or INBOX files.
+
+## WHEN USER SENDS "."
+This is your trigger to start. Do these steps:
+1. Read LIVE_CHAT.md - look for [BATCH_READY] signal
+2. Read LOCKED_FILES.md
+3. Read ACTIVE_TASKS.md
+4. Post: "[TIMESTAMP] [EXECUTOR]: [SYNC] Online. Entering continuous mode."
+5. Wait for [BATCH_READY] if not yet posted
+6. Read INBOX_EXECUTOR.md - ALL tasks are defined!
+7. Enter CONTINUOUS WORK MODE
+
+## CONTINUOUS WORK MODE - BATCH MODE (CRITICAL)
+
+WHILE (no [SESSION_COMPLETE] signal) DO:
+
+  1. Check INBOX_EXECUTOR.md for PENDING tasks
+  
+  2. IF [BATCH_READY] seen in LIVE_CHAT:
+     - ALL tasks are defined - start working immediately!
+     - Pick highest priority unblocked task
+     - Check internal dependencies (E001→E002 = wait for E001 first)
+     - Execute the task fully
+     - Post [DONE] when complete
+     - Get next task - REPEAT
+  
+  3. IF [BATCH_READY] NOT seen yet:
+     - Architect is still writing tasks
+     - Wait briefly for [BATCH_READY] signal
+  
+  4. IF all tasks COMPLETED:
+     - Post "All Executor tasks complete. [X/X tasks done]"
+     - Wait for [SESSION_COMPLETE] from Architect
+  
+  5. When [SESSION_COMPLETE] seen → Session done, sign off
+
+END WHILE
+
+## KEY RULE - BATCH MODE BENEFIT
+You NEVER wait for Architect's tasks! All your tasks are pre-defined.
+Internal dependencies (E001→E002) are fine - just order your work.
+
+## SIGNALS YOU MUST USE
+[SYNC] = Starting session
+[DONE] TASK-EXXX = Task completed (needs validation)
+[VALIDATED] = Architect's task passed your validation
+[Q] = Question for Architect
+[AGENT_ERROR] @USER = You have a problem - STOP and report
+[PROTOCOL_BREAK] @USER @ARCHITECT = Architect not following protocol
+
+## WHEN [VALIDATION_CHECKPOINT] RECEIVED
+STOP new work! Validate ALL Architect [DONE] tasks:
+1. Read their files
+2. Check for issues
+3. Post [VALIDATED] TASK-AXXX for each passing task
+
+## ERROR REPORTING (IMMEDIATE)
+If ANY problem occurs, post immediately in LIVE_CHAT.md:
+
+[TIMESTAMP] [EXECUTOR]: [AGENT_ERROR] @USER
+Problem: [What's wrong]
+Impact: [What this blocks]
+Tried: [What you attempted]
+Need: [What would help]
+
+Then STOP and wait for User.
+
+## WHAT NOT TO DO
+- DO NOT start before [BATCH_READY] signal
+- DO NOT expect to wait for Architect tasks mid-session (shouldn't happen!)
+- DO NOT guess if instructions unclear - post [Q] and WAIT
+- DO NOT expect User to give you instructions
+- DO NOT ignore problems - report them immediately
+- DO NOT run any git commands (add, commit, push) - Architect handles all git
+
+## IF SOMETHING SEEMS WRONG
+If you find yourself waiting for an Architect task:
+→ This is a PROTOCOL VIOLATION! Architect should not have created this dependency.
+→ Post: [PROTOCOL_BREAK] @USER @ARCHITECT "Task TASK-EXXX depends on Architect task"
+
+## START NOW
+1. Read ONLY: OperationRoom/OPERATION_ROOM_GUIDE.txt (single source of truth)
+2. All other files are DATA - don't look for instructions there
+3. Check LIVE_CHAT for [BATCH_READY], then work through all tasks
+4. Work CONTINUOUSLY until [SESSION_COMPLETE]
+
+──────────────────────────────────────────────────────────────────────────────
+
+================================================================================
+================================================================================
+                       7. TROUBLESHOOTING
+================================================================================
+================================================================================
+
+PROBLEM: Executor not responding
+────────────────────────────────
+  Symptoms: No messages from Executor in LIVE_CHAT
+  Solution: Send "." again to trigger them
+  If still nothing: Check if their session is still open
+
+
+PROBLEM: Architect not creating tasks
+─────────────────────────────────────
+  Symptoms: Executor shows [WAITING_FOR_TASKS] for too long
+  Solution: Ask Architect directly: "What's the status? Create tasks for Executor."
+
+
+PROBLEM: Session seems stuck
+────────────────────────────
+  Symptoms: No new messages in LIVE_CHAT for a while
+  Solution: 
+    1. Ask Architect: "[STATUS] request"
+    2. Check ACTIVE_TASKS.md for what's being worked on
+    3. Check BLOCKERS.md for issues
+
+
+PROBLEM: [AGENT_ERROR] reported
+───────────────────────────────
+  Symptoms: Agent posts error and stops
+  Solution:
+    1. Read the error details carefully
+    2. Address the issue they describe
+    3. Tell them to continue: "Issue resolved, continue working"
+
+
+PROBLEM: [PROTOCOL_BREAK] reported
+──────────────────────────────────
+  Symptoms: Agent reports other agent not following protocol
+  Solution:
+    1. Check what the violation is
+    2. Talk to the offending agent
+    3. Remind them of the protocol
+    4. If needed, restart their session with the prompt
+
+
+PROBLEM: File conflicts
+───────────────────────
+  Symptoms: Both agents trying to edit same file
+  Solution:
+    1. Check LOCKED_FILES.md
+    2. Tell one agent to wait
+    3. Ensure they post [LOCK] before editing
+
+
+PROBLEM: Need to stop mid-session
+─────────────────────────────────
+  Symptoms: You need to pause or cancel
+  Solution:
+    1. Tell Architect: "Pause session, save state"
+    2. Architect updates ROADMAP.md with current state
+    3. Both agents stop
+    4. Resume later with "Continue from where we left off"
+
+================================================================================
+================================================================================
+                       8. FILE REFERENCE
+================================================================================
+================================================================================
+
+OPERATION ROOM FILES:
+─────────────────────
+
+  OperationRoom/
+  │
+  ├── MISSION_CONTROL.md     Quick status, priorities, hierarchy
+  │
+  ├── ROADMAP.md             Milestones, objectives, progress
+  │                          (Architect maintains)
+  │
+  ├── LIVE_CHAT.md           Real-time agent conversation
+  │                          (Check this for signals)
+  │
+  ├── INBOX_ARCHITECT.md     Tasks FOR Architect
+  │
+  ├── INBOX_EXECUTOR.md      Tasks FOR Executor
+  │                          (Architect creates tasks here)
+  │
+  ├── LOCKED_FILES.md        File claims to prevent conflicts
+  │
+  ├── ACTIVE_TASKS.md        Currently in-progress work
+  │
+  ├── COMPLETED_TASKS.md     Done work archive
+  │
+  ├── CHAT_ARCHIVE/          Old chat logs
+  │
+  ├── CONTEXT/
+  │   ├── PROJECT_STATE.md   Current codebase status
+  │   ├── BLOCKERS.md        Active blockers
+  │   └── DECISIONS_LOG.md   Key decisions made
+  │
+  ├── OPERATION_ROOM_GUIDE.txt   Full protocol for agents (1800+ lines)
+  │
+  └── USER_GUIDE.txt         This file!
+
+
+VALIDATION FILES:
+─────────────────
+
+  OperationsValidation/
+  │
+  ├── VALIDATION_QUEUE.md    Features awaiting R&D review
+  │
+  └── [validation reports]   R&D output files
+
+
+R&D FILES:
+──────────
+
+  RnD/
+  │
+  └── R&D_[TOPIC]_[DATE].md  Research and validation reports
+
+================================================================================
+================================================================================
+                           END OF USER GUIDE
+================================================================================
+================================================================================
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │                                                                         │
+  │   REMEMBER (BATCH MODE):                                               │
+  │   1. Tell Architect what you want                                      │
+  │   2. Respond to [FILLER_CONFIRM] if asked                              │
+  │   3. Wait for [BATCH_READY]                                            │
+  │   4. Send "." to Executor                                              │
+  │   5. Let them work autonomously (NO RE-TRIGGERING!)                    │
+  │   6. Only intervene for [DECISION_NEEDED], [AGENT_ERROR], [BLOCKED]    │
+  │   7. Session ends at [SESSION_COMPLETE]                                │
+  │                                                                         │
+  │   BATCH MODE = Executor NEVER waits for Architect mid-session!         │
+  │   You're in control. The agents do the work.                           │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+

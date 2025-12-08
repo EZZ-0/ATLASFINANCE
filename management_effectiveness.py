@@ -26,12 +26,13 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_management_effectiveness(ticker: str) -> Dict:
+def analyze_management_effectiveness(ticker: str, financials: Dict = None) -> Dict:
     """
     Comprehensive management effectiveness analysis
     
     Args:
         ticker: Stock ticker symbol
+        financials: Pre-extracted financials dict (optional, reduces API calls)
         
     Returns:
         Dictionary with management metrics and effectiveness score
@@ -39,8 +40,13 @@ def analyze_management_effectiveness(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing management effectiveness for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use pre-extracted info if available
+        if financials and financials.get('info'):
+            info = financials['info']
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            stock = yf.Ticker(ticker)
+            info = stock.info
         
         metrics = {}
         

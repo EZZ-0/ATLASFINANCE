@@ -1,0 +1,14 @@
+# Streamlit Theme Configuration
+# Professional Blue Corporate Theme
+
+[theme]
+primaryColor = "#1e88e5"              # Professional blue accent
+backgroundColor = "#0a1929"            # Dark navy background
+secondaryBackgroundColor = "#1565c0"  # Medium blue for cards/sidebar
+textColor = "#e3f2fd"                  # Light blue-white text
+font = "sans serif"
+
+[server]
+enableCORS = false
+enableXsrfProtection = false
+

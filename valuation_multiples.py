@@ -23,12 +23,13 @@ from typing import Dict, List, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_valuation_multiples(ticker: str) -> Dict:
+def analyze_valuation_multiples(ticker: str, financials: Dict = None) -> Dict:
     """
     Calculate comprehensive valuation multiples
     
     Args:
         ticker: Stock ticker symbol
+        financials: Pre-extracted financials dict (optional, prevents redundant API calls)
         
     Returns:
         Dictionary with valuation metrics
@@ -36,8 +37,14 @@ def analyze_valuation_multiples(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Analyzing valuation multiples for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use pre-extracted financials if available (reduces API calls)
+        if financials and financials.get('info'):
+            info = financials['info']
+            print(f"   [REUSE] Using pre-extracted data")
+        else:
+            # Fallback to direct yfinance call
+            stock = yf.Ticker(ticker)
+            info = stock.info
         
         metrics = {}
         

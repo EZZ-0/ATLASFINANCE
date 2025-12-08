@@ -31,6 +31,12 @@ except ImportError:
     BANK_SUPPORT = False
     BANK_TICKERS = set()
 
+# Re-export RATIO_DEFINITIONS for backward compatibility with flip_card_component imports
+try:
+    from ratio_card import RATIO_DEFINITIONS
+except ImportError:
+    RATIO_DEFINITIONS = {}
+
 
 # ============================================================================
 # METRIC DEFINITIONS - All metrics with formulas, insights, benchmarks
