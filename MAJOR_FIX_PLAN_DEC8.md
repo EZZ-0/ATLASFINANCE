@@ -94,84 +94,186 @@
 
 ## PHASED FIX PLAN
 
-### PHASE 0: Pre-Work (30 min)
+### PHASE 0: Pre-Work (30 min) ✅ COMPLETE
 - [x] Enable maintenance mode on deployed site
-- [ ] Create backup branch
-- [ ] Verify all previous commits saved
+- [x] Create backup branch (`pre-major-fix-backup`)
+- [x] Verify all previous commits saved
 
-### PHASE 1: Core Data Fixes (2-3 hours)
-**Goal: Reduce N/A rate from 62.5% to <15%**
+### COMPLETED FIXES (as of this session):
 
-| Task | File | Description |
-|------|------|-------------|
-| 1.1 | `analysis_tab.py` | Audit ALL 8 sub-modules for data source |
-| 1.2 | `valuation_multiples.py` | Ensure uses passed `financials`, not new yf.Ticker() |
-| 1.3 | `earnings_analysis.py` | Fix earnings data extraction |
-| 1.4 | `management_effectiveness.py` | Fix ROE/ROA calculations |
-| 1.5 | `cashflow_analysis.py` | Fix FCF and OCF extraction |
-| 1.6 | `balance_sheet_health.py` | Verify SEC/yfinance format handling |
-| 1.7 | `growth_quality.py` | Fix growth rate metrics |
-| 1.8 | `dividend_analysis.py` | Fix dividend metrics |
+| # | Issue | Status | Notes |
+|---|-------|--------|-------|
+| 1 | Theme one-click-behind | ✅ FIXED | Added `st.rerun()` on theme change |
+| 2 | Sidebar text overflow | ✅ FIXED | Added CSS overflow handling |
+| 3 | DCF redirects to dashboard | ✅ FIXED | Removed unnecessary `st.rerun()` |
+| 4 | Flip cards out of frame | ✅ FIXED | Improved CSS positioning, added hover |
+| 5 | Quant tab deleted | ✅ FIXED | Always show tab, handle missing data |
+| 6 | Earnings revisions error | ✅ FIXED | Fixed incorrect dict key access |
+| 7 | Cash flow table empty | ✅ FIXED | Expanded XBRL tag search |
+| 8 | Institutional ownership 0% | ✅ FIXED | Fixed % column name variations |
+| 9 | Peer discovery 0 peers | ✅ FIXED | Added sector name normalization |
 
-### PHASE 2: UI/UX Critical Fixes (2 hours)
-**Goal: Fix theme, sidebar, flip cards**
+---
 
-| Task | File | Description |
-|------|------|-------------|
-| 2.1 | `app_themes.py` | Fix one-click-behind bug with session state |
-| 2.2 | `app_css.py` | Fix sidebar text overflow |
-| 2.3 | `flip_cards.py` | Fix animation and out-of-frame issue |
-| 2.4 | `flip_cards.py` | Add proper hover effect |
-| 2.5 | `app_css.py` | Consistent icon system (Unicode fallback) |
+## DETAILED ROOT CAUSE ANALYSIS (Dec 8 Investigation)
 
-### PHASE 3: Missing Features (2-3 hours)
-**Goal: Wire dead code, add missing components**
+### ISSUE 1: FLIP CARDS BROKEN EVERYWHERE (Except Dashboard)
 
-| Task | File | Description |
-|------|------|-------------|
-| 3.1 | `usa_app.py` | Fix DCF redirect issue |
-| 3.2 | `tabs/tab_market.py` | Restore Quant tab |
-| 3.3 | `tabs/tab_valuation.py` | Integrate Monte Carlo |
-| 3.4 | `dashboard_tab.py` | Add/fix price chart |
-| 3.5 | `usa_app.py` (Data tab) | Fix cash flow table rendering |
-| 3.6 | `institutional_ownership.py` | Fix 0% ownership calculation |
-| 3.7 | `compare_tab.py` | Fix peer discovery |
-| 3.8 | `earnings_revisions.py` | Fix 'current_estimate' error |
+**Root Cause:** TWO different implementations exist:
 
-### PHASE 4: IC Memo & PDF (1 hour)
-**Goal: Fix memo structure and PDF export**
+| Location | Implementation | Status |
+|----------|----------------|--------|
+| `flip_cards.py` | CSS animation via `components.html()` | ✅ Works (Dashboard only) |
+| `analysis_tab_metrics.py` line 336 | `st.button("↻")` + `st.rerun()` | ❌ Clunky, server round-trip |
+| `data_tab_metrics.py` line 444 | `st.button("↻")` + `st.rerun()` | ❌ Clunky, server round-trip |
 
-| Task | File | Description |
-|------|------|-------------|
-| 4.1 | `investment_summary.py` | Fix dropdown for business description |
-| 4.2 | `investment_summary.py` | Add recommendations section |
+**Design Issues in flip_cards.py:**
+- Font sizes: 0.55-0.72rem (too small, unreadable)
+- Card height: 100px (too cramped for content)
+- No professional font family
+- Line clamp: 3 (cuts off educational content)
+
+**Files to modify:** `flip_cards.py`, `analysis_tab_metrics.py`, `data_tab_metrics.py`
+
+---
+
+### ISSUE 2: DEEP DIVE N/A RATE (62.5%)
+
+**Root Cause:** Analysis modules use yfinance which has inconsistent data. FMP API provides more reliable data.
+
+**Evidence:** `analysis_tab_metrics.py` uses hardcoded keys like `metrics.get('earnings_score')` - if analysis module returns different keys, shows N/A.
+
+**Solution:** Use FMP API (`fmp_extractor.py`) as primary data source - already exists but not wired.
+
+**Files to modify:** `valuation_multiples.py`, `balance_sheet_health.py`, `management_effectiveness.py`, `cashflow_analysis.py`
+
+---
+
+### ISSUE 3: MISSING PRICE CHART (Dashboard)
+
+**Root Cause:** `visualization.py` has 11 plot functions but NO stock price chart:
+- `plot_revenue_trend`, `plot_margin_analysis`, `plot_dcf_comparison`, etc.
+- Missing: `plot_stock_price()` or `plot_historical_prices()`
+
+**Files to modify:** `visualization.py` (add function), `dashboard_tab.py` (call it)
+
+---
+
+### ISSUE 4: MONTE CARLO NOT INTEGRATED
+
+**Root Cause:** Complete code exists as DEAD CODE:
+- `monte_carlo_engine.py` - 645 lines, full simulation engine
+- `monte_carlo_ui.py` - 471 lines, complete Streamlit UI
+- `usa_app.py` NEVER imports or calls these
+
+**Files to modify:** `usa_app.py` Valuation tab (import and render `monte_carlo_ui.render_monte_carlo_button()`)
+
+---
+
+### ISSUE 5: IC MEMO DROPDOWN ISSUES
+
+**Root Cause:** `investment_summary.py` lines 936-951 use expander for long business descriptions. Shows truncated text (400 chars) with "Show More" expander.
+
+**User wants:** Full text visible by default, hidden when exporting to PDF
+
+**Files to modify:** `investment_summary.py`
+
+---
+
+## REVISED PHASED FIX PLAN
+
+### PHASE 1: FLIP CARDS OVERHAUL (HIGH PRIORITY) - 4 hours
+
+#### Step 1A: Fix Design in `flip_cards.py` (1 hour)
+
+| Property | Current | Target | Reason |
+|----------|---------|--------|--------|
+| Card height | 100px | 140px | More room for content |
+| Label font | 0.72rem | 0.85rem | Readable |
+| Value font | 1.35rem | 1.7rem | Prominent |
+| Formula font | 0.68rem | 0.9rem | Legible |
+| Insight font | 0.68rem | 0.85rem | Educational content readable |
+| Benchmark font | 0.58rem | 0.75rem | Visible |
+| Line clamp | 3 | 5 | Show full insight |
+| Font family | System | Plus Jakarta Sans | Professional |
+| Animation | 0.6s | 0.45s | Snappier feel |
+| Padding | 12px | 16px | Less cramped |
+
+#### Step 1B: Propagate to All Tabs (2 hours)
+
+| Task | File | Action |
+|------|------|--------|
+| 1B.1 | `analysis_tab_metrics.py` | Remove OLD `_render_analysis_flip()`, import from `flip_cards.py` |
+| 1B.2 | `data_tab_metrics.py` | Remove OLD `_render_simple_flip()`, import from `flip_cards.py` |
+| 1B.3 | Delete old files | Remove `flip_card_component.py`, `flip_card_v2.py`, `flip_card_integration.py` |
+
+#### Step 1C: Test (1 hour)
+- Dashboard flip cards
+- Data tab flip cards  
+- Deep Dive flip cards
+- Verify no `st.rerun()` calls remain in flip logic
+
+---
+
+### PHASE 2: FMP INTEGRATION FOR N/A REDUCTION (HIGH PRIORITY) - 2 hours
+
+**Why:** 62.5% N/A rate unacceptable. FMP provides reliable, standardized data.
+**Prerequisite:** `FMP_API_KEY` in `.env` file
+
+| Task | File | Action |
+|------|------|--------|
+| 2.1 | Verify FMP key | Check `.env` has `FMP_API_KEY` |
+| 2.2 | `valuation_multiples.py` | Use `FMPExtractor` for P/E, P/B, EV/EBITDA |
+| 2.3 | `balance_sheet_health.py` | Use FMP for current ratio, D/E |
+| 2.4 | `management_effectiveness.py` | Use FMP for ROE, ROA, ROIC |
+| 2.5 | `cashflow_analysis.py` | Use FMP for FCF, OCF metrics |
+| 2.6 | Test | Verify N/A rate drops to <15% |
+
+**FMP Provides:**
+- `peRatioTTM`, `returnOnEquityTTM`, `returnOnAssetsTTM`
+- `currentRatioTTM`, `debtEquityRatioTTM`, `dividendYieldTTM`
+- Historical prices for charts
+
+---
+
+### PHASE 3: MISSING FEATURES (MEDIUM PRIORITY) - 3 hours
+
+| Task | File | Action |
+|------|------|--------|
+| 3.1 | `visualization.py` | Add `plot_stock_price()` function |
+| 3.2 | `dashboard_tab.py` | Call price chart function |
+| 3.3 | `usa_app.py` | Import `monte_carlo_ui`, add to Valuation tab |
+| 3.4 | `investment_summary.py` | Fix business description (no dropdown, full text) |
+| 3.5 | `investment_summary.py` | Add recommendations section |
+
+---
+
+### PHASE 4: IC MEMO & PDF (LOW PRIORITY) - 1 hour
+
+| Task | File | Action |
+|------|------|--------|
+| 4.1 | `investment_summary.py` | Show full business description by default |
+| 4.2 | `investment_summary.py` | Add dedicated recommendations section |
 | 4.3 | PDF export | Fix Alpha Signals N/A |
-| 4.4 | PDF export | Hide dropdown content, show full text |
 
-### PHASE 5: Performance (1 hour)
-**Goal: Reduce extraction time from 18-25s to <10s**
+---
 
-| Task | File | Description |
-|------|------|-------------|
-| 5.1 | `usa_backend.py` | Parallel API calls |
-| 5.2 | `usa_backend.py` | Better caching strategy |
-| 5.3 | `compare_tab.py` | Cache peer data |
+### PHASE 5: POLISH (LOW PRIORITY) - 1 hour
 
-### PHASE 6: Polish (1 hour)
-**Goal: Professional look and feel**
+| Task | File | Action |
+|------|------|--------|
+| 5.1 | `app_themes.py` | Improve 3 theme color palettes |
+| 5.2 | `app_css.py` | Better font stack (Plus Jakarta Sans) |
+| 5.3 | News tab | Make headlines clickable |
 
-| Task | File | Description |
-|------|------|-------------|
-| 6.1 | `app_themes.py` | Create 3 professional themes |
-| 6.2 | `app_css.py` | Better font stack |
-| 6.3 | News tab | Fix headline links |
-| 6.4 | Risk tab | Fix dropdown charts/tables |
-| 6.5 | General | Reduce page reloads |
+---
 
-### PHASE 7: Testing & Launch (1 hour)
-- [ ] Test all 63 scenarios
+### PHASE 6: TESTING & LAUNCH - 1 hour
+
+- [ ] Test all 63 scenarios from manual checklist
 - [ ] Verify 90%+ pass rate
-- [ ] Set MAINTENANCE_MODE = False
+- [ ] Verify N/A rate <15%
+- [ ] Set `MAINTENANCE_MODE = False` in `usa_app.py`
 - [ ] Deploy
 
 ---
