@@ -11,6 +11,120 @@ Tabs:
 """
 
 import streamlit as st
+
+# ============================================================================
+# MAINTENANCE MODE - Set to True to show "Under Development" placeholder
+# ============================================================================
+MAINTENANCE_MODE = True  # <-- SET TO False WHEN READY TO GO LIVE
+
+if MAINTENANCE_MODE:
+    st.set_page_config(
+        page_title="ATLAS - Under Development",
+        page_icon="🔧",
+        layout="centered"
+    )
+    st.markdown("""
+    <style>
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            text-align: center;
+            padding: 2rem;
+        }
+        .logo-text {
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+            letter-spacing: -2px;
+        }
+        .subtitle {
+            font-size: 1.5rem;
+            color: #64748b;
+            font-weight: 400;
+            margin-bottom: 2rem;
+        }
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 50px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 2rem;
+        }
+        .message {
+            font-size: 1.2rem;
+            color: #475569;
+            max-width: 600px;
+            line-height: 1.8;
+            margin-bottom: 2rem;
+        }
+        .progress-bar {
+            width: 300px;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 1rem auto;
+        }
+        .progress-fill {
+            width: 65%;
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            border-radius: 10px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .footer-text {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 3rem;
+        }
+    </style>
+    
+    <div class="main-container">
+        <div class="logo-text">ATLAS</div>
+        <div class="subtitle">Financial Intelligence Platform</div>
+        
+        <div class="status-badge">
+            🔧 Under Active Development
+        </div>
+        
+        <div class="message">
+            We're implementing significant improvements to bring you a more 
+            accurate and professional financial analysis experience.
+            <br><br>
+            Our team is working on enhanced data accuracy, improved UI/UX, 
+            and new analytical features.
+        </div>
+        
+        <div class="progress-bar">
+            <div class="progress-fill"></div>
+        </div>
+        <p style="color: #64748b; font-size: 0.95rem;">Development Progress: ~65%</p>
+        
+        <div class="footer-text">
+            Expected to resume: Coming Soon<br>
+            For inquiries, please contact the development team.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    st.stop()  # CRITICAL: Stops the rest of the app from loading
+# ============================================================================
 import pandas as pd
 import numpy as np
 import os
