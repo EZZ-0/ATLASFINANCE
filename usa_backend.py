@@ -20,7 +20,6 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Callable, Any
 from functools import wraps
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import usa_dictionary as usa_dict
 
 # Import centralized logging
@@ -799,48 +798,11 @@ class USAFinancialExtractor:
         """Extract cash flow statement from XBRL data"""
         metrics = {}
         
-        # Expanded search map with multiple XBRL variations
         search_map = {
-            "Operating_Cash_Flow": [
-                "NetCashProvidedByUsedInOperatingActivities",
-                "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
-                "CashProvidedByUsedInOperatingActivities",
-            ],
-            "Investing_Cash_Flow": [
-                "NetCashProvidedByUsedInInvestingActivities",
-                "NetCashProvidedByUsedInInvestingActivitiesContinuingOperations",
-                "CashProvidedByUsedInInvestingActivities",
-            ],
-            "Financing_Cash_Flow": [
-                "NetCashProvidedByUsedInFinancingActivities",
-                "NetCashProvidedByUsedInFinancingActivitiesContinuingOperations",
-                "CashProvidedByUsedInFinancingActivities",
-            ],
-            "Capex": [
-                "PaymentsToAcquirePropertyPlantAndEquipment",
-                "PaymentsForCapitalExpenditures",
-                "PaymentsToAcquireProductiveAssets",
-            ],
-            "Depreciation": [
-                "DepreciationDepletionAndAmortization",
-                "DepreciationAndAmortization",
-                "Depreciation",
-            ],
-            "Net_Change_Cash": [
-                "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalentsPeriodIncreaseDecreaseIncludingExchangeRateEffect",
-                "CashAndCashEquivalentsPeriodIncreaseDecrease",
-                "IncreaseDecreaseInCashAndCashEquivalents",
-            ],
-            "Dividends_Paid": [
-                "PaymentsOfDividendsCommonStock",
-                "PaymentsOfDividends",
-                "DividendsPaid",
-            ],
-            "Stock_Repurchases": [
-                "PaymentsForRepurchaseOfCommonStock",
-                "PaymentsForRepurchaseOfEquity",
-                "StockRepurchasedAndRetiredDuringPeriodValue",
-            ],
+            "Operating_Cash_Flow": ["NetCashProvidedByUsedInOperatingActivities"],
+            "Investing_Cash_Flow": ["NetCashProvidedByUsedInInvestingActivities"],
+            "Financing_Cash_Flow": ["NetCashProvidedByUsedInFinancingActivities"],
+            "Capex": ["PaymentsToAcquirePropertyPlantAndEquipment"]
         }
         
         for metric_name, xbrl_tags in search_map.items():
@@ -856,15 +818,7 @@ class USAFinancialExtractor:
                             metrics[metric_name] = filtered_data
                             break
         
-        # Add calculated Free Cash Flow if we have operating and capex
-        df = self._format_time_series(metrics)
-        if not df.empty and "Operating_Cash_Flow" in df.columns and "Capex" in df.columns:
-            try:
-                df["Free_Cash_Flow"] = df["Operating_Cash_Flow"] - abs(df["Capex"])
-            except Exception:
-                pass  # Skip if calculation fails
-        
-        return df
+        return self._format_time_series(metrics)
     
     def _extract_per_share_data(self, us_gaap: Dict, filing_types: List[str] = ["10-K"]) -> pd.DataFrame:
         """Extract EPS and other per-share metrics"""
@@ -1122,62 +1076,18 @@ class USAFinancialExtractor:
         if source == "auto":
             print(f"\n[INFO] AUTO MODE: Extracting {ticker} ({result})")
             
-            # OPTIMIZATION: Run SEC and yfinance info fetch in PARALLEL
-            sec_data = None
-            yf_info = None
-            yf_market_data = None
-            
-            def fetch_sec():
-                return self.extract_from_sec(ticker, filing_types=filing_types)
-            
-            def fetch_yf_info():
-                if YFINANCE_AVAILABLE:
-                    try:
-                        # Direct yf.Ticker() - can't use @st.cache_data in ThreadPoolExecutor (not thread-safe)
-                        stock = yf.Ticker(ticker)
-                        info = stock.info
-                        market_data = {
-                            'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
-                            'market_cap': info.get('marketCap'),
-                            'volume': info.get('volume'),
-                            'beta': info.get('beta'),
-                            'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
-                            'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
-                            'shares_outstanding': info.get('sharesOutstanding'),
-                        }
-                        return info, market_data
-                    except Exception as e:
-                        print(f"   [PARALLEL] yfinance info fetch failed: {e}")
-                return None, None
-            
-            print(f"   [PARALLEL] Starting parallel extraction (SEC + yfinance)...")
-            parallel_start = time.time()
-            
-            with ThreadPoolExecutor(max_workers=2) as executor:
-                sec_future = executor.submit(fetch_sec)
-                yf_future = executor.submit(fetch_yf_info)
-                
-                sec_data = sec_future.result()
-                yf_info, yf_market_data = yf_future.result()
-            
-            print(f"   [PARALLEL] Parallel extraction completed in {time.time() - parallel_start:.2f}s")
-            
-            # Use SEC data if available
-            if sec_data and ("status" not in sec_data or sec_data["status"] != "error"):
+            # Try SEC API first (most accurate)
+            sec_data = self.extract_from_sec(ticker, filing_types=filing_types)
+            if "status" not in sec_data or sec_data["status"] != "error":
                 financials = sec_data
                 primary_source = "sec"
-                # Pre-populate yfinance info to avoid redundant call in _fill_data_gaps
-                if yf_info:
-                    financials['info'] = yf_info
-                    financials['market_data'] = yf_market_data
-                    print(f"   [PARALLEL] Pre-populated yfinance info ({len(yf_info)} fields)")
             else:
                 print("[WARN] SEC extraction failed, trying Yahoo Finance...")
                 # Fallback to yfinance
                 financials = self.extract_from_yfinance(ticker, fiscal_year_offset=fiscal_year_offset)
                 primary_source = "yfinance"
             
-            # PHASE 1: Field-level gap filling (will skip yfinance call if info already present)
+            # PHASE 1: Field-level gap filling
             financials = self._fill_data_gaps(ticker, financials, primary_source)
         
         # Manual source selection
@@ -1311,15 +1221,11 @@ class USAFinancialExtractor:
         
         if not gaps:
             print(f"   [GAP FILL] No gaps detected")
-            # Still need yfinance info for analysis modules even if no gaps
-            # OPTIMIZATION: Skip if already fetched in parallel extraction
-            if 'info' in financials and financials['info']:
-                print(f"   [GAP FILL] Using pre-fetched yfinance info")
-            elif YFINANCE_AVAILABLE:
+            # Still need to fetch yfinance info for analysis modules even if no gaps
+            if YFINANCE_AVAILABLE and 'info' not in financials:
                 try:
-                    # Use cached ticker info to prevent rate limiting
-                    from utils.ticker_cache import get_ticker_info
-                    info = get_ticker_info(ticker)
+                    stock = yf.Ticker(ticker)
+                    info = stock.info
                     if info:
                         financials['info'] = info
                         financials['market_data'] = {
@@ -1344,14 +1250,11 @@ class USAFinancialExtractor:
         # ========== STEP 1: Try yfinance for gaps ==========
         if YFINANCE_AVAILABLE and primary_source != 'yfinance':
             try:
-                # OPTIMIZATION: Reuse info if already fetched in parallel extraction
-                if 'info' in financials and financials['info']:
-                    info = financials['info']
-                    print(f"   [GAP FILL] Reusing pre-fetched yfinance info ({len(info)} fields)")
-                else:
-                    # Use cached ticker info to prevent rate limiting
-                    from utils.ticker_cache import get_ticker_info
-                    info = get_ticker_info(ticker)
+                stock = yf.Ticker(ticker)
+                info = stock.info
+                
+                # CRITICAL: Store full info dict for analysis modules to use
+                if info and 'info' not in financials:
                     financials['info'] = info
                     print(f"   [GAP FILL] Added yfinance info dict ({len(info)} fields)")
                 
@@ -2215,4 +2118,3 @@ def quick_extract(ticker: str, filing_types: List[str] = ["10-K"], include_quant
     extractor = USAFinancialExtractor()
     return extractor.extract_financials(ticker, filing_types=filing_types, include_quant=include_quant, 
                                        fiscal_year_offset=fiscal_year_offset)
-
