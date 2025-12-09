@@ -1133,9 +1133,9 @@ class USAFinancialExtractor:
             def fetch_yf_info():
                 if YFINANCE_AVAILABLE:
                     try:
-                        # Use centralized ticker cache to avoid redundant API calls
-                        from utils.ticker_cache import get_ticker_info
-                        info = get_ticker_info(ticker)
+                        # Direct yf.Ticker() - can't use @st.cache_data in ThreadPoolExecutor (not thread-safe)
+                        stock = yf.Ticker(ticker)
+                        info = stock.info
                         market_data = {
                             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
                             'market_cap': info.get('marketCap'),
