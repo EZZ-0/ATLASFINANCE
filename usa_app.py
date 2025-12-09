@@ -1793,19 +1793,28 @@ else:
         # SUB-TAB 1: QUICK 3-SCENARIO DCF (Original)
         # ==========================================
         with dcf_tab1:
-            # Run DCF button
+            # AUTO-RUN DCF: Run automatically if no results exist yet
+            if not st.session_state.dcf_results and st.session_state.financials:
+                with st.spinner("🔄 Auto-running DCF analysis..."):
+                    try:
+                        model = DCFModel(st.session_state.financials)
+                        results = model.run_all_scenarios()
+                        st.session_state.dcf_results = results
+                        st.success("✅ DCF Analysis Complete!")
+                    except Exception as e:
+                        st.error(f"DCF auto-run failed: {e}")
+            
+            # Manual re-run button (in case user wants fresh analysis)
             col1, col2, col3 = st.columns([2, 1, 1])
             
             with col1:
-                if st.button("▶️ RUN 3-SCENARIO DCF ANALYSIS", type="primary", use_container_width=True, key="dcf_button_quick"):
-                    with st.spinner("Building DCF model..."):
+                if st.button("🔄 RE-RUN DCF ANALYSIS", type="secondary", use_container_width=True, key="dcf_button_quick"):
+                    with st.spinner("Recalculating DCF model..."):
                         try:
                             model = DCFModel(st.session_state.financials)
                             results = model.run_all_scenarios()
                             st.session_state.dcf_results = results
-                            st.success("DCF Analysis Complete!")
-                            # NOTE: Removed st.rerun() - was causing redirect to Dashboard tab
-                            # Results will display naturally in the same render cycle
+                            st.success("DCF Analysis Updated!")
                         except Exception as e:
                             st.error(f"DCF failed: {e}")
             
@@ -2146,17 +2155,16 @@ else:
                 st.error(f"Error fetching analyst ratings: {str(e)}")
         
         else:
-            st.info("Click 'Run 3-Scenario DCF Analysis' to generate valuation")
+            st.info("DCF analysis will run automatically when you view this tab")
         
         # ==========================================
-        # MONTE CARLO SIMULATION (ALWAYS VISIBLE)
+        # MONTE CARLO SIMULATION (AUTO-RUN)
         # ==========================================
         st.markdown("---")
         st.markdown(f"### {icon('dice-3')} Monte Carlo Simulation", unsafe_allow_html=True)
-        st.info("ℹ Run thousands of simulations to understand the range of possible fair values based on parameter uncertainty.")
         
         try:
-            from monte_carlo_ui import render_monte_carlo_button, render_monte_carlo_results
+            from monte_carlo_ui import run_monte_carlo_simulation, render_monte_carlo_results
             
             market_data = st.session_state.financials.get('market_data', {})
             current_price = market_data.get('current_price', 0)
@@ -2164,15 +2172,32 @@ else:
             if current_price and current_price > 0:
                 mc_key = f"mc_results_{st.session_state.ticker}"
                 
-                mc_results = render_monte_carlo_button(
-                    st.session_state.financials,
-                    current_price,
-                    key_prefix="dcf_mc_main"
-                )
+                # AUTO-RUN: Run Monte Carlo if no results exist
+                if mc_key not in st.session_state or not st.session_state[mc_key]:
+                    with st.spinner("🎲 Running Monte Carlo simulation (10,000 scenarios)..."):
+                        try:
+                            mc_results = run_monte_carlo_simulation(
+                                st.session_state.financials,
+                                current_price,
+                                n_simulations=10000
+                            )
+                            if mc_results:
+                                st.session_state[mc_key] = mc_results
+                        except Exception as e:
+                            st.warning(f"Monte Carlo auto-run skipped: {e}")
                 
-                if mc_results:
-                    st.session_state[mc_key] = mc_results
+                # Re-run button for users who want to refresh
+                if st.button("🔄 Re-run Monte Carlo", key="mc_rerun_btn"):
+                    with st.spinner("Recalculating..."):
+                        mc_results = run_monte_carlo_simulation(
+                            st.session_state.financials,
+                            current_price,
+                            n_simulations=10000
+                        )
+                        if mc_results:
+                            st.session_state[mc_key] = mc_results
                 
+                # Display results
                 if mc_key in st.session_state and st.session_state[mc_key]:
                     render_monte_carlo_results(
                         st.session_state[mc_key],
@@ -2185,7 +2210,7 @@ else:
         except ImportError:
             st.info("Monte Carlo module not available.")
         except Exception as e:
-            st.error(f"Error running Monte Carlo: {str(e)}")
+            st.error(f"Monte Carlo error: {str(e)}")
         
         # ==========================================
         # SUB-TAB 2: LIVE SCENARIO BUILDER (New!)

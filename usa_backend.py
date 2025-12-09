@@ -20,6 +20,7 @@ import pandas as pd
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple, Callable, Any
 from functools import wraps
+from concurrent.futures import ThreadPoolExecutor
 import usa_dictionary as usa_dict
 
 # Import centralized logging
@@ -1076,18 +1077,62 @@ class USAFinancialExtractor:
         if source == "auto":
             print(f"\n[INFO] AUTO MODE: Extracting {ticker} ({result})")
             
-            # Try SEC API first (most accurate)
-            sec_data = self.extract_from_sec(ticker, filing_types=filing_types)
-            if "status" not in sec_data or sec_data["status"] != "error":
+            # PARALLEL EXTRACTION: Run SEC and yfinance info fetch simultaneously
+            sec_data = None
+            yf_info = None
+            yf_market_data = None
+            
+            def fetch_sec():
+                return self.extract_from_sec(ticker, filing_types=filing_types)
+            
+            def fetch_yf_info():
+                if YFINANCE_AVAILABLE:
+                    try:
+                        # Direct yf.Ticker() - Streamlit cache not thread-safe in workers
+                        stock = yf.Ticker(ticker)
+                        info = stock.info
+                        market_data = {
+                            'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
+                            'market_cap': info.get('marketCap'),
+                            'volume': info.get('volume'),
+                            'beta': info.get('beta'),
+                            'fifty_two_week_high': info.get('fiftyTwoWeekHigh'),
+                            'fifty_two_week_low': info.get('fiftyTwoWeekLow'),
+                            'shares_outstanding': info.get('sharesOutstanding'),
+                        }
+                        return info, market_data
+                    except Exception as e:
+                        print(f"   [PARALLEL] yfinance info fetch failed: {e}")
+                return None, None
+            
+            print(f"   [PARALLEL] Starting parallel extraction (SEC + yfinance)...")
+            parallel_start = time.time()
+            
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                sec_future = executor.submit(fetch_sec)
+                yf_future = executor.submit(fetch_yf_info)
+                
+                sec_data = sec_future.result()
+                yf_info, yf_market_data = yf_future.result()
+            
+            print(f"   [PARALLEL] Parallel extraction completed in {time.time() - parallel_start:.2f}s")
+            
+            # Use SEC data if available
+            if sec_data and ("status" not in sec_data or sec_data["status"] != "error"):
                 financials = sec_data
                 primary_source = "sec"
+                # Pre-populate yfinance info to avoid redundant call in _fill_data_gaps
+                if yf_info:
+                    financials['info'] = yf_info
+                    financials['market_data'] = yf_market_data
+                    print(f"   [PARALLEL] Pre-populated yfinance info ({len(yf_info)} fields)")
             else:
                 print("[WARN] SEC extraction failed, trying Yahoo Finance...")
                 # Fallback to yfinance
                 financials = self.extract_from_yfinance(ticker, fiscal_year_offset=fiscal_year_offset)
                 primary_source = "yfinance"
             
-            # PHASE 1: Field-level gap filling
+            # PHASE 1: Field-level gap filling (skips yfinance call if info already present)
             financials = self._fill_data_gaps(ticker, financials, primary_source)
         
         # Manual source selection
