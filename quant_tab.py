@@ -62,35 +62,22 @@ def render_quant_tab(ticker: str, financials: Dict) -> None:
     
     quant_data = financials.get("quant_analysis", {}) if financials else {}
     
-    # #region agent log
-    import json as _json_qt; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_qt.dumps({"hypothesisId":"C","location":"quant_tab.py:ENTRY","message":"Quant tab entered","data":{"has_quant_data":bool(quant_data),"ticker":ticker},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-    # #endregion
-    
     # If no quant data, try to fetch it on-demand
     if not quant_data and ticker:
         st.info("Loading Fama-French analysis...")
         
         try:
             from quant_engine import QuantEngine
-            # #region agent log
-            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_qt.dumps({"hypothesisId":"C","location":"quant_tab.py:IMPORT_OK","message":"QuantEngine import SUCCESS","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
             
             with st.spinner("Running Fama-French 3-Factor Analysis..."):
                 quant = QuantEngine()
                 quant_data = quant.analyze_stock(ticker)
-                # #region agent log
-                open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_qt.dumps({"hypothesisId":"D","location":"quant_tab.py:FETCH_OK","message":"Quant data fetched","data":{"has_data":bool(quant_data),"keys":list(quant_data.keys()) if quant_data else []},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-                # #endregion
                 
                 # Store in financials for future use (won't persist to cache but helps this session)
                 if financials is not None:
                     financials["quant_analysis"] = quant_data
                     
         except ImportError as ie:
-            # #region agent log
-            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_qt.dumps({"hypothesisId":"C","location":"quant_tab.py:IMPORT_FAIL","message":"QuantEngine import FAILED","data":{"error":str(ie)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
             st.warning("Quant engine not available. Install required dependencies.")
             st.markdown("""
             **What is Fama-French 3-Factor Analysis?**

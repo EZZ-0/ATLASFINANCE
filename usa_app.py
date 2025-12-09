@@ -215,9 +215,8 @@ def validate_and_enrich(ticker: str, financials: dict) -> tuple:
 # ==========================================
 # CACHING - Prevent Rate Limiting
 # ==========================================
-# Cache financial data for 5 minutes during testing (was 1 hour)
-# TODO: Increase back to 3600 after testing complete
-@st.cache_data(ttl=300, show_spinner=False)
+# Cache financial data for 1 hour to prevent Yahoo Finance rate limiting
+@st.cache_data(ttl=3600, show_spinner=False)
 def cached_extract_financials(
     ticker: str, 
     source: str = "auto",
@@ -1213,10 +1212,6 @@ else:
     
     st.markdown("")  # Spacing before tabs
     
-    # #region agent log
-    import json as _json_render; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_render.dumps({"hypothesisId":"F","location":"usa_app.py:RENDER_TABS_START","message":"TABS RENDER STARTING","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-    # #endregion
-    
     # Main tabs (dynamically show based on available data)
     has_quant = st.session_state.financials and "quant_analysis" in st.session_state.financials
     
@@ -1238,9 +1233,6 @@ else:
     # ==========================================
     
     with tab1:
-        # #region agent log
-        import json as _json_tab1; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_tab1.dumps({"hypothesisId":"F","location":"usa_app.py:TAB1_ENTER","message":"TAB1 Dashboard ENTERED","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-        # #endregion
         render_dashboard_tab(st.session_state.ticker, st.session_state.financials, visualizer)
     
     # ==========================================
@@ -1788,9 +1780,6 @@ else:
     # ==========================================
     
     with tab4:
-        # #region agent log
-        import json as _json_tab4; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_tab4.dumps({"hypothesisId":"F","location":"usa_app.py:TAB4_ENTER","message":"TAB4 Valuation ENTERED","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-        # #endregion
         st.markdown(f"## {icon('cash-coin', '1.5em')} DCF Valuation Model", unsafe_allow_html=True)
         
         # Create sub-tabs for different DCF modes + Earnings Revisions
@@ -1809,17 +1798,11 @@ else:
             
             with col1:
                 if st.button("▶️ RUN 3-SCENARIO DCF ANALYSIS", type="primary", use_container_width=True, key="dcf_button_quick"):
-                    # #region agent log
-                    import json as _json_dcf_main; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_dcf_main.dumps({"hypothesisId":"E","location":"usa_app.py:DCF_BTN_CLICKED","message":"Main DCF button clicked","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-                    # #endregion
                     with st.spinner("Building DCF model..."):
                         try:
                             model = DCFModel(st.session_state.financials)
                             results = model.run_all_scenarios()
                             st.session_state.dcf_results = results
-                            # #region agent log
-                            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_dcf_main.dumps({"hypothesisId":"E","location":"usa_app.py:DCF_SUCCESS","message":"DCF completed WITHOUT st.rerun()","data":{"has_results":bool(results)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-                            # #endregion
                             st.success("DCF Analysis Complete!")
                             # NOTE: Removed st.rerun() - was causing redirect to Dashboard tab
                             # Results will display naturally in the same render cycle
@@ -2168,9 +2151,6 @@ else:
         # ==========================================
         # MONTE CARLO SIMULATION (ALWAYS VISIBLE)
         # ==========================================
-        # #region agent log
-        import json as _json_mc; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc.dumps({"hypothesisId":"A","location":"usa_app.py:MC_SECTION","message":"Monte Carlo section REACHED","timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-        # #endregion
         st.markdown("---")
         st.markdown(f"### {icon('dice-3')} Monte Carlo Simulation", unsafe_allow_html=True)
         st.info("ℹ Run thousands of simulations to understand the range of possible fair values based on parameter uncertainty.")
@@ -2180,9 +2160,6 @@ else:
             
             market_data = st.session_state.financials.get('market_data', {})
             current_price = market_data.get('current_price', 0)
-            # #region agent log
-            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc.dumps({"hypothesisId":"B","location":"usa_app.py:MC_PRICE","message":"Monte Carlo current_price check","data":{"current_price":current_price,"has_market_data":bool(market_data)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
             
             if current_price and current_price > 0:
                 mc_key = f"mc_results_{st.session_state.ticker}"

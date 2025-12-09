@@ -84,10 +84,6 @@ def run_monte_carlo_simulation(
             cashflow = financials.get('cashflow_statement', financials.get('cash_flow', {}))  # Try both keys
             balance = financials.get('balance_sheet', {})
             
-            # #region agent log
-            import json as _json_mc_sim; import pandas as _pd_mc; _is_df = lambda x: not x.empty if isinstance(x, _pd_mc.DataFrame) else bool(x); open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc_sim.dumps({"hypothesisId":"G","location":"monte_carlo_ui.py:INPUTS","message":"MC simulation inputs","data":{"has_market_data":_is_df(market_data) if hasattr(market_data,'empty') else bool(market_data),"has_income":_is_df(income_stmt),"has_cashflow":_is_df(cashflow),"has_balance":_is_df(balance),"financials_keys":list(financials.keys()) if financials else [],"income_type":str(type(income_stmt)),"cashflow_type":str(type(cashflow))},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
-            
             # Get base values
             base_revenue = _extract_value(income_stmt, ['Total Revenue', 'totalRevenue', 'Revenue']) or 1e9
             
@@ -103,10 +99,6 @@ def run_monte_carlo_simulation(
             total_debt = _extract_value(balance, ['Total Debt', 'totalDebt', 'Long Term Debt']) or 0
             cash = _extract_value(balance, ['Cash And Cash Equivalents', 'cash', 'Cash']) or 0
             net_debt = total_debt - cash
-            
-            # #region agent log
-            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc_sim.dumps({"hypothesisId":"G","location":"monte_carlo_ui.py:VALUES","message":"MC extracted values","data":{"base_revenue":float(base_revenue),"ocf":float(ocf),"capex":float(capex),"fcf":float(fcf),"fcf_margin":float(base_fcf_margin),"shares":float(shares),"total_debt":float(total_debt),"cash":float(cash),"net_debt":float(net_debt)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
             
             # Create engine and run simulation
             engine = MonteCarloEngine(SimulationParams(n_simulations=n_simulations))

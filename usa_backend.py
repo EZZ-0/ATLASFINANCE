@@ -1133,8 +1133,9 @@ class USAFinancialExtractor:
             def fetch_yf_info():
                 if YFINANCE_AVAILABLE:
                     try:
-                        stock = yf.Ticker(ticker)
-                        info = stock.info
+                        # Use centralized ticker cache to avoid redundant API calls
+                        from utils.ticker_cache import get_ticker_info
+                        info = get_ticker_info(ticker)
                         market_data = {
                             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
                             'market_cap': info.get('marketCap'),
@@ -1316,8 +1317,9 @@ class USAFinancialExtractor:
                 print(f"   [GAP FILL] Using pre-fetched yfinance info")
             elif YFINANCE_AVAILABLE:
                 try:
-                    stock = yf.Ticker(ticker)
-                    info = stock.info
+                    # Use cached ticker info to prevent rate limiting
+                    from utils.ticker_cache import get_ticker_info
+                    info = get_ticker_info(ticker)
                     if info:
                         financials['info'] = info
                         financials['market_data'] = {
@@ -1347,8 +1349,9 @@ class USAFinancialExtractor:
                     info = financials['info']
                     print(f"   [GAP FILL] Reusing pre-fetched yfinance info ({len(info)} fields)")
                 else:
-                    stock = yf.Ticker(ticker)
-                    info = stock.info
+                    # Use cached ticker info to prevent rate limiting
+                    from utils.ticker_cache import get_ticker_info
+                    info = get_ticker_info(ticker)
                     financials['info'] = info
                     print(f"   [GAP FILL] Added yfinance info dict ({len(info)} fields)")
                 

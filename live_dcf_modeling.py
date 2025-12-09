@@ -371,9 +371,6 @@ def render_live_dcf_modeling(financials: Dict, model: DCFModel):
             st.session_state.custom_dcf_result = custom_result
             st.session_state.custom_dcf_assumptions = custom_assumptions
             
-            # #region agent log
-            import json as _json_dcf; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_dcf.dumps({"hypothesisId":"E","location":"live_dcf_modeling.py:DCF_COMPLETE","message":"Custom DCF completed WITHOUT st.rerun()","data":{"has_result":bool(custom_result)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
-            # #endregion
             st.success("✅ Custom DCF Complete!")
             # NOTE: Removed st.rerun() - causes redirect to Dashboard tab
             # Results display naturally without rerun

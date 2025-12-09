@@ -24,6 +24,9 @@ from typing import Dict, List, Optional, Tuple
 import warnings
 warnings.filterwarnings('ignore')
 
+# Use centralized ticker cache to avoid rate limiting
+from utils.ticker_cache import get_ticker_info
+
 
 # Related industries mapping - industries that are similar enough to be valid peers
 # Comprehensive mapping to ensure peer discovery works for ALL S&P 500 stocks
@@ -191,9 +194,8 @@ def discover_peers(ticker: str, max_peers: int = 10) -> Dict:
     try:
         print(f"\n[INFO] Discovering peers for {ticker}...")
         
-        # Get company info
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Get company info (using cached ticker info to prevent rate limiting)
+        info = get_ticker_info(ticker)
         
         company_sector = info.get('sector', 'Unknown')
         company_industry = info.get('industry', 'Unknown')
@@ -215,11 +217,10 @@ def discover_peers(ticker: str, max_peers: int = 10) -> Dict:
         peers = []
         same_industry_count = 0
         
-        # Now fetch detailed info only for candidates
+        # Now fetch detailed info only for candidates (using cache to prevent rate limiting)
         for peer_ticker in candidate_tickers:
             try:
-                peer_stock = yf.Ticker(peer_ticker)
-                peer_info = peer_stock.info
+                peer_info = get_ticker_info(peer_ticker)
                 
                 peer_industry = peer_info.get('industry', 'Unknown')
                 peer_market_cap = peer_info.get('marketCap', 0)
@@ -349,8 +350,8 @@ def get_peer_comparison_data(ticker: str, peer_tickers: List[str]) -> Dict:
         
         for t in all_tickers:
             try:
-                stock = yf.Ticker(t)
-                info = stock.info
+                # Use cached ticker info to prevent rate limiting
+                info = get_ticker_info(t)
                 
                 row = {
                     'Ticker': t,
