@@ -290,6 +290,280 @@ METRICS = {
         "unit": "",
         "category": "Alpha"
     },
+    
+    # === DEEP DIVE METRICS ===
+    "Earnings_Score": {
+        "label": "Earnings Score",
+        "formula": "Beat Rate × Surprise Factor",
+        "insight": "Overall earnings quality. >70 is excellent.",
+        "benchmark": (60, 80),
+        "higher_is": "better",
+        "unit": "/100",
+        "category": "Earnings"
+    },
+    "Beat_Rate": {
+        "label": "Beat Rate",
+        "formula": "Beats ÷ Total Reports × 100",
+        "insight": "% of quarters beating estimates. >75% is elite.",
+        "benchmark": (50, 75),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Earnings"
+    },
+    "Avg_Surprise": {
+        "label": "Avg Surprise",
+        "formula": "Avg (Actual - Estimate) ÷ Estimate",
+        "insight": "Average earnings beat magnitude. >5% is strong.",
+        "benchmark": (0, 10),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Earnings"
+    },
+    "EPS_Momentum": {
+        "label": "EPS Momentum",
+        "formula": "(Recent EPS - Old EPS) ÷ Old EPS",
+        "insight": "Earnings trend direction. Positive = improving.",
+        "benchmark": (-10, 20),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Earnings"
+    },
+    "FCF_Score": {
+        "label": "FCF Score",
+        "formula": "FCF Quality + Consistency + Margins",
+        "insight": "Cash flow quality score. >70 is excellent.",
+        "benchmark": (60, 80),
+        "higher_is": "better",
+        "unit": "/100",
+        "category": "Cash Flow"
+    },
+    "OCF_Margin": {
+        "label": "OCF Margin",
+        "formula": "Operating Cash Flow ÷ Revenue",
+        "insight": "Cash from operations vs sales. >15% is solid.",
+        "benchmark": (15, 25),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Cash Flow"
+    },
+    "FCF_Conversion": {
+        "label": "FCF Conversion",
+        "formula": "Free Cash Flow ÷ Net Income",
+        "insight": "Earnings converting to cash. >80% is quality.",
+        "benchmark": (80, 100),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Cash Flow"
+    },
+    "Health_Score": {
+        "label": "Health Score",
+        "formula": "Liquidity + Leverage + Coverage Score",
+        "insight": "Balance sheet strength. >70 is healthy.",
+        "benchmark": (60, 80),
+        "higher_is": "better",
+        "unit": "/100",
+        "category": "Balance Sheet"
+    },
+    "Mgmt_Score": {
+        "label": "Mgmt Score",
+        "formula": "ROE + ROA + Efficiency Factors",
+        "insight": "Management effectiveness. >70 is excellent.",
+        "benchmark": (60, 80),
+        "higher_is": "better",
+        "unit": "/100",
+        "category": "Management"
+    },
+    "Asset_Turnover": {
+        "label": "Asset Turnover",
+        "formula": "Revenue ÷ Total Assets",
+        "insight": "Asset efficiency. >1 means efficient use of assets.",
+        "benchmark": (0.5, 1.5),
+        "higher_is": "better",
+        "unit": "x",
+        "category": "Efficiency"
+    },
+    "Growth_Score": {
+        "label": "Growth Score",
+        "formula": "Revenue + EPS Growth + Consistency",
+        "insight": "Growth quality score. >70 is strong grower.",
+        "benchmark": (60, 80),
+        "higher_is": "better",
+        "unit": "/100",
+        "category": "Growth"
+    },
+    "Revenue_CAGR": {
+        "label": "Revenue CAGR",
+        "formula": "(End Revenue ÷ Start Revenue)^(1/n) - 1",
+        "insight": "Compound annual growth rate. >10% is strong.",
+        "benchmark": (5, 15),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Growth"
+    },
+    "EPS_CAGR": {
+        "label": "EPS CAGR",
+        "formula": "(End EPS ÷ Start EPS)^(1/n) - 1",
+        "insight": "Earnings compound growth. Should exceed revenue CAGR.",
+        "benchmark": (5, 20),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Growth"
+    },
+    "PEG_Ratio": {
+        "label": "PEG Ratio",
+        "formula": "P/E Ratio ÷ EPS Growth Rate",
+        "insight": "Growth-adjusted P/E. <1 may be undervalued.",
+        "benchmark": (1, 2),
+        "higher_is": "worse",
+        "unit": "x",
+        "category": "Valuation"
+    },
+    "P_S_Ratio": {
+        "label": "P/S Ratio",
+        "formula": "Market Cap ÷ Revenue",
+        "insight": "Price per dollar of sales. Useful for growth stocks.",
+        "benchmark": (1, 5),
+        "higher_is": "worse",
+        "unit": "x",
+        "category": "Valuation"
+    },
+    "Payout_Ratio": {
+        "label": "Payout Ratio",
+        "formula": "Dividends ÷ Net Income",
+        "insight": "% of earnings paid as dividends. 30-60% is healthy.",
+        "benchmark": (30, 60),
+        "higher_is": "neutral",
+        "unit": "%",
+        "category": "Dividends"
+    },
+    "5Y_Growth": {
+        "label": "5Y Div Growth",
+        "formula": "CAGR of dividends over 5 years",
+        "insight": "Dividend growth rate. >5% shows commitment.",
+        "benchmark": (3, 10),
+        "higher_is": "better",
+        "unit": "%",
+        "category": "Dividends"
+    },
+    "Streak_Years": {
+        "label": "Streak Years",
+        "formula": "Consecutive years of dividend payments",
+        "insight": "Dividend track record. 25+ = Aristocrat.",
+        "benchmark": (5, 25),
+        "higher_is": "better",
+        "unit": "yrs",
+        "category": "Dividends"
+    },
+    "Consistency": {
+        "label": "Consistency",
+        "formula": "Growth Volatility Score",
+        "insight": "Lower = more consistent growth. <30% is stable.",
+        "benchmark": (20, 50),
+        "higher_is": "worse",
+        "unit": "%",
+        "category": "Growth"
+    },
+    
+    # === FINANCIAL STATEMENT LINE ITEMS (for Data tab) ===
+    "Revenue": {
+        "label": "Revenue",
+        "formula": "Total sales from operations",
+        "insight": "Top-line growth driver. Compare YoY growth rate.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Income"
+    },
+    "Net_Income": {
+        "label": "Net Income",
+        "formula": "Revenue - All Expenses - Taxes",
+        "insight": "Bottom-line profit. Drives EPS and dividends.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Income"
+    },
+    "Total_Assets": {
+        "label": "Total Assets",
+        "formula": "Current Assets + Non-Current Assets",
+        "insight": "Everything the company owns. Basis for ROA.",
+        "benchmark": None,
+        "higher_is": "neutral",
+        "unit": "$",
+        "category": "Balance Sheet"
+    },
+    "Total_Equity": {
+        "label": "Total Equity",
+        "formula": "Assets - Liabilities",
+        "insight": "Shareholders' ownership stake. Basis for ROE.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Balance Sheet"
+    },
+    "Total_Liabilities": {
+        "label": "Total Liabilities",
+        "formula": "Current + Long-term Liabilities",
+        "insight": "Everything the company owes. Lower = less risk.",
+        "benchmark": None,
+        "higher_is": "worse",
+        "unit": "$",
+        "category": "Balance Sheet"
+    },
+    "Operating_CF": {
+        "label": "Operating CF",
+        "formula": "Cash from core business operations",
+        "insight": "Cash generated from main business. Should exceed net income.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Cash Flow"
+    },
+    "Investing_CF": {
+        "label": "Investing CF",
+        "formula": "Cash from buying/selling assets",
+        "insight": "Usually negative (growth investment). Positive = asset sales.",
+        "benchmark": None,
+        "higher_is": "neutral",
+        "unit": "$",
+        "category": "Cash Flow"
+    },
+    "Financing_CF": {
+        "label": "Financing CF",
+        "formula": "Cash from debt/equity transactions",
+        "insight": "Negative = returning cash to shareholders.",
+        "benchmark": None,
+        "higher_is": "neutral",
+        "unit": "$",
+        "category": "Cash Flow"
+    },
+    "Free_Cash_Flow": {
+        "label": "Free Cash Flow",
+        "formula": "Operating CF - CapEx",
+        "insight": "Cash available for dividends, buybacks, debt paydown.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Cash Flow"
+    },
+    "Market_Cap": {
+        "label": "Market Cap",
+        "formula": "Share Price × Shares Outstanding",
+        "insight": "Total market value of company's equity.",
+        "benchmark": None,
+        "higher_is": "neutral",
+        "unit": "$",
+        "category": "Market"
+    },
+    "EPS": {
+        "label": "EPS",
+        "formula": "Net Income ÷ Shares Outstanding",
+        "insight": "Earnings per share. Key valuation metric.",
+        "benchmark": None,
+        "higher_is": "better",
+        "unit": "$",
+        "category": "Income"
+    },
 }
 
 
@@ -377,7 +651,7 @@ def render_flip_card(
     value: Any,
     label: str = None,
     custom_insight: str = None,
-    height: int = 100
+    height: int = 140
 ) -> None:
     """
     Render a single flip card in the current Streamlit column.
@@ -413,6 +687,8 @@ def render_flip_card(
     
     html = f"""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
         .fc-wrap-{card_id} {{
             perspective: 1000px;
             width: 100%;
@@ -420,12 +696,13 @@ def render_flip_card(
             cursor: pointer;
             position: relative;
             overflow: visible;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
         }}
         .fc-inner-{card_id} {{
             position: relative;
             width: 100%;
             height: 100%;
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }}
         .fc-wrap-{card_id}:hover .fc-inner-{card_id} {{
@@ -442,32 +719,35 @@ def render_flip_card(
             height: 100%;
             backface-visibility: hidden;
             -webkit-backface-visibility: hidden;
-            border-radius: 10px;
+            border-radius: 12px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: flex-start;
-            padding: 12px;
-            background: linear-gradient(180deg, #1e2530 0%, #161b22 100%);
-            border: 1px solid rgba(59, 130, 246, 0.15);
+            padding: 16px;
+            background: linear-gradient(145deg, #1e2530 0%, #161b22 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
             box-sizing: border-box;
             overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }}
         .fc-front-{card_id}:hover, .fc-back-{card_id}:hover {{
-            border-color: rgba(59, 130, 246, 0.4);
-            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
         }}
         .fc-back-{card_id} {{
             transform: rotateY(180deg);
-            background: linear-gradient(180deg, #161b22 0%, #0d1117 100%);
+            background: linear-gradient(145deg, #161b22 0%, #0d1117 100%);
+            justify-content: flex-start;
+            padding-top: 14px;
         }}
         .fc-label-{card_id} {{
-            color: #8b949e;
-            font-size: 0.72rem;
+            color: #a0aec0;
+            font-size: 0.82rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
+            margin-bottom: 8px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -475,37 +755,41 @@ def render_flip_card(
         }}
         .fc-value-{card_id} {{
             color: {color};
-            font-size: 1.35rem;
+            font-size: 1.65rem;
             font-weight: 700;
             white-space: nowrap;
+            letter-spacing: -0.5px;
         }}
         .fc-formula-{card_id} {{
-            color: #58a6ff;
-            font-size: 0.68rem;
-            font-family: 'SF Mono', Consolas, monospace;
-            margin-bottom: 4px;
+            color: #60a5fa;
+            font-size: 0.88rem;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            margin-bottom: 8px;
+            font-weight: 500;
         }}
         .fc-insight-{card_id} {{
-            color: #e6edf3;
-            font-size: 0.68rem;
-            line-height: 1.35;
+            color: #e2e8f0;
+            font-size: 0.82rem;
+            line-height: 1.5;
             overflow: hidden;
             display: -webkit-box;
-            -webkit-line-clamp: 3;
+            -webkit-line-clamp: 4;
             -webkit-box-orient: vertical;
         }}
         .fc-bench-{card_id} {{
-            color: #6e7681;
-            font-size: 0.58rem;
-            margin-top: 4px;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            font-weight: 500;
         }}
         .fc-hint-{card_id} {{
             position: absolute;
-            bottom: 4px;
-            right: 8px;
-            color: #6e7681;
-            font-size: 0.55rem;
-            opacity: 0.7;
+            bottom: 6px;
+            right: 10px;
+            color: #64748b;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-style: italic;
         }}
     </style>
     <div class="fc-wrap-{card_id}" onclick="this.classList.toggle('flipped')">

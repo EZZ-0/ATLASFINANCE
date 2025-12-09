@@ -26,29 +26,147 @@ warnings.filterwarnings('ignore')
 
 
 # Related industries mapping - industries that are similar enough to be valid peers
+# Comprehensive mapping to ensure peer discovery works for ALL S&P 500 stocks
 RELATED_INDUSTRIES = {
-    # Restaurants
-    'Restaurants': ['Restaurants', 'Food Distribution', 'Packaged Foods', 'Grocery Stores'],
-    # Retail
-    'Specialty Retail': ['Specialty Retail', 'Department Stores', 'Discount Stores', 'Home Improvement Retail'],
-    'Home Improvement Retail': ['Home Improvement Retail', 'Specialty Retail', 'Building Products'],
-    'Discount Stores': ['Discount Stores', 'Department Stores', 'Grocery Stores'],
-    # Auto - keep separate from restaurants!
+    # === TECHNOLOGY ===
+    'Consumer Electronics': ['Consumer Electronics', 'Computer Hardware', 'Electronic Components', 'Communication Equipment', 'Semiconductors'],
+    'Computer Hardware': ['Computer Hardware', 'Consumer Electronics', 'Electronic Components', 'Semiconductors'],
+    'Software - Infrastructure': ['Software - Infrastructure', 'Software - Application', 'Information Technology Services', 'Internet Content & Information'],
+    'Software - Application': ['Software - Application', 'Software - Infrastructure', 'Internet Content & Information', 'Information Technology Services'],
+    'Semiconductors': ['Semiconductors', 'Semiconductor Equipment & Materials', 'Electronic Components', 'Consumer Electronics'],
+    'Semiconductor Equipment & Materials': ['Semiconductor Equipment & Materials', 'Semiconductors', 'Electronic Components'],
+    'Electronic Components': ['Electronic Components', 'Semiconductors', 'Consumer Electronics', 'Communication Equipment'],
+    'Communication Equipment': ['Communication Equipment', 'Consumer Electronics', 'Electronic Components'],
+    'Information Technology Services': ['Information Technology Services', 'Software - Infrastructure', 'Software - Application'],
+    'Scientific & Technical Instruments': ['Scientific & Technical Instruments', 'Electronic Components', 'Medical Devices'],
+    
+    # === COMMUNICATION SERVICES ===
+    'Internet Content & Information': ['Internet Content & Information', 'Software - Application', 'Entertainment', 'Advertising Agencies'],
+    'Entertainment': ['Entertainment', 'Internet Content & Information', 'Broadcasting', 'Media - Diversified'],
+    'Broadcasting': ['Broadcasting', 'Entertainment', 'Media - Diversified', 'Telecom Services'],
+    'Media - Diversified': ['Media - Diversified', 'Entertainment', 'Broadcasting', 'Publishing'],
+    'Telecom Services': ['Telecom Services', 'Broadcasting', 'Communication Equipment'],
+    'Advertising Agencies': ['Advertising Agencies', 'Internet Content & Information', 'Media - Diversified'],
+    'Electronic Gaming & Multimedia': ['Electronic Gaming & Multimedia', 'Entertainment', 'Internet Content & Information'],
+    
+    # === CONSUMER CYCLICAL ===
+    'Internet Retail': ['Internet Retail', 'Specialty Retail', 'Department Stores', 'Discount Stores'],
     'Auto Manufacturers': ['Auto Manufacturers', 'Auto Parts', 'Auto Dealerships'],
-    'Auto Parts': ['Auto Parts', 'Auto Manufacturers'],
-    # Tech
-    'Software - Infrastructure': ['Software - Infrastructure', 'Software - Application', 'Information Technology Services'],
-    'Software - Application': ['Software - Application', 'Software - Infrastructure', 'Internet Content & Information'],
-    'Semiconductors': ['Semiconductors', 'Semiconductor Equipment & Materials', 'Electronic Components'],
-    # Financial
-    'Banks - Diversified': ['Banks - Diversified', 'Banks - Regional', 'Financial Services'],
-    'Banks - Regional': ['Banks - Regional', 'Banks - Diversified', 'Credit Services'],
-    # Healthcare
+    'Auto Parts': ['Auto Parts', 'Auto Manufacturers', 'Auto Dealerships'],
+    'Restaurants': ['Restaurants', 'Food Distribution', 'Leisure'],
+    'Specialty Retail': ['Specialty Retail', 'Department Stores', 'Discount Stores', 'Internet Retail'],
+    'Home Improvement Retail': ['Home Improvement Retail', 'Specialty Retail', 'Building Products'],
+    'Discount Stores': ['Discount Stores', 'Department Stores', 'Grocery Stores', 'Internet Retail'],
+    'Department Stores': ['Department Stores', 'Specialty Retail', 'Discount Stores'],
+    'Apparel Retail': ['Apparel Retail', 'Specialty Retail', 'Apparel Manufacturing', 'Footwear & Accessories'],
+    'Footwear & Accessories': ['Footwear & Accessories', 'Apparel Retail', 'Apparel Manufacturing'],
+    'Apparel Manufacturing': ['Apparel Manufacturing', 'Apparel Retail', 'Footwear & Accessories'],
+    'Lodging': ['Lodging', 'Resorts & Casinos', 'Travel Services', 'Restaurants'],
+    'Resorts & Casinos': ['Resorts & Casinos', 'Lodging', 'Entertainment', 'Leisure'],
+    'Travel Services': ['Travel Services', 'Lodging', 'Airlines'],
+    'Residential Construction': ['Residential Construction', 'Building Products', 'Home Improvement Retail'],
+    'Building Products': ['Building Products', 'Residential Construction', 'Home Improvement Retail'],
+    'Leisure': ['Leisure', 'Entertainment', 'Restaurants', 'Resorts & Casinos'],
+    
+    # === CONSUMER DEFENSIVE ===
+    'Beverages - Non-Alcoholic': ['Beverages - Non-Alcoholic', 'Beverages - Brewers', 'Packaged Foods'],
+    'Beverages - Brewers': ['Beverages - Brewers', 'Beverages - Non-Alcoholic', 'Beverages - Wineries & Distilleries'],
+    'Beverages - Wineries & Distilleries': ['Beverages - Wineries & Distilleries', 'Beverages - Brewers'],
+    'Packaged Foods': ['Packaged Foods', 'Food Distribution', 'Confectioners', 'Beverages - Non-Alcoholic'],
+    'Confectioners': ['Confectioners', 'Packaged Foods', 'Food Distribution'],
+    'Household & Personal Products': ['Household & Personal Products', 'Consumer Products', 'Packaged Foods'],
+    'Tobacco': ['Tobacco', 'Packaged Foods', 'Beverages - Brewers'],
+    'Grocery Stores': ['Grocery Stores', 'Discount Stores', 'Food Distribution'],
+    'Food Distribution': ['Food Distribution', 'Grocery Stores', 'Packaged Foods'],
+    'Consumer Products': ['Consumer Products', 'Household & Personal Products', 'Packaged Foods'],
+    
+    # === HEALTHCARE ===
     'Drug Manufacturers - General': ['Drug Manufacturers - General', 'Drug Manufacturers - Specialty & Generic', 'Biotechnology'],
-    'Biotechnology': ['Biotechnology', 'Drug Manufacturers - General', 'Medical Devices'],
-    # Energy
+    'Drug Manufacturers - Specialty & Generic': ['Drug Manufacturers - Specialty & Generic', 'Drug Manufacturers - General', 'Biotechnology'],
+    'Biotechnology': ['Biotechnology', 'Drug Manufacturers - General', 'Drug Manufacturers - Specialty & Generic', 'Medical Devices'],
+    'Medical Devices': ['Medical Devices', 'Diagnostics & Research', 'Biotechnology', 'Healthcare Equipment & Services'],
+    'Diagnostics & Research': ['Diagnostics & Research', 'Medical Devices', 'Biotechnology'],
+    'Health Care Plans': ['Health Care Plans', 'Health Care Providers', 'Medical Care Facilities'],
+    'Health Care Providers': ['Health Care Providers', 'Health Care Plans', 'Medical Care Facilities'],
+    'Medical Care Facilities': ['Medical Care Facilities', 'Health Care Providers', 'Health Care Plans'],
+    'Medical Distribution': ['Medical Distribution', 'Medical Devices', 'Drug Manufacturers - General'],
+    'Medical Instruments & Supplies': ['Medical Instruments & Supplies', 'Medical Devices', 'Diagnostics & Research'],
+    'Healthcare Equipment & Services': ['Healthcare Equipment & Services', 'Medical Devices', 'Health Care Providers'],
+    
+    # === FINANCIAL SERVICES ===
+    'Banks - Diversified': ['Banks - Diversified', 'Banks - Regional', 'Financial Services', 'Capital Markets'],
+    'Banks - Regional': ['Banks - Regional', 'Banks - Diversified', 'Credit Services', 'Financial Services'],
+    'Credit Services': ['Credit Services', 'Banks - Regional', 'Financial Services', 'Consumer Finance'],
+    'Insurance - Life': ['Insurance - Life', 'Insurance - Diversified', 'Insurance - Property & Casualty'],
+    'Insurance - Property & Casualty': ['Insurance - Property & Casualty', 'Insurance - Life', 'Insurance - Diversified'],
+    'Insurance - Diversified': ['Insurance - Diversified', 'Insurance - Life', 'Insurance - Property & Casualty'],
+    'Insurance Brokers': ['Insurance Brokers', 'Insurance - Diversified', 'Financial Services'],
+    'Asset Management': ['Asset Management', 'Capital Markets', 'Financial Services'],
+    'Capital Markets': ['Capital Markets', 'Asset Management', 'Banks - Diversified', 'Financial Services'],
+    'Financial Services': ['Financial Services', 'Banks - Diversified', 'Capital Markets', 'Credit Services'],
+    'Financial Data & Stock Exchanges': ['Financial Data & Stock Exchanges', 'Capital Markets', 'Financial Services'],
+    
+    # === INDUSTRIALS ===
+    'Aerospace & Defense': ['Aerospace & Defense', 'Industrial Conglomerates', 'Specialty Industrial Machinery'],
+    'Industrial Conglomerates': ['Industrial Conglomerates', 'Aerospace & Defense', 'Specialty Industrial Machinery'],
+    'Specialty Industrial Machinery': ['Specialty Industrial Machinery', 'Industrial Conglomerates', 'Farm & Heavy Construction Machinery'],
+    'Farm & Heavy Construction Machinery': ['Farm & Heavy Construction Machinery', 'Specialty Industrial Machinery', 'Trucking'],
+    'Railroads': ['Railroads', 'Trucking', 'Integrated Freight & Logistics'],
+    'Trucking': ['Trucking', 'Railroads', 'Integrated Freight & Logistics'],
+    'Integrated Freight & Logistics': ['Integrated Freight & Logistics', 'Railroads', 'Trucking', 'Air Freight & Logistics'],
+    'Air Freight & Logistics': ['Air Freight & Logistics', 'Integrated Freight & Logistics', 'Airlines'],
+    'Airlines': ['Airlines', 'Air Freight & Logistics', 'Travel Services'],
+    'Building Materials': ['Building Materials', 'Building Products', 'Specialty Industrial Machinery'],
+    'Electrical Equipment & Parts': ['Electrical Equipment & Parts', 'Specialty Industrial Machinery', 'Electronic Components'],
+    'Engineering & Construction': ['Engineering & Construction', 'Building Materials', 'Specialty Industrial Machinery'],
+    'Waste Management': ['Waste Management', 'Environmental Services', 'Industrial Services'],
+    'Pollution & Treatment Controls': ['Pollution & Treatment Controls', 'Waste Management', 'Specialty Industrial Machinery'],
+    'Staffing & Employment Services': ['Staffing & Employment Services', 'Business Services', 'Industrial Services'],
+    'Security & Protection Services': ['Security & Protection Services', 'Business Services', 'Industrial Services'],
+    
+    # === ENERGY ===
     'Oil & Gas Integrated': ['Oil & Gas Integrated', 'Oil & Gas E&P', 'Oil & Gas Refining & Marketing'],
     'Oil & Gas E&P': ['Oil & Gas E&P', 'Oil & Gas Integrated', 'Oil & Gas Equipment & Services'],
+    'Oil & Gas Refining & Marketing': ['Oil & Gas Refining & Marketing', 'Oil & Gas Integrated', 'Oil & Gas Midstream'],
+    'Oil & Gas Midstream': ['Oil & Gas Midstream', 'Oil & Gas Refining & Marketing', 'Oil & Gas Integrated'],
+    'Oil & Gas Equipment & Services': ['Oil & Gas Equipment & Services', 'Oil & Gas E&P', 'Oil & Gas Drilling'],
+    'Oil & Gas Drilling': ['Oil & Gas Drilling', 'Oil & Gas Equipment & Services', 'Oil & Gas E&P'],
+    
+    # === UTILITIES ===
+    'Utilities - Regulated Electric': ['Utilities - Regulated Electric', 'Utilities - Diversified', 'Utilities - Renewable'],
+    'Utilities - Diversified': ['Utilities - Diversified', 'Utilities - Regulated Electric', 'Utilities - Regulated Gas'],
+    'Utilities - Regulated Gas': ['Utilities - Regulated Gas', 'Utilities - Diversified', 'Utilities - Regulated Electric'],
+    'Utilities - Renewable': ['Utilities - Renewable', 'Utilities - Regulated Electric', 'Utilities - Diversified'],
+    'Utilities - Independent Power Producers': ['Utilities - Independent Power Producers', 'Utilities - Diversified', 'Utilities - Renewable'],
+    
+    # === REAL ESTATE ===
+    'REIT - Industrial': ['REIT - Industrial', 'REIT - Diversified', 'REIT - Specialty'],
+    'REIT - Retail': ['REIT - Retail', 'REIT - Diversified', 'REIT - Specialty'],
+    'REIT - Office': ['REIT - Office', 'REIT - Diversified', 'REIT - Specialty'],
+    'REIT - Residential': ['REIT - Residential', 'REIT - Diversified', 'REIT - Specialty'],
+    'REIT - Healthcare Facilities': ['REIT - Healthcare Facilities', 'REIT - Diversified', 'REIT - Specialty'],
+    'REIT - Specialty': ['REIT - Specialty', 'REIT - Diversified', 'REIT - Industrial'],
+    'REIT - Diversified': ['REIT - Diversified', 'REIT - Industrial', 'REIT - Retail', 'REIT - Office'],
+    'Real Estate Services': ['Real Estate Services', 'Real Estate - Development', 'REIT - Diversified'],
+    'Real Estate - Development': ['Real Estate - Development', 'Real Estate Services', 'Residential Construction'],
+    
+    # === BASIC MATERIALS ===
+    'Specialty Chemicals': ['Specialty Chemicals', 'Chemicals', 'Agricultural Inputs'],
+    'Chemicals': ['Chemicals', 'Specialty Chemicals', 'Agricultural Inputs'],
+    'Agricultural Inputs': ['Agricultural Inputs', 'Chemicals', 'Specialty Chemicals'],
+    'Steel': ['Steel', 'Aluminum', 'Other Industrial Metals & Mining'],
+    'Aluminum': ['Aluminum', 'Steel', 'Other Industrial Metals & Mining'],
+    'Copper': ['Copper', 'Other Industrial Metals & Mining', 'Gold'],
+    'Gold': ['Gold', 'Silver', 'Other Precious Metals & Mining'],
+    'Silver': ['Silver', 'Gold', 'Other Precious Metals & Mining'],
+    'Other Industrial Metals & Mining': ['Other Industrial Metals & Mining', 'Steel', 'Copper', 'Aluminum'],
+    'Other Precious Metals & Mining': ['Other Precious Metals & Mining', 'Gold', 'Silver'],
+    'Building Materials': ['Building Materials', 'Specialty Chemicals', 'Steel'],
+    'Coking Coal': ['Coking Coal', 'Thermal Coal', 'Other Industrial Metals & Mining'],
+    'Thermal Coal': ['Thermal Coal', 'Coking Coal', 'Oil & Gas E&P'],
+    'Paper & Paper Products': ['Paper & Paper Products', 'Packaging & Containers', 'Lumber & Wood Production'],
+    'Packaging & Containers': ['Packaging & Containers', 'Paper & Paper Products', 'Specialty Chemicals'],
+    'Lumber & Wood Production': ['Lumber & Wood Production', 'Paper & Paper Products', 'Building Materials'],
 }
 
 
@@ -106,7 +224,7 @@ def discover_peers(ticker: str, max_peers: int = 10) -> Dict:
                 peer_industry = peer_info.get('industry', 'Unknown')
                 peer_market_cap = peer_info.get('marketCap', 0)
                 
-                # NEW SCORING: Industry-first approach
+                # NEW SCORING: Industry-first, but allow same-sector fallback
                 similarity_score = 0.0
                 
                 # INDUSTRY MATCHING (most important!)
@@ -118,9 +236,9 @@ def discover_peers(ticker: str, max_peers: int = 10) -> Dict:
                     # Related industry = moderate bonus
                     similarity_score += 1.5
                 else:
-                    # Different industry = PENALTY (even if same sector)
-                    # This prevents Ford from showing up as CMG peer
-                    similarity_score -= 1.0
+                    # Different industry but SAME SECTOR = small bonus (fallback)
+                    # This allows peers when exact/related matches aren't available
+                    similarity_score += 0.3  # Changed from -1.0 penalty to small bonus
                 
                 # SIZE MATCHING (secondary factor)
                 if company_market_cap > 0 and peer_market_cap > 0:

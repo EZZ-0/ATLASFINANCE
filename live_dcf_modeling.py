@@ -189,18 +189,16 @@ def render_live_dcf_modeling(financials: Dict, model: DCFModel):
                             st.session_state.loaded_assumptions = scenario['assumptions']
                             st.success(f"Loaded: {scenario['name']}")
                             st.session_state.show_load_dialog = False
-                            st.rerun()
+                            # NOTE: Removed st.rerun() - causes redirect
                     with col3:
                         if st.button("🗑️", key=f"delete_{scenario['filename']}"):
                             if scenario_mgr.delete_scenario(scenario['filename']):
                                 st.success("Deleted!")
-                                st.rerun()
             else:
                 st.info("No saved scenarios found for this ticker")
             
             if st.button("Close"):
                 st.session_state.show_load_dialog = False
-                st.rerun()
     
     # Load assumptions if available
     if 'loaded_assumptions' in st.session_state:
@@ -373,8 +371,12 @@ def render_live_dcf_modeling(financials: Dict, model: DCFModel):
             st.session_state.custom_dcf_result = custom_result
             st.session_state.custom_dcf_assumptions = custom_assumptions
             
+            # #region agent log
+            import json as _json_dcf; open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_dcf.dumps({"hypothesisId":"E","location":"live_dcf_modeling.py:DCF_COMPLETE","message":"Custom DCF completed WITHOUT st.rerun()","data":{"has_result":bool(custom_result)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
+            # #endregion
             st.success("✅ Custom DCF Complete!")
-            st.rerun()
+            # NOTE: Removed st.rerun() - causes redirect to Dashboard tab
+            # Results display naturally without rerun
     
     # Display results if available
     if 'custom_dcf_result' in st.session_state:

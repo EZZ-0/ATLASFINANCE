@@ -81,24 +81,32 @@ def run_monte_carlo_simulation(
             # Extract required inputs from financials
             market_data = financials.get('market_data', {})
             income_stmt = financials.get('income_statement', {})
-            cashflow = financials.get('cashflow_statement', {})
+            cashflow = financials.get('cashflow_statement', financials.get('cash_flow', {}))  # Try both keys
             balance = financials.get('balance_sheet', {})
+            
+            # #region agent log
+            import json as _json_mc_sim; import pandas as _pd_mc; _is_df = lambda x: not x.empty if isinstance(x, _pd_mc.DataFrame) else bool(x); open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc_sim.dumps({"hypothesisId":"G","location":"monte_carlo_ui.py:INPUTS","message":"MC simulation inputs","data":{"has_market_data":_is_df(market_data) if hasattr(market_data,'empty') else bool(market_data),"has_income":_is_df(income_stmt),"has_cashflow":_is_df(cashflow),"has_balance":_is_df(balance),"financials_keys":list(financials.keys()) if financials else [],"income_type":str(type(income_stmt)),"cashflow_type":str(type(cashflow))},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
+            # #endregion
             
             # Get base values
             base_revenue = _extract_value(income_stmt, ['Total Revenue', 'totalRevenue', 'Revenue']) or 1e9
             
             # Calculate FCF margin
-            ocf = _extract_value(cashflow, ['Operating Cash Flow', 'operatingCashFlow']) or 0
-            capex = abs(_extract_value(cashflow, ['Capital Expenditure', 'capitalExpenditure']) or 0)
+            ocf = _extract_value(cashflow, ['Operating Cash Flow', 'operatingCashFlow', 'Total Cash From Operating Activities']) or 0
+            capex = abs(_extract_value(cashflow, ['Capital Expenditure', 'capitalExpenditure', 'Capital Expenditures']) or 0)
             fcf = ocf - capex
             base_fcf_margin = fcf / base_revenue if base_revenue > 0 else 0.15
             
-            shares = market_data.get('shares_outstanding') or _extract_value(balance, ['Ordinary Shares Number']) or 1e9
+            shares = market_data.get('shares_outstanding') or _extract_value(balance, ['Ordinary Shares Number', 'Common Stock Shares Outstanding']) or 1e9
             
             # Net debt
-            total_debt = _extract_value(balance, ['Total Debt', 'totalDebt']) or 0
-            cash = _extract_value(balance, ['Cash And Cash Equivalents', 'cash']) or 0
+            total_debt = _extract_value(balance, ['Total Debt', 'totalDebt', 'Long Term Debt']) or 0
+            cash = _extract_value(balance, ['Cash And Cash Equivalents', 'cash', 'Cash']) or 0
             net_debt = total_debt - cash
+            
+            # #region agent log
+            open(r'c:\Users\cidma\OneDrive\Desktop\backup\ATLAS v1.5 - public\Saudi_Earnings_Engine\.cursor\debug.log', 'a').write(_json_mc_sim.dumps({"hypothesisId":"G","location":"monte_carlo_ui.py:VALUES","message":"MC extracted values","data":{"base_revenue":float(base_revenue),"ocf":float(ocf),"capex":float(capex),"fcf":float(fcf),"fcf_margin":float(base_fcf_margin),"shares":float(shares),"total_debt":float(total_debt),"cash":float(cash),"net_debt":float(net_debt)},"timestamp":__import__('time').time()*1000,"sessionId":"debug-p0"})+'\n')
+            # #endregion
             
             # Create engine and run simulation
             engine = MonteCarloEngine(SimulationParams(n_simulations=n_simulations))
@@ -147,10 +155,11 @@ def render_monte_carlo_results(
     # Key metrics row
     col1, col2, col3, col4 = st.columns(4)
     
-    percentiles = results.get('percentiles', {})
+    # Get statistics from engine results (correct key path)
+    stats = results.get('statistics', {})
     
     with col1:
-        p10 = percentiles.get(10, 0)
+        p10 = stats.get('percentile_10', 0)
         st.metric(
             "10th Percentile",
             f"${p10:.2f}",
@@ -158,7 +167,7 @@ def render_monte_carlo_results(
         )
     
     with col2:
-        median = percentiles.get(50, 0)
+        median = stats.get('percentile_50', stats.get('median', 0))
         delta = ((median / current_price) - 1) * 100 if current_price > 0 else 0
         st.metric(
             "Median (50th)",
@@ -168,7 +177,7 @@ def render_monte_carlo_results(
         )
     
     with col3:
-        p90 = percentiles.get(90, 0)
+        p90 = stats.get('percentile_90', 0)
         st.metric(
             "90th Percentile",
             f"${p90:.2f}",
@@ -208,7 +217,7 @@ def create_distribution_chart(
     Returns:
         Plotly figure
     """
-    values = results.get('intrinsic_values', np.array([100]))
+    values = results.get('values_per_share', np.array([100]))
     
     # Create histogram
     fig = go.Figure()
@@ -267,7 +276,7 @@ def render_detailed_statistics(
         results: Monte Carlo results
         current_price: Current stock price
     """
-    values = results.get('intrinsic_values', np.array([100]))
+    values = results.get('values_per_share', np.array([100]))
     
     col1, col2 = st.columns(2)
     
@@ -369,8 +378,27 @@ def render_input_distributions(key_prefix: str = "mc"):
     }
 
 
-def _extract_value(data: Dict, keys: list) -> Optional[float]:
-    """Extract value from dict trying multiple keys."""
+def _extract_value(data, keys: list) -> Optional[float]:
+    """Extract value from dict or DataFrame trying multiple keys."""
+    import pandas as pd
+    
+    # Handle DataFrame
+    if isinstance(data, pd.DataFrame):
+        if data.empty:
+            return None
+        for key in keys:
+            if key in data.index:
+                # Get most recent column value
+                val = data.loc[key].iloc[0] if len(data.columns) > 0 else None
+                if val is not None and not pd.isna(val):
+                    return float(val)
+            elif key in data.columns:
+                val = data[key].iloc[0] if len(data) > 0 else None
+                if val is not None and not pd.isna(val):
+                    return float(val)
+        return None
+    
+    # Handle dict
     if isinstance(data, dict):
         for key in keys:
             if key in data:

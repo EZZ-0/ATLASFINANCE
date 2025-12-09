@@ -18,12 +18,12 @@ from typing import Dict, Any, Optional
 
 # Import flip card components with fallback
 try:
-    from flip_cards import RATIO_DEFINITIONS
+    from flip_cards import RATIO_DEFINITIONS, render_flip_card
     FLIP_CARDS_AVAILABLE = True
 except ImportError:
     FLIP_CARDS_AVAILABLE = False
     RATIO_DEFINITIONS = {}
-    RATIO_DEFINITIONS = {}
+    def render_flip_card(*args, **kwargs): pass
 
 
 def render_income_metrics(financials: Dict, depth: str = "beginner"):
@@ -288,160 +288,52 @@ def render_growth_metrics(financials: Dict, depth: str = "beginner"):
 
 
 def _render_simple_flip(config: Dict, depth: str):
-    """Render a simple flip card metric"""
+    """Render a simple flip card metric using unified CSS flip cards"""
     
     label = config["label"]
     value = config["value"]
-    fmt = config.get("format", "number")
-    benchmark = config.get("benchmark")
-    higher_better = config.get("higher_better", True)
     
-    # Format value
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        formatted = "N/A"
-        color = "#6b7280"
-    else:
-        try:
-            num = float(value)
-            
-            if fmt == "currency":
-                if abs(num) >= 1e12:
-                    formatted = f"${num/1e12:.2f}T"
-                elif abs(num) >= 1e9:
-                    formatted = f"${num/1e9:.2f}B"
-                elif abs(num) >= 1e6:
-                    formatted = f"${num/1e6:.2f}M"
-                else:
-                    formatted = f"${num:,.0f}"
-            elif fmt == "price":
-                formatted = f"${num:.2f}"
-            elif fmt == "pct":
-                formatted = f"{num:.1f}%"
-            elif fmt == "ratio":
-                formatted = f"{num:.2f}x"
-            else:
-                formatted = f"{num:.2f}"
-            
-            # Determine color
-            if benchmark:
-                low, high = benchmark
-                if higher_better:
-                    if num >= high:
-                        color = "#22c55e"
-                    elif num <= low:
-                        color = "#ef4444"
-                    else:
-                        color = "#f59e0b"
-                else:
-                    if num <= low:
-                        color = "#22c55e"
-                    elif num >= high:
-                        color = "#ef4444"
-                    else:
-                        color = "#f59e0b"
-            else:
-                # Default color based on sign for currency
-                if fmt == "currency" and num < 0:
-                    color = "#ef4444"
-                else:
-                    color = "#60a5fa"
-                    
-        except (ValueError, TypeError):
-            formatted = str(value) if value else "N/A"
-            color = "#6b7280"
-    
-    # Get explanation from definitions
+    # Map label to metric key for flip_cards.py
     key_mapping = {
+        # Valuation
         "P/E Ratio": "PE_Ratio",
         "P/B Ratio": "PB_Ratio",
         "P/S Ratio": "PS_Ratio",
         "EV/EBITDA": "EV_EBITDA",
+        # Profitability
         "ROE": "ROE",
-        "Current Ratio": "Current_Ratio",
-        "Debt/Equity": "Debt_to_Equity",
+        "ROA": "ROA",
         "Gross Margin": "Gross_Margin",
         "Operating Margin": "Operating_Margin",
         "Net Margin": "Net_Margin",
+        "Profit Margin": "Profit_Margin",
+        # Balance Sheet
+        "Current Ratio": "Current_Ratio",
+        "Debt/Equity": "Debt_to_Equity",
+        "Total Assets": "Total_Assets",
+        "Total Equity": "Total_Equity",
+        "Total Liabilities": "Total_Liabilities",
+        # Income Statement
+        "Revenue": "Revenue",
+        "Net Income": "Net_Income",
+        "EPS": "EPS",
+        # Cash Flow
+        "Operating CF": "Operating_CF",
+        "Investing CF": "Investing_CF",
+        "Financing CF": "Financing_CF",
+        "Free Cash Flow": "Free_Cash_Flow",
+        # Market
+        "Market Cap": "Market_Cap",
         "Beta": "Beta",
     }
     
-    def_key = key_mapping.get(label, label.replace(" ", "_"))
-    definition = RATIO_DEFINITIONS.get(def_key, {})
-    formula = definition.get("formula", "")
-    explanation = definition.get("explanations", {}).get(depth, f"Measures {label.lower()}")
+    metric_key = key_mapping.get(label, label.replace(" ", "_"))
     
-    # Create unique key
-    card_key = f"data_flip_{label.replace(' ', '_').replace('/', '_')}"
-    
-    if card_key not in st.session_state:
-        st.session_state[card_key] = False
-    
-    is_flipped = st.session_state[card_key]
-    
-    # Render card
-    st.markdown(f"""
-    <style>
-        .data-flip-{card_key} {{
-            perspective: 1000px;
-            height: 110px;
-            margin-bottom: 8px;
-        }}
-        .data-card-{card_key} {{
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.5s;
-            transform-style: preserve-3d;
-            cursor: pointer;
-            border-radius: 10px;
-        }}
-        .data-card-{card_key}.flipped {{
-            transform: rotateY(180deg);
-        }}
-        .data-front-{card_key}, .data-back-{card_key} {{
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-        }}
-        .data-front-{card_key} {{
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-left: 3px solid {color};
-        }}
-        .data-back-{card_key} {{
-            background: linear-gradient(145deg, #0f172a, #1e293b);
-            border-left: 3px solid {color};
-            transform: rotateY(180deg);
-            text-align: left;
-            font-size: 0.7rem;
-            overflow-y: auto;
-        }}
-    </style>
-    <div class="data-flip-{card_key}">
-        <div class="data-card-{card_key} {'flipped' if is_flipped else ''}">
-            <div class="data-front-{card_key}">
-                <div style="color: #94a3b8; font-size: 0.75rem;">{label}</div>
-                <div style="color: {color}; font-size: 1.5rem; font-weight: 700;">{formatted}</div>
-            </div>
-            <div class="data-back-{card_key}">
-                <div style="font-weight: 600; color: #e2e8f0; font-size: 0.8rem;">{label}</div>
-                <div style="color: #60a5fa; font-family: monospace; font-size: 0.65rem; margin: 3px 0;">{formula if formula else ''}</div>
-                <div style="color: #cbd5e1; font-size: 0.65rem; line-height: 1.2;">{explanation[:120]}{'...' if len(explanation) > 120 else ''}</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Toggle button
-    if st.button("↻", key=f"btn_{card_key}", help="Flip"):
-        st.session_state[card_key] = not st.session_state[card_key]
-        st.rerun()
+    # Use the new unified CSS flip card (no st.rerun needed)
+    render_flip_card(
+        metric_key=metric_key,
+        value=value,
+        label=label,
+        height=130
+    )
 

@@ -25,7 +25,7 @@ from datetime import datetime
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_dividends(ticker: str, financials: Dict = None) -> Dict:
+def analyze_dividends(ticker: str, _financials: Dict = None) -> Dict:
     """
     Comprehensive dividend analysis
     
@@ -43,8 +43,8 @@ def analyze_dividends(ticker: str, financials: Dict = None) -> Dict:
         stock = yf.Ticker(ticker)
         
         # Use pre-extracted info if available
-        if financials and financials.get('info'):
-            info = financials['info']
+        if _financials and _financials.get('info'):
+            info = _financials['info']
             print(f"   [REUSE] Using pre-extracted data")
         else:
             info = stock.info

@@ -76,6 +76,17 @@ def render_dashboard_tab(ticker: str, financials: Dict[str, Any], visualizer):
         display_key_metrics(financials)
     
     st.markdown("---")
+    
+    # Price Chart - Full Width at top
+    st.markdown("### Stock Price")
+    try:
+        price_chart = create_price_chart(ticker, financials)
+        if price_chart:
+            st.plotly_chart(price_chart, use_container_width=True, key="dash_price")
+    except Exception as e:
+        st.info(f"Price chart unavailable: {str(e)}")
+    
+    st.markdown("---")
     st.markdown("### Charts Overview")
     
     # Top row - Revenue & Margins
@@ -546,15 +557,8 @@ def _render_flip_metric(config: Dict, financials: Dict, depth: str):
         explanation = f"No detailed definition available for {label}."
         components = []
     
-    # Create unique key for this card
+    # Create unique key for this card (for CSS styling uniqueness)
     card_key = f"flip_{key}_{id(financials)}"
-    
-    # Initialize flip state
-    if card_key not in st.session_state:
-        st.session_state[card_key] = False
-    
-    # Render the flip card using HTML/CSS
-    is_flipped = st.session_state[card_key]
     
     # Build component values string
     comp_str = ""
@@ -569,22 +573,25 @@ def _render_flip_metric(config: Dict, financials: Dict, depth: str):
     
     st.markdown(f"""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        
         .flip-container-{card_key} {{
             perspective: 1000px;
-            height: 130px;
-            margin-bottom: 10px;
+            height: 140px;
+            margin-bottom: 8px;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
         }}
         .flip-card-{card_key} {{
             position: relative;
             width: 100%;
             height: 100%;
             text-align: center;
-            transition: transform 0.6s;
+            transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
             cursor: pointer;
             border-radius: 12px;
         }}
-        .flip-card-{card_key}.flipped {{
+        .flip-container-{card_key}:hover .flip-card-{card_key} {{
             transform: rotateY(180deg);
         }}
         .flip-front-{card_key}, .flip-back-{card_key} {{
@@ -592,73 +599,94 @@ def _render_flip_metric(config: Dict, financials: Dict, depth: str):
             width: 100%;
             height: 100%;
             backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
             border-radius: 12px;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            padding: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            background: linear-gradient(145deg, #1e2530 0%, #161b22 100%);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }}
+        .flip-front-{card_key}:hover, .flip-back-{card_key}:hover {{
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
         }}
         .flip-front-{card_key} {{
-            background: linear-gradient(145deg, #1a1a2e, #16213e);
             border-left: 4px solid {color};
         }}
         .flip-back-{card_key} {{
-            background: linear-gradient(145deg, #16213e, #1a1a2e);
             border-left: 4px solid {color};
             transform: rotateY(180deg);
             text-align: left;
-            font-size: 0.75rem;
-            overflow-y: auto;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding-top: 14px;
         }}
-        .metric-label {{
-            color: #94a3b8;
-            font-size: 0.8rem;
-            margin-bottom: 4px;
+        .metric-label-{card_key} {{
+            color: #a0aec0;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }}
-        .metric-value {{
+        .metric-value-{card_key} {{
             color: {color};
-            font-size: 1.8rem;
+            font-size: 1.75rem;
             font-weight: 700;
+            letter-spacing: -0.5px;
         }}
-        .formula-text {{
+        .formula-text-{card_key} {{
             color: #60a5fa;
-            font-family: monospace;
-            font-size: 0.7rem;
-            margin: 4px 0;
+            font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 8px;
         }}
-        .explanation-text {{
-            color: #cbd5e1;
-            font-size: 0.7rem;
-            line-height: 1.3;
+        .explanation-text-{card_key} {{
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
         }}
-        .components-text {{
+        .components-text-{card_key} {{
             color: #94a3b8;
-            font-size: 0.65rem;
-            margin-top: 4px;
+            font-size: 0.75rem;
+            margin-top: 8px;
+            font-weight: 500;
+        }}
+        .flip-hint-{card_key} {{
+            position: absolute;
+            bottom: 6px;
+            right: 10px;
+            color: #64748b;
+            font-size: 0.7rem;
+            opacity: 0.8;
+            font-style: italic;
         }}
     </style>
     <div class="flip-container-{card_key}">
-        <div class="flip-card-{card_key} {'flipped' if is_flipped else ''}">
+        <div class="flip-card-{card_key}">
             <div class="flip-front-{card_key}">
-                <div class="metric-label">{label}</div>
-                <div class="metric-value">{formatted_value}</div>
+                <div class="metric-label-{card_key}">{label}</div>
+                <div class="metric-value-{card_key}">{formatted_value}</div>
+                <div class="flip-hint-{card_key}">Hover for details</div>
             </div>
             <div class="flip-back-{card_key}">
-                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 4px;">{label}</div>
-                <div class="formula-text">{formula if formula else 'N/A'}</div>
-                <div class="explanation-text">{explanation[:150]}{'...' if len(explanation) > 150 else ''}</div>
-                <div class="components-text">{comp_str if comp_str else ''}</div>
+                <div style="font-weight: 600; color: #e2e8f0; margin-bottom: 6px; font-size: 0.9rem;">{label}</div>
+                <div class="formula-text-{card_key}">{formula if formula else ''}</div>
+                <div class="explanation-text-{card_key}">{explanation[:180]}{'...' if len(explanation) > 180 else ''}</div>
+                <div class="components-text-{card_key}">{comp_str if comp_str else ''}</div>
             </div>
         </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Toggle button (small, below the card)
-    if st.button("↻", key=f"btn_{card_key}", help="Click to flip"):
-        st.session_state[card_key] = not st.session_state[card_key]
-        st.rerun()
 
 
 def _get_component_value(component: str, financials: Dict) -> str:
@@ -751,6 +779,87 @@ def display_quick_insights(financials: Dict[str, Any]):
                 st.warning(f"High Debt: {debt_equity:.2f}")
         else:
             st.caption("Debt/Equity not available")
+
+
+def create_price_chart(ticker: str, financials: Dict[str, Any]):
+    """Create a stock price chart with volume"""
+    import plotly.graph_objects as go
+    from plotly.subplots import make_subplots
+    import yfinance as yf
+    from datetime import datetime, timedelta
+    
+    try:
+        # Fetch 1 year of daily data
+        stock = yf.Ticker(ticker)
+        end_date = datetime.now()
+        start_date = end_date - timedelta(days=365)
+        history = stock.history(start=start_date, end=end_date)
+        
+        if history.empty:
+            return None
+        
+        # Create figure with secondary y-axis for volume
+        fig = make_subplots(
+            rows=2, cols=1,
+            shared_xaxes=True,
+            vertical_spacing=0.03,
+            row_heights=[0.75, 0.25]
+        )
+        
+        # Price line
+        fig.add_trace(
+            go.Scatter(
+                x=history.index,
+                y=history['Close'],
+                mode='lines',
+                name='Price',
+                line=dict(color='#3b82f6', width=2),
+                fill='tozeroy',
+                fillcolor='rgba(59, 130, 246, 0.1)'
+            ),
+            row=1, col=1
+        )
+        
+        # Volume bars
+        colors = ['#22c55e' if c >= o else '#ef4444' 
+                  for c, o in zip(history['Close'], history['Open'])]
+        fig.add_trace(
+            go.Bar(
+                x=history.index,
+                y=history['Volume'],
+                name='Volume',
+                marker_color=colors,
+                opacity=0.7
+            ),
+            row=2, col=1
+        )
+        
+        # Current price annotation
+        current_price = history['Close'].iloc[-1]
+        price_change = ((current_price - history['Close'].iloc[0]) / history['Close'].iloc[0]) * 100
+        
+        fig.update_layout(
+            title=dict(
+                text=f"{ticker} | ${current_price:.2f} ({'+' if price_change >= 0 else ''}{price_change:.1f}% YTD)",
+                font=dict(size=16)
+            ),
+            template='plotly_dark',
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            height=350,
+            showlegend=False,
+            margin=dict(l=40, r=40, t=60, b=40),
+            xaxis2_rangeslider_visible=False
+        )
+        
+        fig.update_yaxes(title_text="Price ($)", row=1, col=1, gridcolor='rgba(255,255,255,0.1)')
+        fig.update_yaxes(title_text="Volume", row=2, col=1, gridcolor='rgba(255,255,255,0.1)')
+        fig.update_xaxes(gridcolor='rgba(255,255,255,0.05)')
+        
+        return fig
+        
+    except Exception:
+        return None
 
 
 def create_valuation_chart(financials: Dict[str, Any], visualizer):

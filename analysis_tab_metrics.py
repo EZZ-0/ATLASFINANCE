@@ -19,11 +19,12 @@ from typing import Dict, Any
 
 # Import flip card components with fallback
 try:
-    from flip_cards import RATIO_DEFINITIONS
+    from flip_cards import RATIO_DEFINITIONS, render_flip_card
     FLIP_CARDS_AVAILABLE = True
 except ImportError:
     FLIP_CARDS_AVAILABLE = False
     RATIO_DEFINITIONS = {}
+    def render_flip_card(*args, **kwargs): pass
 
 # Import universal field mapper for intelligent field lookups
 try:
@@ -45,10 +46,10 @@ def render_earnings_flip_metrics(earnings_data: Dict, depth: str = "beginner"):
     cols = st.columns(4)
     
     metric_list = [
-        {"label": "Earnings Score", "value": metrics.get('earnings_score'), "format": "score", "benchmark": (60, 80)},
+        {"label": "Earnings Score", "value": metrics.get('earnings_score', metrics.get('beat_rate', 0) * 0.8 if metrics.get('beat_rate') else None), "format": "score", "benchmark": (60, 80)},
         {"label": "Beat Rate", "value": metrics.get('beat_rate'), "format": "pct", "benchmark": (50, 75)},
-        {"label": "Avg Surprise", "value": metrics.get('average_surprise_pct'), "format": "pct"},
-        {"label": "Quality Ratio", "value": metrics.get('quality_ratio'), "format": "ratio", "benchmark": (0.5, 1.0)},
+        {"label": "Avg Surprise", "value": metrics.get('average_surprise_pct', metrics.get('avg_surprise_pct')), "format": "pct"},
+        {"label": "EPS Momentum", "value": metrics.get('quality_ratio', metrics.get('eps_momentum')), "format": "pct", "benchmark": (-10, 20)},
     ]
     
     for i, m in enumerate(metric_list):
@@ -67,7 +68,7 @@ def render_dividend_flip_metrics(dividend_data: Dict, depth: str = "beginner"):
     cols = st.columns(4)
     
     metric_list = [
-        {"label": "Dividend Yield", "value": metrics.get('yield_pct'), "format": "pct", "benchmark": (2, 5)},
+        {"label": "Dividend Yield", "value": metrics.get('yield_pct', metrics.get('dividend_yield')), "format": "pct", "benchmark": (2, 5)},
         {"label": "Payout Ratio", "value": metrics.get('payout_ratio'), "format": "pct", "benchmark": (30, 60), "higher_better": False},
         {"label": "5Y Growth", "value": metrics.get('dividend_cagr_5y'), "format": "pct", "benchmark": (3, 10)},
         {"label": "Streak Years", "value": metrics.get('consecutive_years'), "format": "years", "benchmark": (5, 25)},
@@ -89,11 +90,11 @@ def render_valuation_flip_metrics(valuation_data: Dict, depth: str = "beginner")
     cols = st.columns(5)
     
     metric_list = [
-        {"label": "P/E Ratio", "value": get_field(metrics, 'pe_ratio'), "format": "ratio", "benchmark": (15, 25), "higher_better": False},
-        {"label": "PEG Ratio", "value": get_field(metrics, 'peg_ratio'), "format": "ratio", "benchmark": (1, 2), "higher_better": False},
-        {"label": "P/B Ratio", "value": get_field(metrics, 'price_to_book'), "format": "ratio", "benchmark": (1, 3), "higher_better": False},
-        {"label": "EV/EBITDA", "value": get_field(metrics, 'ev_to_ebitda'), "format": "ratio", "benchmark": (8, 15), "higher_better": False},
-        {"label": "Premium/Discount", "value": get_field(metrics, 'valuation_score'), "format": "pct"},
+        {"label": "P/E Ratio", "value": metrics.get('pe_ratio', metrics.get('pe_trailing')), "format": "ratio", "benchmark": (15, 25), "higher_better": False},
+        {"label": "PEG Ratio", "value": metrics.get('peg_ratio'), "format": "ratio", "benchmark": (1, 2), "higher_better": False},
+        {"label": "P/B Ratio", "value": metrics.get('price_to_book'), "format": "ratio", "benchmark": (1, 3), "higher_better": False},
+        {"label": "EV/EBITDA", "value": metrics.get('ev_to_ebitda'), "format": "ratio", "benchmark": (8, 15), "higher_better": False},
+        {"label": "P/S Ratio", "value": metrics.get('price_to_sales', metrics.get('valuation_score')), "format": "ratio", "benchmark": (1, 5), "higher_better": False},
     ]
     
     for i, m in enumerate(metric_list):
@@ -112,10 +113,10 @@ def render_cashflow_flip_metrics(cashflow_data: Dict, depth: str = "beginner"):
     cols = st.columns(4)
     
     metric_list = [
-        {"label": "FCF Score", "value": metrics.get('fcf_score'), "format": "score", "benchmark": (60, 80)},
-        {"label": "FCF Yield", "value": metrics.get('fcf_yield'), "format": "pct", "benchmark": (3, 8)},
+        {"label": "FCF Score", "value": metrics.get('cashflow_score', metrics.get('fcf_score')), "format": "score", "benchmark": (60, 80)},
+        {"label": "FCF Yield", "value": metrics.get('fcf_yield', metrics.get('fcf_margin')), "format": "pct", "benchmark": (3, 8)},
         {"label": "OCF Margin", "value": metrics.get('ocf_margin'), "format": "pct", "benchmark": (15, 25)},
-        {"label": "FCF Conversion", "value": metrics.get('fcf_conversion'), "format": "pct", "benchmark": (80, 100)},
+        {"label": "FCF Conversion", "value": metrics.get('fcf_conversion_rate', metrics.get('fcf_conversion')), "format": "pct", "benchmark": (80, 100)},
     ]
     
     for i, m in enumerate(metric_list):
@@ -134,7 +135,7 @@ def render_balance_flip_metrics(balance_data: Dict, depth: str = "beginner"):
     cols = st.columns(5)
     
     metric_list = [
-        {"label": "Health Score", "value": metrics.get('health_score'), "format": "score", "benchmark": (60, 80)},
+        {"label": "Health Score", "value": metrics.get('health_score', metrics.get('balance_sheet_score')), "format": "score", "benchmark": (60, 80)},
         {"label": "Current Ratio", "value": metrics.get('current_ratio'), "format": "ratio", "benchmark": (1.0, 2.0)},
         {"label": "Quick Ratio", "value": metrics.get('quick_ratio'), "format": "ratio", "benchmark": (0.8, 1.5)},
         {"label": "Debt/Equity", "value": metrics.get('debt_to_equity'), "format": "ratio", "benchmark": (0.5, 1.5), "higher_better": False},
@@ -158,9 +159,9 @@ def render_management_flip_metrics(management_data: Dict, depth: str = "beginner
     
     metric_list = [
         {"label": "Mgmt Score", "value": metrics.get('management_score'), "format": "score", "benchmark": (60, 80)},
-        {"label": "ROE", "value": metrics.get('roe'), "format": "pct", "benchmark": (10, 20)},
-        {"label": "ROA", "value": metrics.get('roa'), "format": "pct", "benchmark": (5, 10)},
-        {"label": "ROIC", "value": metrics.get('roic'), "format": "pct", "benchmark": (10, 20)},
+        {"label": "ROE", "value": metrics.get('roe', metrics.get('return_on_equity')), "format": "pct", "benchmark": (10, 20)},
+        {"label": "ROA", "value": metrics.get('roa', metrics.get('return_on_assets')), "format": "pct", "benchmark": (5, 10)},
+        {"label": "Asset Turnover", "value": metrics.get('roic', metrics.get('asset_turnover')), "format": "ratio", "benchmark": (0.5, 1.5)},
     ]
     
     for i, m in enumerate(metric_list):
@@ -191,149 +192,66 @@ def render_growth_flip_metrics(growth_data: Dict, depth: str = "beginner"):
 
 
 def _render_analysis_flip(config: Dict, depth: str):
-    """Render a single analysis flip card"""
+    """Render a single analysis flip card using unified CSS flip cards"""
     
     label = config["label"]
     value = config["value"]
-    fmt = config.get("format", "number")
-    benchmark = config.get("benchmark")
-    higher_better = config.get("higher_better", True)
     
-    # Format value
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        formatted = "N/A"
-        color = "#6b7280"
-    else:
-        try:
-            num = float(value)
-            
-            if fmt == "score":
-                formatted = f"{num:.0f}/100"
-            elif fmt == "pct":
-                formatted = f"{num:.1f}%"
-            elif fmt == "ratio":
-                formatted = f"{num:.2f}x"
-            elif fmt == "years":
-                formatted = f"{int(num)} yrs"
-            else:
-                formatted = f"{num:.2f}"
-            
-            # Determine color
-            if benchmark:
-                low, high = benchmark
-                if higher_better:
-                    if num >= high:
-                        color = "#22c55e"
-                    elif num <= low:
-                        color = "#ef4444"
-                    else:
-                        color = "#f59e0b"
-                else:
-                    if num <= low:
-                        color = "#22c55e"
-                    elif num >= high:
-                        color = "#ef4444"
-                    else:
-                        color = "#f59e0b"
-            else:
-                color = "#60a5fa"
-                    
-        except (ValueError, TypeError):
-            formatted = str(value) if value else "N/A"
-            color = "#6b7280"
-    
-    # Get explanation
+    # Map label to metric key for flip_cards.py
     key_mapping = {
+        # Valuation
         "P/E Ratio": "PE_Ratio",
         "P/B Ratio": "PB_Ratio",
+        "P/S Ratio": "P_S_Ratio",
         "EV/EBITDA": "EV_EBITDA",
+        "PEG Ratio": "PEG_Ratio",
+        # Profitability
         "ROE": "ROE",
         "ROA": "ROA",
         "ROIC": "ROIC",
+        "Gross Margin": "Gross_Margin",
+        "Operating Margin": "Operating_Margin",
+        "Profit Margin": "Profit_Margin",
+        # Balance Sheet
         "Current Ratio": "Current_Ratio",
+        "Quick Ratio": "Quick_Ratio",
         "Debt/Equity": "Debt_to_Equity",
+        "Interest Coverage": "Interest_Coverage",
+        "Health Score": "Health_Score",
+        # Dividends
         "Dividend Yield": "Dividend_Yield",
         "Payout Ratio": "Payout_Ratio",
-        "PEG Ratio": "PEG_Ratio",
+        "5Y Growth": "5Y_Growth",
+        "Streak Years": "Streak_Years",
+        # Earnings
+        "Earnings Score": "Earnings_Score",
+        "Beat Rate": "Beat_Rate",
+        "Avg Surprise": "Avg_Surprise",
+        "EPS Momentum": "EPS_Momentum",
+        # Cash Flow
+        "FCF Yield": "FCF_Yield",
+        "FCF Score": "FCF_Score",
+        "OCF Margin": "OCF_Margin",
+        "FCF Conversion": "FCF_Conversion",
+        # Management
+        "Mgmt Score": "Mgmt_Score",
+        "Asset Turnover": "Asset_Turnover",
+        # Growth
+        "Growth Score": "Growth_Score",
+        "Revenue CAGR": "Revenue_CAGR",
+        "Revenue Growth": "Revenue_Growth",
+        "EPS CAGR": "EPS_CAGR",
+        "EPS Growth": "EPS_Growth",
+        "Consistency": "Consistency",
     }
     
-    def_key = key_mapping.get(label, label.replace(" ", "_"))
-    definition = RATIO_DEFINITIONS.get(def_key, {})
-    formula = definition.get("formula", "")
-    explanation = definition.get("explanations", {}).get(depth, f"Measures {label.lower()}")
+    metric_key = key_mapping.get(label, label.replace(" ", "_"))
     
-    # Create unique key
-    card_key = f"analysis_flip_{label.replace(' ', '_').replace('/', '_')}"
-    
-    if card_key not in st.session_state:
-        st.session_state[card_key] = False
-    
-    is_flipped = st.session_state[card_key]
-    
-    # Render card (compact version for analysis tab)
-    st.markdown(f"""
-    <style>
-        .analysis-flip-{card_key} {{
-            perspective: 1000px;
-            height: 100px;
-            margin-bottom: 6px;
-        }}
-        .analysis-card-{card_key} {{
-            position: relative;
-            width: 100%;
-            height: 100%;
-            text-align: center;
-            transition: transform 0.5s;
-            transform-style: preserve-3d;
-            cursor: pointer;
-            border-radius: 8px;
-        }}
-        .analysis-card-{card_key}.flipped {{
-            transform: rotateY(180deg);
-        }}
-        .analysis-front-{card_key}, .analysis-back-{card_key} {{
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }}
-        .analysis-front-{card_key} {{
-            background: linear-gradient(145deg, #1e293b, #0f172a);
-            border-left: 3px solid {color};
-        }}
-        .analysis-back-{card_key} {{
-            background: linear-gradient(145deg, #0f172a, #1e293b);
-            border-left: 3px solid {color};
-            transform: rotateY(180deg);
-            text-align: left;
-            font-size: 0.65rem;
-            overflow-y: auto;
-        }}
-    </style>
-    <div class="analysis-flip-{card_key}">
-        <div class="analysis-card-{card_key} {'flipped' if is_flipped else ''}">
-            <div class="analysis-front-{card_key}">
-                <div style="color: #94a3b8; font-size: 0.7rem;">{label}</div>
-                <div style="color: {color}; font-size: 1.3rem; font-weight: 700;">{formatted}</div>
-            </div>
-            <div class="analysis-back-{card_key}">
-                <div style="font-weight: 600; color: #e2e8f0; font-size: 0.7rem;">{label}</div>
-                <div style="color: #60a5fa; font-family: monospace; font-size: 0.6rem;">{formula[:50] if formula else ''}</div>
-                <div style="color: #cbd5e1; font-size: 0.6rem; line-height: 1.2;">{explanation[:80]}{'...' if len(explanation) > 80 else ''}</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Toggle button
-    if st.button("↻", key=f"btn_{card_key}", help="Flip"):
-        st.session_state[card_key] = not st.session_state[card_key]
-        st.rerun()
+    # Use the new unified CSS flip card (no st.rerun needed)
+    render_flip_card(
+        metric_key=metric_key,
+        value=value,
+        label=label,
+        height=130
+    )
 

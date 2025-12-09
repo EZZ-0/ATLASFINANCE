@@ -61,6 +61,7 @@ def ensure_yfinance_info(ticker: str, financials: Dict) -> Dict:
     """
     Ensure financials dict has yfinance info for analysis modules.
     This handles cached data that may be missing the info dict.
+    Also tries FMP as fallback if yfinance data is incomplete.
     """
     if financials and 'info' not in financials:
         try:
@@ -78,6 +79,59 @@ def ensure_yfinance_info(ticker: str, financials: Dict) -> Dict:
                 print(f"[ANALYSIS] Fetched missing yfinance data for {ticker}")
         except Exception as e:
             print(f"[ANALYSIS] Could not fetch yfinance data: {e}")
+    
+    # Try FMP for any critical fields still missing
+    try:
+        from fmp_extractor import get_fmp_extractor
+        fmp = get_fmp_extractor()
+        if fmp.available:
+            info = financials.get('info', {})
+            critical_missing = []
+            for field in ['trailingPE', 'forwardPE', 'pegRatio', 'enterpriseValue', 
+                         'priceToBook', 'returnOnEquity', 'returnOnAssets', 'debtToEquity']:
+                if not info.get(field):
+                    critical_missing.append(field)
+            
+            if len(critical_missing) > 3:  # Only call FMP if many fields missing
+                fmp_data = fmp.extract_all(ticker)
+                if fmp_data:
+                    # Map FMP fields to yfinance-style keys
+                    fmp_to_yf = {
+                        'pe_ratio': 'trailingPE',
+                        'forward_pe': 'forwardPE',
+                        'peg_ratio': 'pegRatio',
+                        'enterprise_value': 'enterpriseValue',
+                        'price_to_book': 'priceToBook',
+                        'roe': 'returnOnEquity',
+                        'roa': 'returnOnAssets',
+                        'debt_to_equity': 'debtToEquity',
+                        'current_ratio': 'currentRatio',
+                        'gross_margin': 'grossMargins',
+                        'operating_margin': 'operatingMargins',
+                        'profit_margin': 'profitMargins',
+                        'dividend_yield': 'dividendYield',
+                        'ev_to_ebitda': 'enterpriseToEbitda',
+                        'market_cap': 'marketCap',
+                        'beta': 'beta',
+                    }
+                    
+                    if 'info' not in financials:
+                        financials['info'] = {}
+                    
+                    filled = 0
+                    for fmp_key, yf_key in fmp_to_yf.items():
+                        val = fmp_data.get(fmp_key)
+                        if val is not None and not financials['info'].get(yf_key):
+                            financials['info'][yf_key] = val
+                            filled += 1
+                    
+                    if filled > 0:
+                        print(f"[ANALYSIS] Filled {filled} fields from FMP for {ticker}")
+    except ImportError:
+        pass
+    except Exception as e:
+        print(f"[ANALYSIS] FMP fallback failed: {e}")
+    
     return financials
 
 
@@ -117,7 +171,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('bar-chart-line', '1.2em')} Earnings Performance Analysis", unsafe_allow_html=True)
         
         with st.spinner("Analyzing earnings history..."):
-            earnings_data = analyze_earnings_history(ticker, financials=financials)
+            earnings_data = analyze_earnings_history(ticker, _financials=financials)
         
         if earnings_data['status'] == 'success':
             metrics = earnings_data['metrics']
@@ -178,7 +232,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('cash-coin', '1.2em')} Dividend Analysis", unsafe_allow_html=True)
         
         with st.spinner("Analyzing dividend history..."):
-            dividend_data = analyze_dividends(ticker, financials=financials)
+            dividend_data = analyze_dividends(ticker, _financials=financials)
         
         if dividend_data['status'] == 'success':
             metrics = dividend_data['metrics']
@@ -253,7 +307,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('currency-dollar', '1.2em')} Valuation Multiples", unsafe_allow_html=True)
         
         with st.spinner("Analyzing valuation..."):
-            valuation_data = analyze_valuation_multiples(ticker, financials=financials)
+            valuation_data = analyze_valuation_multiples(ticker, _financials=financials)
         
         if valuation_data['status'] == 'success':
             metrics = valuation_data['metrics']
@@ -332,7 +386,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('cash-stack', '1.2em')} Cash Flow Deep Dive", unsafe_allow_html=True)
         
         with st.spinner("Analyzing cash flow..."):
-            cashflow_data = analyze_cashflow(ticker, financials=financials)
+            cashflow_data = analyze_cashflow(ticker, _financials=financials)
         
         if cashflow_data['status'] == 'success':
             metrics = cashflow_data['metrics']
@@ -401,7 +455,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('shield-fill-check', '1.2em')} Balance Sheet Health", unsafe_allow_html=True)
         
         with st.spinner("Analyzing balance sheet..."):
-            bs_data = analyze_balance_sheet_health(ticker, financials=financials)
+            bs_data = analyze_balance_sheet_health(ticker, _financials=financials)
         
         if bs_data['status'] == 'success':
             metrics = bs_data['metrics']
@@ -477,7 +531,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('person-badge', '1.2em')} Management Effectiveness", unsafe_allow_html=True)
         
         with st.spinner("Analyzing management performance..."):
-            mgmt_data = analyze_management_effectiveness(ticker, financials=financials)
+            mgmt_data = analyze_management_effectiveness(ticker, _financials=financials)
         
         if mgmt_data['status'] == 'success':
             metrics = mgmt_data['metrics']
@@ -578,7 +632,7 @@ def render_analysis_tab(ticker: str, financials: Dict) -> None:
         st.markdown(f"### {icon('rocket-takeoff', '1.2em')} Growth Quality", unsafe_allow_html=True)
         
         with st.spinner("Analyzing growth quality..."):
-            growth_data = analyze_growth_quality(ticker, financials_dict=financials)
+            growth_data = analyze_growth_quality(ticker, _financials_dict=financials)
         
         if growth_data['status'] == 'success':
             metrics = growth_data['metrics']

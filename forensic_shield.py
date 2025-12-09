@@ -226,8 +226,10 @@ class ForensicShield:
             lvgi = (total_debt_t / total_debt_t1) if total_debt_t and total_debt_t1 and total_debt_t1 > 0 else 1.0
             
             # 8. TATA = (Change in Working Capital - Cash Flow from Operations) / Total Assets
-            working_capital_change = ((current_assets_t - current_liabilities_t) - (current_assets_t1 - current_liabilities_t1)) if current_assets_t1 and current_liabilities_t1 else 0
-            tata = (working_capital_change - (cash_flow_ops_t or 0)) / total_assets_t if total_assets_t > 0 else 0
+            wc_t = ((current_assets_t or 0) - (current_liabilities_t or 0))
+            wc_t1 = ((current_assets_t1 or 0) - (current_liabilities_t1 or 0)) if current_assets_t1 is not None and current_liabilities_t1 is not None else 0
+            working_capital_change = wc_t - wc_t1
+            tata = (working_capital_change - (cash_flow_ops_t or 0)) / total_assets_t if total_assets_t and total_assets_t > 0 else 0
             
             # Calculate M-Score
             m_score = (-4.84 + 
@@ -305,11 +307,13 @@ class ForensicShield:
         
         # Get metrics
         net_income_t = self._get_metric('income_statement', ['Net Income', 'Net_Income'], 0)
-        roa_t = net_income_t / self._get_metric('balance_sheet', ['Total Assets', 'Total_Assets'], 0) if net_income_t else 0
+        total_assets_t0 = self._get_metric('balance_sheet', ['Total Assets', 'Total_Assets'], 0)
+        roa_t = (net_income_t / total_assets_t0) if net_income_t and total_assets_t0 and total_assets_t0 > 0 else 0
         cf_ops_t = self._get_metric('cash_flow', ['Operating Cash Flow', 'Total Cash From Operating Activities'], 0)
         
         net_income_t1 = self._get_metric('income_statement', ['Net Income', 'Net_Income'], 1)
-        roa_t1 = net_income_t1 / self._get_metric('balance_sheet', ['Total Assets', 'Total_Assets'], 1) if net_income_t1 else 0
+        total_assets_t0_for_roa = self._get_metric('balance_sheet', ['Total Assets', 'Total_Assets'], 1)
+        roa_t1 = (net_income_t1 / total_assets_t0_for_roa) if net_income_t1 and total_assets_t0_for_roa and total_assets_t0_for_roa > 0 else 0
         
         current_assets_t = self._get_metric('balance_sheet', ['Current Assets', 'Current_Assets'], 0)
         current_liabilities_t = self._get_metric('balance_sheet', ['Current Liabilities', 'Current_Liabilities'], 0)
@@ -383,8 +387,10 @@ class ForensicShield:
         
         # 3. OPERATING EFFICIENCY TESTS (2 points)
         # 3a. Gross margin increased
-        gross_margin_t = (revenue_t - self._get_metric('income_statement', ['Cost Of Revenue', 'COGS'], 0)) / revenue_t if revenue_t and revenue_t > 0 else 0
-        gross_margin_t1 = (revenue_t1 - self._get_metric('income_statement', ['Cost Of Revenue', 'COGS'], 1)) / revenue_t1 if revenue_t1 and revenue_t1 > 0 else 0
+        cogs_t = self._get_metric('income_statement', ['Cost Of Revenue', 'COGS'], 0)
+        cogs_t1 = self._get_metric('income_statement', ['Cost Of Revenue', 'COGS'], 1)
+        gross_margin_t = (revenue_t - (cogs_t or 0)) / revenue_t if revenue_t and revenue_t > 0 else 0
+        gross_margin_t1 = (revenue_t1 - (cogs_t1 or 0)) / revenue_t1 if revenue_t1 and revenue_t1 > 0 else 0
         
         if gross_margin_t and gross_margin_t1 and gross_margin_t > gross_margin_t1:
             score += 1

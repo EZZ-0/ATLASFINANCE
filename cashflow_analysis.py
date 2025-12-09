@@ -25,7 +25,7 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_cashflow(ticker: str, financials: Dict = None) -> Dict:
+def analyze_cashflow(ticker: str, _financials: Dict = None) -> Dict:
     """
     Deep dive into cash flow metrics and quality
     
@@ -40,11 +40,11 @@ def analyze_cashflow(ticker: str, financials: Dict = None) -> Dict:
         print(f"\n[INFO] Analyzing cash flow for {ticker}...")
         
         # Use pre-extracted data if available
-        if financials:
-            info = financials.get('info', {})
-            cashflow = financials.get('cash_flow', pd.DataFrame())
-            income = financials.get('income_statement', pd.DataFrame())
-            balance = financials.get('balance_sheet', pd.DataFrame())
+        if _financials:
+            info = _financials.get('info', {})
+            cashflow = _financials.get('cash_flow', pd.DataFrame())
+            income = _financials.get('income_statement', pd.DataFrame())
+            balance = _financials.get('balance_sheet', pd.DataFrame())
             print(f"   [REUSE] Using pre-extracted data")
         else:
             # Fallback to direct yfinance call
@@ -200,6 +200,12 @@ def analyze_cashflow(ticker: str, financials: Dict = None) -> Dict:
             if 'free_cash_flow' in metrics:
                 fcf_margin = (metrics['free_cash_flow'] / revenue) * 100
                 metrics['fcf_margin'] = round(fcf_margin, 2)
+        
+        # FCF Yield = FCF / Market Cap
+        market_cap = info.get('marketCap', 0)
+        if market_cap > 0 and 'free_cash_flow' in metrics:
+            fcf_yield = (metrics['free_cash_flow'] / market_cap) * 100
+            metrics['fcf_yield'] = round(fcf_yield, 2)
         
         # ====================================
         # 6. OVERALL CASH FLOW SCORE

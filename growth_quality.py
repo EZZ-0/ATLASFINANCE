@@ -25,7 +25,7 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_growth_quality(ticker: str, financials_dict: Dict = None) -> Dict:
+def analyze_growth_quality(ticker: str, _financials_dict: Dict = None) -> Dict:
     """
     Comprehensive growth quality analysis
     
@@ -40,9 +40,9 @@ def analyze_growth_quality(ticker: str, financials_dict: Dict = None) -> Dict:
         print(f"\n[INFO] Analyzing growth quality for {ticker}...")
         
         # Use pre-extracted data if available
-        if financials_dict:
-            info = financials_dict.get('info', {})
-            financials = financials_dict.get('income_statement', pd.DataFrame())
+        if _financials_dict:
+            info = _financials_dict.get('info', {})
+            financials = _financials_dict.get('income_statement', pd.DataFrame())
             print(f"   [REUSE] Using pre-extracted data")
         else:
             stock = yf.Ticker(ticker)

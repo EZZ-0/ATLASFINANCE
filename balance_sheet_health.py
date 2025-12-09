@@ -25,7 +25,7 @@ from typing import Dict, Optional
 
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
-def analyze_balance_sheet_health(ticker: str, financials: Dict = None) -> Dict:
+def analyze_balance_sheet_health(ticker: str, _financials: Dict = None) -> Dict:
     """
     Comprehensive balance sheet health analysis
     
@@ -40,10 +40,10 @@ def analyze_balance_sheet_health(ticker: str, financials: Dict = None) -> Dict:
         print(f"\n[INFO] Analyzing balance sheet health for {ticker}...")
         
         # Use pre-extracted data if available
-        if financials:
-            info = financials.get('info', {})
-            balance_sheet = financials.get('balance_sheet', pd.DataFrame())
-            income_stmt = financials.get('income_statement', pd.DataFrame())
+        if _financials:
+            info = _financials.get('info', {})
+            balance_sheet = _financials.get('balance_sheet', pd.DataFrame())
+            income_stmt = _financials.get('income_statement', pd.DataFrame())
             print(f"   [REUSE] Using pre-extracted data")
         else:
             # Fallback to direct yfinance call
