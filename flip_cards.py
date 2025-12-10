@@ -705,9 +705,6 @@ def render_flip_card(
             transition: transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
             transform-style: preserve-3d;
         }}
-        .fc-wrap-{card_id}:hover .fc-inner-{card_id} {{
-            transform: rotateY(180deg);
-        }}
         .fc-wrap-{card_id}.flipped .fc-inner-{card_id} {{
             transform: rotateY(180deg);
         }}
@@ -730,13 +727,12 @@ def render_flip_card(
             box-sizing: border-box;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 12px rgba(47, 255, 255, 0.05);
-            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
         }}
         .fc-wrap-{card_id}:hover .fc-front-{card_id}, 
         .fc-wrap-{card_id}:hover .fc-back-{card_id} {{
             border-color: rgba(184, 238, 255, 0.35);
             box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(47, 255, 255, 0.15);
-            transform: scale(1.02);
         }}
         .fc-back-{card_id} {{
             transform: rotateY(180deg);
@@ -800,7 +796,7 @@ def render_flip_card(
             <div class="fc-front-{card_id}">
                 <div class="fc-label-{card_id}">{display_label}</div>
                 <div class="fc-value-{card_id}">{formatted}</div>
-                <div class="fc-hint-{card_id}">Hover for details</div>
+                <div class="fc-hint-{card_id}">Click for details</div>
             </div>
             <div class="fc-back-{card_id}">
                 <div class="fc-formula-{card_id}">{formula}</div>
