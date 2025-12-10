@@ -2503,10 +2503,12 @@ else:
                 risk_colors = {
                     'LOW': '<span style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
                     'MODERATE': '<span style="background: #ff9800; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
-                    'HIGH': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
+                    'HIGH': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
+                    'UNKNOWN': '<span style="background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
                 }
                 
-                st.markdown(f"## {risk_colors.get(overall['risk_level'], '<span style=\"background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;\">●</span>')} Overall Risk: {overall['risk_level']}", unsafe_allow_html=True)
+                risk_badge = risk_colors.get(overall['risk_level'], risk_colors['UNKNOWN'])
+                st.markdown(f"## {risk_badge} Overall Risk: {overall['risk_level']}", unsafe_allow_html=True)
                 st.markdown(f"**Summary:** {overall['summary']}")
                 
                 if overall.get('risk_factors'):
@@ -2680,10 +2682,12 @@ else:
                         'Slightly Bullish': '<span style="background: #7cb342; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
                         'Neutral': '<span style="background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
                         'Slightly Bearish': '<span style="background: #ef5350; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
-                        'Bearish': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
+                        'Bearish': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
+                        'Unknown': '<span style="background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
                     }
                     
-                    st.markdown(f"## {sentiment_colors.get(options_data['sentiment'], '<span style=\"background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;\">●</span>')} Market Sentiment: {options_data['sentiment']}", unsafe_allow_html=True)
+                    sentiment_badge = sentiment_colors.get(options_data['sentiment'], sentiment_colors['Neutral'])
+                    st.markdown(f"## {sentiment_badge} Market Sentiment: {options_data['sentiment']}", unsafe_allow_html=True)
                     st.caption(options_data['sentiment_description'])
                     
                     st.markdown("---")
@@ -3016,10 +3020,12 @@ else:
                     risk_colors = {
                         'LOW': '<span style="background: #28a745; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
                         'MODERATE': '<span style="background: #ff9800; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
-                        'HIGH': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
+                        'HIGH': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>',
+                        'UNKNOWN': '<span style="background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
                     }
                     
-                    st.markdown(f"## {risk_colors.get(overall['risk_level'], '<span style=\"background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;\">●</span>')} Overall Risk: {overall['risk_level']}", unsafe_allow_html=True)
+                    risk_badge2 = risk_colors.get(overall['risk_level'], risk_colors['UNKNOWN'])
+                    st.markdown(f"## {risk_badge2} Overall Risk: {overall['risk_level']}", unsafe_allow_html=True)
                     st.markdown(f"**Summary:** {overall['summary']}")
                     
                     if overall.get('risk_factors'):
@@ -3493,7 +3499,8 @@ else:
                             'Bearish': '<span style="background: #d32f2f; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;">●</span>'
                         }
                         
-                        st.markdown(f"## {sentiment_colors.get(options_data['sentiment'], '<span style=\"background: #9e9e9e; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold;\">●</span>')} Market Sentiment: {options_data['sentiment']}", unsafe_allow_html=True)
+                        sentiment_badge2 = sentiment_colors.get(options_data['sentiment'], sentiment_colors['Neutral'])
+                        st.markdown(f"## {sentiment_badge2} Market Sentiment: {options_data['sentiment']}", unsafe_allow_html=True)
                         st.caption(options_data['sentiment_description'])
                         
                         st.markdown("---")
