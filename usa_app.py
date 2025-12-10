@@ -714,21 +714,21 @@ with st.sidebar:
 # - DCF, Analyst, Dividends, Valuation, Cash Flow: Already existed in main tabs
             
 # ==========================================
-# MAIN CONTENT TABS (Current Structure - UNCHANGED)
-# ==========================================
-
-# App Title/Header
-st.markdown('<h1 class="main-header"><i class="bi bi-lightning-fill" style="margin-right: 0.8rem;"></i>ATLAS FINANCIAL INTELLIGENCE</h1>', unsafe_allow_html=True)
-st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;"> Financial Analysis & Valuation Engine</p>', unsafe_allow_html=True)
-
-# ==========================================
-# CENTERED SEARCH BAR (Landing Page Only)
+# LANDING PAGE CHECK (Before Main Content)
 # ==========================================
 # NOTE: Landing page logic moved to app_landing.py
 
 if not st.session_state.get('data_extracted', False):
     render_landing_page(cached_extract_financials, validate_and_enrich, SP500_DISPLAY, extract_ticker)
     st.stop()  # Don't render tabs until data is extracted
+
+# ==========================================
+# MAIN CONTENT TABS (Current Structure - UNCHANGED)
+# ==========================================
+
+# App Title/Header (Only shown after data extraction)
+st.markdown('<h1 class="main-header"><i class="bi bi-lightning-fill" style="margin-right: 0.8rem;"></i>ATLAS FINANCIAL INTELLIGENCE</h1>', unsafe_allow_html=True)
+st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 1.1rem; margin-top: -1rem; margin-bottom: 2rem;"> Financial Analysis & Valuation Engine</p>', unsafe_allow_html=True)
 
 # ==========================================
 # PERSISTENT TICKER DISPLAY (Across All Tabs)
