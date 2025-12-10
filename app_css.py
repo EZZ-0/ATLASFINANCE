@@ -312,21 +312,78 @@ def get_main_theme_css() -> str:
         content: '' !important;
     }
     
-    /* Button Enhancements */
-    .stButton button {
-        background: linear-gradient(135deg, var(--accent-primary) 0%, #2563eb 100%);
-        color: white !important;
-        border: none;
-        border-radius: 8px;
-        padding: 0.5rem 2rem;
-        font-weight: 600;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    /* ============================================
+       GLOWING TEAL BUTTON - Site-wide Button Style
+       From Uiverse.io, adapted for Streamlit
+       ============================================ */
+    .stButton > button {
+        padding: 0.6rem 1.5rem !important;
+        border-radius: 0.5rem !important;
+        border: 1px solid rgba(184, 238, 255, 0.32) !important;
+        font-size: 0.95rem !important;
+        font-weight: 500 !important;
+        color: #f4f0ff !important;
+        background: linear-gradient(
+            180deg,
+            rgba(8, 77, 126, 0) 0%,
+            rgba(8, 77, 126, 0.42) 100%
+        ),
+        rgba(47, 255, 255, 0.24) !important;
+        box-shadow: inset 0 0 12px rgba(151, 200, 255, 0.44) !important;
+        position: relative !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease-in !important;
     }
-    
-    .stButton button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+
+    .stButton > button:hover {
+        background: linear-gradient(
+            180deg,
+            rgba(8, 77, 126, 0.2) 0%,
+            rgba(8, 77, 126, 0.6) 100%
+        ),
+        rgba(47, 255, 255, 0.4) !important;
+        box-shadow: 
+            inset 0 0 12px rgba(151, 200, 255, 0.44),
+            0 0 20px rgba(47, 255, 255, 0.3) !important;
+        border-color: rgba(184, 238, 255, 0.5) !important;
+        transform: translateY(-2px) !important;
+    }
+
+    .stButton > button:active {
+        transform: scale(0.98) !important;
+    }
+
+    /* Primary button (type="primary") - more intense glow */
+    .stButton > button[kind="primary"],
+    .stButton > button[data-testid="baseButton-primary"] {
+        background: linear-gradient(
+            180deg,
+            rgba(8, 77, 126, 0.3) 0%,
+            rgba(8, 77, 126, 0.6) 100%
+        ),
+        rgba(47, 255, 255, 0.35) !important;
+        box-shadow: 
+            inset 0 0 12px rgba(151, 200, 255, 0.5),
+            0 0 15px rgba(47, 255, 255, 0.2) !important;
+    }
+
+    .stButton > button[kind="primary"]:hover,
+    .stButton > button[data-testid="baseButton-primary"]:hover {
+        box-shadow: 
+            inset 0 0 15px rgba(151, 200, 255, 0.6),
+            0 0 25px rgba(47, 255, 255, 0.4) !important;
+    }
+
+    /* Secondary button - subtle glow */
+    .stButton > button[kind="secondary"],
+    .stButton > button[data-testid="baseButton-secondary"] {
+        background: linear-gradient(
+            180deg,
+            rgba(8, 77, 126, 0) 0%,
+            rgba(8, 77, 126, 0.25) 100%
+        ),
+        rgba(47, 255, 255, 0.15) !important;
+        border-color: rgba(184, 238, 255, 0.2) !important;
     }
     
     /* Charts Enhancement - Clean Solid Design */
@@ -790,23 +847,24 @@ div[data-testid="stHorizontalBlock"] .stButton button {
 
 def get_search_button_css() -> str:
     """
-    Search button styling for sidebar
+    Search button styling for sidebar - Enhanced teal glow for main search
     """
     return """
 <style>
-div.stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
-    color: white !important;
-    font-weight: 600 !important;
+/* Search button in sidebar - extra prominent teal glow */
+[data-testid="stSidebar"] div.stButton > button[kind="primary"] {
     padding: 0.8rem 2rem !important;
-    font-size: 1.1rem !important;
-    border-radius: 10px !important;
-    border: none !important;
-    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
-    transition: all 0.3s ease !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
+    box-shadow: 
+        inset 0 0 15px rgba(151, 200, 255, 0.5),
+        0 0 20px rgba(47, 255, 255, 0.3) !important;
 }
 
-div.stButton > button[kind="primary"]:hover {
+[data-testid="stSidebar"] div.stButton > button[kind="primary"]:hover {
+    box-shadow: 
+        inset 0 0 18px rgba(151, 200, 255, 0.6),
+        0 0 30px rgba(47, 255, 255, 0.5) !important;
     transform: translateY(-3px) scale(1.02) !important;
 }
 </style>

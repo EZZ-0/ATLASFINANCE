@@ -1,0 +1,43 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.cursor
+.vscode
+*.code-workspace
+
+# Python cache
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+
+# Virtual environments
+venv
+.venv
+env
+
+# Local files
+.env
+*.log
+*.tmp
+
+# Development files
+tests/
+validation/
+research/
+RnD/
+OperationRoom/
+legal/
+
+# Documentation (not needed in production)
+*.md
+!README.md
+
+# Large unnecessary files
+*.exe
+*.zip
+*.tar.gz
+backup_*/
+

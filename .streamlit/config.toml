@@ -11,4 +11,10 @@ font = "sans serif"
 [server]
 enableCORS = false
 enableXsrfProtection = false
+headless = true
+address = "0.0.0.0"
+runOnSave = false
+
+[browser]
+gatherUsageStats = false
 

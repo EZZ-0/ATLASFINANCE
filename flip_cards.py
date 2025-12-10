@@ -726,14 +726,17 @@ def render_flip_card(
             align-items: flex-start;
             padding: 16px;
             background: linear-gradient(145deg, #1e2530 0%, #161b22 100%);
-            border: 1px solid rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(184, 238, 255, 0.15);
             box-sizing: border-box;
             overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), 0 0 12px rgba(47, 255, 255, 0.05);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
         }}
-        .fc-front-{card_id}:hover, .fc-back-{card_id}:hover {{
-            border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25);
+        .fc-wrap-{card_id}:hover .fc-front-{card_id}, 
+        .fc-wrap-{card_id}:hover .fc-back-{card_id} {{
+            border-color: rgba(184, 238, 255, 0.35);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3), 0 0 20px rgba(47, 255, 255, 0.15);
+            transform: scale(1.02);
         }}
         .fc-back-{card_id} {{
             transform: rotateY(180deg);
