@@ -18,6 +18,9 @@ import yfinance as yf
 import pandas as pd
 from typing import Dict, Optional, List
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 def get_segment_data(ticker: str) -> Dict:
     """
@@ -32,11 +35,9 @@ def get_segment_data(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Fetching segment data for {ticker}...")
         
-        stock = yf.Ticker(ticker)
-        
-        # Try to get segment data from financials
-        # Note: yfinance doesn't have dedicated segment API, so we'll use info
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
+        stock = get_ticker(ticker)
         
         # Get company description and business summary
         business_summary = info.get('longBusinessSummary', '')
@@ -126,8 +127,8 @@ def analyze_business_mix(ticker: str) -> Dict:
         Business model analysis
     """
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
         
         # Get key business metrics
         business_model = {
@@ -177,8 +178,8 @@ def get_competitive_position(ticker: str) -> Dict:
         Competitive analysis
     """
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
         
         # Get competitive metrics
         competitive_data = {

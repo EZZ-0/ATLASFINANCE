@@ -12,6 +12,9 @@ import logging
 from typing import Optional, Tuple, Dict
 from dataclasses import dataclass
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info
+
 logger = logging.getLogger(__name__)
 
 # Common ticker aliases and corrections
@@ -120,10 +123,9 @@ def validate_ticker(ticker: str) -> TickerValidation:
             suggestion=DELISTED_TICKERS[normalized]
         )
     
-    # Try to validate with yfinance (quick check)
+    # Try to validate with yfinance (quick check) - use centralized cache
     try:
-        stock = yf.Ticker(normalized)
-        info = stock.info
+        info = get_ticker_info(normalized)
         
         # Check if we got valid data
         if info and info.get('regularMarketPrice') is not None:

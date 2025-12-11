@@ -19,8 +19,11 @@ import yfinance as yf
 import pandas as pd
 from typing import Dict, Optional, Any
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
 
-def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
+
+def get_analyst_ratings(ticker: str, financials: Dict = None) -> Dict[str, Any]:
     """
     Fetches analyst ratings and price targets for a given ticker.
     
@@ -39,8 +42,15 @@ def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
     try:
         print(f"\n[INFO] Fetching analyst ratings for {ticker}...")
         
-        # Create yfinance Ticker object
-        stock = yf.Ticker(ticker)
+        # Use pre-extracted info if available, otherwise use centralized cache
+        if financials and 'info' in financials:
+            info = financials['info']
+            print(f"   [REUSE] Using pre-extracted info data")
+        else:
+            info = get_ticker_info(ticker)
+        
+        # Need Ticker object for recommendations (not cached)
+        stock = get_ticker(ticker)
         
         # Get recommendations
         recommendations = stock.recommendations
@@ -54,9 +64,9 @@ def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
                 'rating_distribution': None
             }
         
-        # Get current stock price
+        # Get current stock price from cached info
         try:
-            current_price = stock.info.get('currentPrice') or stock.info.get('regularMarketPrice')
+            current_price = info.get('currentPrice') or info.get('regularMarketPrice')
             if current_price is None:
                 # Fallback: get from history
                 hist = stock.history(period='1d')
@@ -65,13 +75,13 @@ def get_analyst_ratings(ticker: str) -> Dict[str, Any]:
         except (KeyError, IndexError, TypeError, AttributeError):
             current_price = None
         
-        # Get price targets
+        # Get price targets from cached info
         try:
-            target_high = stock.info.get('targetHighPrice')
-            target_low = stock.info.get('targetLowPrice')
-            target_mean = stock.info.get('targetMeanPrice')
-            target_median = stock.info.get('targetMedianPrice')
-            num_analysts = stock.info.get('numberOfAnalystOpinions')
+            target_high = info.get('targetHighPrice')
+            target_low = info.get('targetLowPrice')
+            target_mean = info.get('targetMeanPrice')
+            target_median = info.get('targetMedianPrice')
+            num_analysts = info.get('numberOfAnalystOpinions')
         except (KeyError, TypeError, AttributeError):
             target_high = None
             target_low = None
@@ -224,7 +234,8 @@ def get_recommendation_trend(ticker: str, periods: int = 6) -> Optional[pd.DataF
         pd.DataFrame: Trend data with columns for each rating type
     """
     try:
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         recommendations = stock.recommendations
         
         if recommendations is None or recommendations.empty:

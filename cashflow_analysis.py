@@ -23,6 +23,9 @@ import numpy as np
 import streamlit as st
 from typing import Dict, Optional
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def analyze_cashflow(ticker: str, _financials: Dict = None) -> Dict:
@@ -47,9 +50,9 @@ def analyze_cashflow(ticker: str, _financials: Dict = None) -> Dict:
             balance = _financials.get('balance_sheet', pd.DataFrame())
             print(f"   [REUSE] Using pre-extracted data")
         else:
-            # Fallback to direct yfinance call
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            # Use centralized cache to prevent Yahoo rate limiting
+            info = get_ticker_info(ticker)
+            stock = get_ticker(ticker)
             cashflow = stock.cashflow
             income = stock.financials
             balance = stock.balance_sheet

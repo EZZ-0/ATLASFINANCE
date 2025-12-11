@@ -29,6 +29,13 @@ try:
 except ImportError:
     YFINANCE_AVAILABLE = False
 
+# Import centralized cache to prevent Yahoo rate limiting
+try:
+    from utils.ticker_cache import get_ticker_info
+    TICKER_CACHE_AVAILABLE = True
+except ImportError:
+    TICKER_CACHE_AVAILABLE = False
+
 
 class TickerValidator:
     """
@@ -151,8 +158,12 @@ class TickerValidator:
             return True, None
         
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            # Use centralized cache to prevent Yahoo rate limiting
+            if TICKER_CACHE_AVAILABLE:
+                info = get_ticker_info(ticker)
+            else:
+                stock = yf.Ticker(ticker)
+                info = stock.info
             
             # Check if we got real data back
             if not info or 'symbol' not in info:

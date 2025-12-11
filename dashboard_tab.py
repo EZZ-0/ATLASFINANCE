@@ -785,12 +785,12 @@ def create_price_chart(ticker: str, financials: Dict[str, Any]):
     """Create a stock price chart with volume"""
     import plotly.graph_objects as go
     from plotly.subplots import make_subplots
-    import yfinance as yf
+    from utils.ticker_cache import get_ticker
     from datetime import datetime, timedelta
     
     try:
-        # Fetch 1 year of daily data
-        stock = yf.Ticker(ticker)
+        # Fetch 1 year of daily data (use centralized cache)
+        stock = get_ticker(ticker)
         end_date = datetime.now()
         start_date = end_date - timedelta(days=365)
         history = stock.history(start=start_date, end=end_date)

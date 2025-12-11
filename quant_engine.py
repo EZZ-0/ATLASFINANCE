@@ -34,6 +34,13 @@ except ImportError:
     DATAREADER_AVAILABLE = False
     print("[!] pandas-datareader not installed. Install with: pip install pandas-datareader")
 
+# Import centralized cache to prevent Yahoo rate limiting
+try:
+    from utils.ticker_cache import get_ticker
+    TICKER_CACHE_AVAILABLE = True
+except ImportError:
+    TICKER_CACHE_AVAILABLE = False
+
 # ==========================================
 # FAMA-FRENCH HISTORICAL FALLBACK VALUES
 # ==========================================
@@ -100,8 +107,11 @@ class QuantEngine:
         print(f"   Attempting to retrieve data from {start_date} to present...")
         
         try:
-            # Download maximum available history
-            stock = yf.Ticker(ticker)
+            # Download maximum available history (use cache if available)
+            if TICKER_CACHE_AVAILABLE:
+                stock = get_ticker(ticker)
+            else:
+                stock = yf.Ticker(ticker)
             hist = stock.history(start=start_date, end=datetime.today())
             
             if hist.empty:

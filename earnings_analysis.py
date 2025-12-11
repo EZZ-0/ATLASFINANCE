@@ -25,6 +25,9 @@ import streamlit as st
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def analyze_earnings_history(ticker: str, periods: int = 8, _financials: Dict = None) -> Dict:
@@ -42,14 +45,15 @@ def analyze_earnings_history(ticker: str, periods: int = 8, _financials: Dict = 
     try:
         print(f"\n[INFO] Analyzing earnings for {ticker}...")
         
-        # Need yfinance stock object for earnings_dates (not in standard extraction)
-        stock = yf.Ticker(ticker)
+        # Need yfinance stock object for earnings_dates (use centralized cache)
+        stock = get_ticker(ticker)
         
         # Can reuse info from _financials if available
         if _financials and _financials.get('info'):
             info = _financials['info']
         else:
-            info = stock.info
+            # Use centralized cache for info
+            info = get_ticker_info(ticker)
         
         # Get earnings data
         earnings_dates = stock.earnings_dates
@@ -247,7 +251,8 @@ def get_earnings_calendar(ticker: str) -> Dict:
         Earnings calendar information
     """
     try:
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         
         calendar = {}
         

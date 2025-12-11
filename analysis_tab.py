@@ -22,6 +22,9 @@ import yfinance as yf
 import pandas as pd
 from typing import Dict
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 # Import analysis modules
 from earnings_analysis import analyze_earnings_history
 from dividend_analysis import analyze_dividends
@@ -65,16 +68,19 @@ def ensure_yfinance_info(ticker: str, financials: Dict) -> Dict:
     """
     if financials and 'info' not in financials:
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            # Use centralized cache to prevent Yahoo rate limiting
+            info = get_ticker_info(ticker)
             if info:
                 financials['info'] = info
                 # Also get balance_sheet if missing or not DataFrame
                 if 'balance_sheet' not in financials or not isinstance(financials.get('balance_sheet'), pd.DataFrame):
+                    stock = get_ticker(ticker)
                     financials['balance_sheet'] = stock.balance_sheet
                 if 'income_statement' not in financials or not isinstance(financials.get('income_statement'), pd.DataFrame):
+                    stock = get_ticker(ticker)
                     financials['income_statement'] = stock.financials
                 if 'cash_flow' not in financials or not isinstance(financials.get('cash_flow'), pd.DataFrame):
+                    stock = get_ticker(ticker)
                     financials['cash_flow'] = stock.cashflow
                 print(f"[ANALYSIS] Fetched missing yfinance data for {ticker}")
         except Exception as e:

@@ -23,6 +23,9 @@ import streamlit as st
 from typing import Dict, Optional
 from datetime import datetime
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour
 def analyze_dividends(ticker: str, _financials: Dict = None) -> Dict:
@@ -39,15 +42,16 @@ def analyze_dividends(ticker: str, _financials: Dict = None) -> Dict:
     try:
         print(f"\n[INFO] Analyzing dividends for {ticker}...")
         
-        # Need yfinance stock object for dividends history
-        stock = yf.Ticker(ticker)
+        # Need yfinance stock object for dividends history (use centralized cache)
+        stock = get_ticker(ticker)
         
         # Use pre-extracted info if available
         if _financials and _financials.get('info'):
             info = _financials['info']
             print(f"   [REUSE] Using pre-extracted data")
         else:
-            info = stock.info
+            # Use centralized cache for info
+            info = get_ticker_info(ticker)
         
         # Get dividend data
         dividends = stock.dividends

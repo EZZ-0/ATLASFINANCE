@@ -29,6 +29,9 @@ from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import IntEnum
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 class LifeCycleStage(IntEnum):
     """Business life cycle stages (1-5)"""
@@ -171,8 +174,9 @@ def _extract_lifecycle_metrics(ticker: str, financials: Optional[Dict] = None) -
 
 def _extract_from_yfinance(ticker: str) -> Dict:
     """Extract metrics directly from yfinance"""
-    stock = yf.Ticker(ticker)
-    info = stock.info
+    # Use centralized cache to prevent Yahoo rate limiting
+    info = get_ticker_info(ticker)
+    stock = get_ticker(ticker)
     
     # Get financial statements
     income = stock.financials

@@ -25,6 +25,13 @@ from typing import Dict, List, Any, Tuple
 from datetime import datetime
 # Lazy import: import yfinance as yf - only when needed
 
+# Import centralized cache to prevent Yahoo rate limiting
+try:
+    from utils.ticker_cache import get_ticker_info
+    TICKER_CACHE_AVAILABLE = True
+except ImportError:
+    TICKER_CACHE_AVAILABLE = False
+
 class DataValidator:
     """
     Comprehensive data validation for financial extractions
@@ -330,10 +337,14 @@ class DataValidator:
         # Source 1: Our extraction (yfinance)
         our_data = extractor.extract_financials(ticker)
         
-        # Source 2: Direct yfinance (for comparison)
+        # Source 2: Direct yfinance (for comparison) - use cache if available
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            if TICKER_CACHE_AVAILABLE:
+                info = get_ticker_info(ticker)
+            else:
+                import yfinance as yf
+                stock = yf.Ticker(ticker)
+                info = stock.info
             yf_direct = {
                 'market_cap': info.get('marketCap'),
                 'current_price': info.get('currentPrice', info.get('regularMarketPrice')),

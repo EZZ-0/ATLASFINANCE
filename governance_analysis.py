@@ -28,6 +28,9 @@ import requests
 from typing import Dict, List, Optional
 import streamlit as st
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 
 @st.cache_data(ttl=86400)  # Cache for 24 hours (governance changes slowly)
 def analyze_governance(ticker: str) -> Dict:
@@ -44,8 +47,9 @@ def analyze_governance(ticker: str) -> Dict:
     """
     
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
+        stock = get_ticker(ticker)
         
         results = {
             'status': 'success',
@@ -491,8 +495,8 @@ def get_sec_filing_links(ticker: str) -> Dict:
     
     # Try to get Investor Relations page
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
         
         # Priority 1: Use yfinance's dedicated IR website if available (most accurate)
         if 'irWebsite' in info and info['irWebsite']:
@@ -576,8 +580,8 @@ def get_cik(ticker: str) -> Optional[str]:
     # TIER 3: YFinance Fallback
     # ==========================================
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
         
         if 'cik' in info:
             return str(info['cik']).zfill(10)

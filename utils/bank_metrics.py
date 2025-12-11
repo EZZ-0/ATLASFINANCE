@@ -15,6 +15,9 @@ Date: 2025-12-08
 from typing import Dict, Any, Optional, List
 import yfinance as yf
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info
+
 # Bank/Financial sector tickers (major US banks)
 BANK_TICKERS = {
     # Major Banks
@@ -115,8 +118,8 @@ def get_bank_metrics(ticker: str) -> Dict[str, Any]:
     This extracts what's available and marks unavailable ones.
     """
     try:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        # Use centralized cache to prevent Yahoo rate limiting
+        info = get_ticker_info(ticker)
         
         if not is_bank(ticker, info):
             return {'status': 'not_bank', 'ticker': ticker}
@@ -188,10 +191,9 @@ def get_bank_display_metrics(ticker: str, info: Dict = None) -> List[Dict]:
     if not is_bank(ticker, info):
         return []
     
-    # If info provided, extract from it; otherwise fetch
+    # If info provided, extract from it; otherwise use centralized cache
     if info is None:
-        stock = yf.Ticker(ticker)
-        info = stock.info
+        info = get_ticker_info(ticker)
     
     metrics = []
     

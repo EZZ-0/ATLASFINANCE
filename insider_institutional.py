@@ -20,6 +20,9 @@ import pandas as pd
 from typing import Dict, List, Optional
 from datetime import datetime, timedelta
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker
+
 
 def get_insider_transactions(ticker: str, limit: int = 50) -> Dict:
     """
@@ -38,7 +41,8 @@ def get_insider_transactions(ticker: str, limit: int = 50) -> Dict:
     try:
         print(f"\n[INFO] Fetching insider transactions for {ticker}...")
         
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         
         # Get insider transactions
         insider_transactions = stock.insider_transactions
@@ -172,7 +176,8 @@ def get_institutional_holders(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Fetching institutional holders for {ticker}...")
         
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         
         # Get institutional holders
         institutional_holders = stock.institutional_holders
@@ -250,7 +255,8 @@ def get_major_holders(ticker: str) -> Dict:
         Dictionary with major holder statistics
     """
     try:
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         major_holders = stock.major_holders
         
         if major_holders is None or major_holders.empty:

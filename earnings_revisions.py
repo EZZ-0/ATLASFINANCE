@@ -36,6 +36,9 @@ from enum import Enum
 import logging
 import os
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 logger = logging.getLogger(__name__)
 
 # Check for FMP availability
@@ -184,8 +187,8 @@ class EarningsRevisionTracker:
             RevisionSummary with all revision data
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            # Use centralized cache to prevent Yahoo rate limiting
+            info = get_ticker_info(ticker)
             
             # Extract current estimates
             current_q = _self._extract_eps_estimate(info, 'current_quarter')

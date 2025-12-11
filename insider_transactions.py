@@ -35,6 +35,9 @@ from enum import Enum
 import logging
 import requests
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker
+
 logger = logging.getLogger(__name__)
 
 
@@ -278,9 +281,8 @@ class InsiderTransactionTracker:
     
     def _fetch_from_yfinance(self, ticker: str, days: int) -> List[InsiderTransaction]:
         """Fetch insider transactions from yfinance."""
-        import yfinance as yf
-        
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to prevent Yahoo rate limiting
+        stock = get_ticker(ticker)
         
         # Get insider transactions
         insider_df = stock.insider_transactions

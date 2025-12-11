@@ -21,6 +21,9 @@ import numpy as np
 from typing import Dict, Optional, List
 from datetime import datetime, timedelta
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker
+
 
 def get_options_data(ticker: str) -> Dict:
     """
@@ -35,7 +38,8 @@ def get_options_data(ticker: str) -> Dict:
     try:
         print(f"\n[INFO] Fetching options data for {ticker}...")
         
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         
         # Get available expiration dates
         expiration_dates = stock.options
@@ -193,7 +197,8 @@ def analyze_options_greeks(ticker: str) -> Dict:
         Dictionary with Greeks analysis
     """
     try:
-        stock = yf.Ticker(ticker)
+        # Use centralized cache to get Ticker object
+        stock = get_ticker(ticker)
         expiration_dates = stock.options
         
         if not expiration_dates or len(expiration_dates) == 0:

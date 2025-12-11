@@ -36,6 +36,9 @@ from enum import Enum
 import logging
 import yfinance as yf
 
+# Import centralized cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker
+
 logger = logging.getLogger(__name__)
 
 
@@ -194,10 +197,11 @@ class InstitutionalOwnershipTracker:
             OwnershipSummary with all metrics
         """
         try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
+            # Use centralized cache to prevent Yahoo rate limiting
+            info = get_ticker_info(ticker)
+            stock = get_ticker(ticker)
             
-            # Get holder data
+            # Get holder data (requires Ticker object)
             inst_holders = stock.institutional_holders
             major_holders = stock.major_holders
             

@@ -27,6 +27,8 @@ import usa_dictionary as usa_dict
 from utils.logging_config import EngineLogger, log_error, log_warning, log_info
 # Import ticker mapper for alias handling (M011)
 from utils.ticker_mapper import normalize_ticker, PROBLEMATIC_TICKERS
+# Import centralized ticker cache to prevent Yahoo rate limiting
+from utils.ticker_cache import get_ticker_info, get_ticker_financials, get_ticker
 
 # Initialize logger for this module
 _logger = EngineLogger.get_logger("USABackend")
@@ -626,8 +628,8 @@ class USAFinancialExtractor:
         """
         try:
             if YFINANCE_AVAILABLE:
-                stock = yf.Ticker(ticker)
-                info = stock.info
+                # Use centralized cache to prevent rate limiting
+                info = get_ticker_info(ticker)
                 if "shortName" in info or "longName" in info:
                     name = info.get("longName", info.get("shortName", ticker))
                     return True, name
@@ -1088,9 +1090,8 @@ class USAFinancialExtractor:
             def fetch_yf_info():
                 if YFINANCE_AVAILABLE:
                     try:
-                        # Direct yf.Ticker() - Streamlit cache not thread-safe in workers
-                        stock = yf.Ticker(ticker)
-                        info = stock.info
+                        # Use centralized cache to prevent rate limiting
+                        info = get_ticker_info(ticker)
                         market_data = {
                             'current_price': info.get('currentPrice') or info.get('regularMarketPrice'),
                             'market_cap': info.get('marketCap'),
@@ -1269,8 +1270,8 @@ class USAFinancialExtractor:
             # Still need to fetch yfinance info for analysis modules even if no gaps
             if YFINANCE_AVAILABLE and 'info' not in financials:
                 try:
-                    stock = yf.Ticker(ticker)
-                    info = stock.info
+                    # Use centralized cache to prevent rate limiting
+                    info = get_ticker_info(ticker)
                     if info:
                         financials['info'] = info
                         financials['market_data'] = {
@@ -1295,8 +1296,8 @@ class USAFinancialExtractor:
         # ========== STEP 1: Try yfinance for gaps ==========
         if YFINANCE_AVAILABLE and primary_source != 'yfinance':
             try:
-                stock = yf.Ticker(ticker)
-                info = stock.info
+                # Use centralized cache to prevent rate limiting
+                info = get_ticker_info(ticker)
                 
                 # CRITICAL: Store full info dict for analysis modules to use
                 if info and 'info' not in financials:
