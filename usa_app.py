@@ -3740,3 +3740,19 @@ else:
     
     with tab8:
         render_investment_summary_tab(st.session_state.financials)
+        
+    # Add to your usa_app.py
+import threading
+import time
+import requests
+
+def keep_alive():
+    while True:
+        time.sleep(300)  # Every 5 minutes
+        try:
+            requests.get("YOUR_APP_URL/_stcore/health")
+        except:
+            pass
+
+# Start at app init
+threading.Thread(target=keep_alive, daemon=True).start()
