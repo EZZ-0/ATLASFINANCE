@@ -4,11 +4,38 @@ Creates professional Excel workbooks with formatting, formulas, and multiple she
 """
 
 import pandas as pd
+import numpy as np
 from openpyxl import Workbook
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils.dataframe import dataframe_to_rows
 from openpyxl.chart import LineChart, Reference
 from datetime import datetime
+
+
+def _convert_numpy_types(value):
+    """
+    Convert numpy types to Python native types for Excel compatibility.
+    openpyxl cannot serialize numpy types directly.
+    """
+    if value is None:
+        return None
+    
+    # Handle numpy scalar types
+    if isinstance(value, (np.integer, np.int64, np.int32)):
+        return int(value)
+    elif isinstance(value, (np.floating, np.float64, np.float32)):
+        return float(value)
+    elif isinstance(value, np.bool_):
+        return bool(value)
+    elif isinstance(value, np.ndarray):
+        return value.tolist()
+    elif isinstance(value, dict):
+        # Recursively convert dict values
+        return {k: _convert_numpy_types(v) for k, v in value.items()}
+    elif isinstance(value, (list, tuple)):
+        return [_convert_numpy_types(v) for v in value]
+    
+    return value
 
 
 class FinancialExcelExporter:
@@ -63,6 +90,9 @@ class FinancialExcelExporter:
         # Write data
         for r_idx, row in enumerate(dataframe_to_rows(df, index=True, header=True), 1):
             for c_idx, value in enumerate(row, 1):
+                # Convert numpy types to Python native types for Excel compatibility
+                value = _convert_numpy_types(value)
+                
                 # Try to convert strings back to numbers for Excel
                 if r_idx > 2 and value is not None:  # Skip headers
                     try:
@@ -138,6 +168,8 @@ class FinancialExcelExporter:
         # Write projections
         for r_idx, data_row in enumerate(dataframe_to_rows(projections, index=False, header=True), row):
             for c_idx, value in enumerate(data_row, 1):
+                # Convert numpy types for Excel compatibility
+                value = _convert_numpy_types(value)
                 cell = ws.cell(row=r_idx, column=c_idx, value=value)
                 
                 # Format large numbers
@@ -170,6 +202,8 @@ class FinancialExcelExporter:
         # Write data
         for r_idx, row in enumerate(dataframe_to_rows(comparison_df, index=True, header=True), 1):
             for c_idx, value in enumerate(row, 1):
+                # Convert numpy types for Excel compatibility
+                value = _convert_numpy_types(value)
                 ws.cell(row=r_idx, column=c_idx, value=value)
         
         # Format header
@@ -275,7 +309,14 @@ def export_financials_to_excel(financials: dict, output_file: str):
     # Ratios
     ratios = financials.get("ratios", pd.DataFrame())
     if not ratios.empty:
-        exporter.add_financial_statement(ratios, "Financial Ratios")
+        # Filter out rows containing dict values (like _components) that can't be serialized to Excel
+        ratios_clean = ratios.copy()
+        rows_to_drop = [idx for idx in ratios_clean.index 
+                        if isinstance(ratios_clean.loc[idx].iloc[0] if hasattr(ratios_clean.loc[idx], 'iloc') 
+                                      else ratios_clean.loc[idx], dict)]
+        if rows_to_drop:
+            ratios_clean = ratios_clean.drop(rows_to_drop)
+        exporter.add_financial_statement(ratios_clean, "Financial Ratios")
     
     # Save
     exporter.save(output_file)

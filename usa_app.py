@@ -256,6 +256,36 @@ def get_cache_key(ticker: str) -> str:
 def clear_ticker_cache(ticker: str):
     """Clear cache for a specific ticker (for force refresh)"""
     cached_extract_financials.clear()
+
+# ==========================================
+# FRAGMENT HELPERS - Prevent Tab Redirect on Button Click
+# ==========================================
+# Using @st.fragment to isolate button sections so they don't cause full page rerun
+
+@st.fragment
+def render_excel_export_button(ticker: str, financials: dict):
+    """
+    Fragment wrapper for Excel export button.
+    Prevents full page rerun which would redirect to Dashboard tab.
+    """
+    if st.button("📥 Export All to Excel (Professional Format)", type="primary", use_container_width=True, key="data_excel_export_main"):
+        try:
+            excel_filename = f"{ticker}_Financial_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
+            export_financials_to_excel(financials, excel_filename)
+            
+            with open(excel_filename, "rb") as f:
+                st.download_button(
+                    label="Download Excel Report",
+                    data=f,
+                    file_name=excel_filename,
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True,
+                    key="excel_download_btn"
+                )
+            st.success(f"Excel report created: {excel_filename}")
+        except Exception as e:
+            st.error(f"Excel export failed: {str(e)}")
+
 from dcf_modeling import DCFModel
 from visualization import FinancialVisualizer
 from format_helpers import format_dataframe_for_display, format_dataframe_for_csv, prepare_table_for_display, external_link, format_large_number, format_change, format_financial_number
@@ -1256,24 +1286,8 @@ else:
         
         st.markdown("---")
         
-        # Export All Data to Excel
-        if st.button("📥 Export All to Excel (Professional Format)", type="primary", use_container_width=True):
-            try:
-                excel_filename = f"{st.session_state.ticker}_Financial_Report_{datetime.now().strftime('%Y%m%d')}.xlsx"
-                export_financials_to_excel(st.session_state.financials, excel_filename)
-                
-                # Provide download link
-                with open(excel_filename, "rb") as f:
-                    st.download_button(
-                        label="Download Excel Report",
-                        data=f,
-                        file_name=excel_filename,
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        use_container_width=True
-                    )
-                st.success(f"Excel report created: {excel_filename}")
-            except Exception as e:
-                st.error(f"Excel export failed: {str(e)}")
+        # Export All Data to Excel (using fragment to prevent tab redirect)
+        render_excel_export_button(st.session_state.ticker, st.session_state.financials)
         
         st.markdown("---")
         

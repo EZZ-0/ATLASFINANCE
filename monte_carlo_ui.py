@@ -18,6 +18,7 @@ import plotly.express as px
 from monte_carlo_engine import MonteCarloEngine, SimulationParams
 
 
+@st.fragment
 def render_monte_carlo_button(
     financials: Dict,
     current_price: float,
@@ -25,6 +26,9 @@ def render_monte_carlo_button(
 ) -> Optional[Dict]:
     """
     Render Monte Carlo simulation button and return results.
+    
+    Uses @st.fragment to prevent full page rerun when button is clicked,
+    keeping user on the current tab instead of redirecting to Dashboard.
     
     Args:
         financials: ATLAS extracted financials

@@ -33,9 +33,13 @@ def icon(name, size="1em", color=None):
     return f'<i class="bi bi-{name}" style="{style}"></i>'
 
 
+@st.fragment
 def render_valuation_tab(ticker: str, financials: dict, visualizer):
     """
     Render the Valuation tab with sub-tabs for DCF and Alpha Signals.
+    
+    Uses @st.fragment to prevent full page rerun when DCF button is clicked,
+    keeping user on the Valuation tab instead of redirecting to Dashboard.
     
     Args:
         ticker: Stock ticker symbol

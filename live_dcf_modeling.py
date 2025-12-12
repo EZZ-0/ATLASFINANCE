@@ -121,9 +121,13 @@ class ScenarioManager:
         return False
 
 
+@st.fragment
 def render_live_dcf_modeling(financials: Dict, model: DCFModel):
     """
-    Render interactive live DCF modeling interface
+    Render interactive live DCF modeling interface.
+    
+    Uses @st.fragment to prevent full page rerun when buttons are clicked,
+    keeping user on the Valuation tab instead of redirecting to Dashboard.
     
     Args:
         financials: Financial data dict

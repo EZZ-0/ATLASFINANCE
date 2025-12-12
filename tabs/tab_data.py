@@ -50,9 +50,13 @@ def icon(name, size="1em", color=None):
     return f'<i class="bi bi-{name}" style="{style}"></i>'
 
 
+@st.fragment
 def render_data_tab(ticker: str, financials: dict, extractor):
     """
     Render the Financial Data tab with sub-tabs for different statements.
+    
+    Uses @st.fragment to prevent full page rerun when Excel export button is clicked,
+    keeping user on the Data tab instead of redirecting to Dashboard.
     
     Args:
         ticker: Stock ticker symbol

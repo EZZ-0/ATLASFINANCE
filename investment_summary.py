@@ -708,9 +708,13 @@ def _calculate_health_score(financials: Dict) -> float:
 # STREAMLIT RENDERING FUNCTION
 # ==========================================
 
+@st.fragment
 def render_investment_summary_tab(financials: Dict):
     """
-    Render the Investment Summary tab in Streamlit
+    Render the Investment Summary tab in Streamlit.
+    
+    Uses @st.fragment to prevent full page rerun when PDF export button is clicked,
+    keeping user on the IC Memo tab instead of redirecting to Dashboard.
     
     Args:
         financials: Dictionary from USAFinancialExtractor

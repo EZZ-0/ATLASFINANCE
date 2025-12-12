@@ -60,9 +60,13 @@ def icon(name: str, size: str = '1em') -> str:
     return f'<i class="bi bi-{name}" style="font-size: {size};"></i>'
 
 
+@st.fragment
 def render_compare_tab(ticker: str, financials: Dict, extractor, visualizer) -> None:
     """
-    Render Peer Comparison & Benchmarking tab with 2 sub-tabs
+    Render Peer Comparison & Benchmarking tab with 2 sub-tabs.
+    
+    Uses @st.fragment to prevent full page rerun when buttons are clicked,
+    keeping user on the Compare tab instead of redirecting to Dashboard.
     
     Args:
         ticker: Stock ticker symbol
